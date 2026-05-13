@@ -36,7 +36,6 @@ set sv_files {
     ../rtl/draw_bg.sv
     ../rtl/top_vga.sv
     ../rtl/vga_if.sv
-    ../rtl/draw_rect.sv
     ../clock/clk_wiz_0.v
     ../clock/clk_wiz_0_clk_wiz.v
     rtl/top_vga_basys3.sv

@@ -34,11 +34,9 @@ module top_vga (
      */
 
     // VGA signals from timing
-     vga_if vga_timing();
+    vga_if vga_timing();
     // VGA signals from background
-     vga_if vga_bg();
-    //VGA signals from rectangle
-    vga_if vga_rect();
+    vga_if vga_bg();
 
     vga_if vga_mouse();
 
@@ -70,9 +68,7 @@ module top_vga (
     draw_bg u_draw_bg (
         .clk,
         .rst,
-
         .vga_in (vga_timing),
-
         .vga_out (vga_bg)
     );
 
@@ -99,17 +95,6 @@ module top_vga (
         end
     end
 
-    draw_rect #(.rect_height(50), .rect_width(70), .rect_rgb(12'h4_f_2)) u_draw_rect (
-
-        .clk,
-        .rst,
-        .x_pos(xpos_sync2),
-        .y_pos(ypos_sync2),
-
-        .vga_in (vga_bg),
-        .vga_out (vga_rect)
-    );
-
     MouseCtl uMouseCtl(
         .clk(clk_100MHz),
         .rst(!rst),
@@ -120,12 +105,11 @@ module top_vga (
     );
 
     draw_mouse u_draw_mouse(
-
         .clk,
         .rst,
         .x_pos,
         .y_pos,
-        .vga_in(vga_rect),
+        .vga_in(vga_bg),
         .vga_out(vga_mouse)
     );
 

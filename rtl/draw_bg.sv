@@ -65,38 +65,6 @@ module draw_bg (
                 rgb_nxt = 12'h0_f_0;                // - - make a green line.
             else if (vga_in.hcount == HOR_PIXELS - 1)   // - right edge:
                 rgb_nxt = 12'h0_0_f;                // - - make a blue line.
-
-                // Litera 'A' (X: 100-140)
-            else if ( (vga_in.hcount >= 100 && vga_in.hcount <= 110 && vga_in.vcount >= 100 && vga_in.vcount <= 150) || // Lewa krawędź
-            (vga_in.hcount >= 130 && vga_in.hcount <= 140 && vga_in.vcount >= 100 && vga_in.vcount <= 150) || // Prawa krawędź
-            (vga_in.hcount >= 110 && vga_in.hcount <= 130 && vga_in.vcount >= 100 && vga_in.vcount <= 110) || // Góra
-            (vga_in.hcount >= 110 && vga_in.hcount <= 130 && vga_in.vcount >= 120 && vga_in.vcount <= 130) )  // Środek
-      rgb_nxt = 12'hf_f_f; // Biały kolor
-
-  // Litera 'K' (X: 160-200)
-  else if ( (vga_in.hcount >= 160 && vga_in.hcount <= 170 && vga_in.vcount >= 100 && vga_in.vcount <= 150) || // Lewa krawędź
-            (vga_in.hcount >= 170 && vga_in.hcount <= 185 && vga_in.vcount >= 120 && vga_in.vcount <= 130) || // Łącznik
-            (vga_in.hcount >= 185 && vga_in.hcount <= 200 && vga_in.vcount >= 100 && vga_in.vcount <= 120) || // Prawe górne ramię
-            (vga_in.hcount >= 185 && vga_in.hcount <= 200 && vga_in.vcount >= 130 && vga_in.vcount <= 150) )  // Prawe dolne ramię
-      rgb_nxt = 12'hf_f_f;
-
-  // Znak '_' (X: 220-260)
-  else if ( vga_in.hcount >= 220 && vga_in.hcount <= 260 && vga_in.vcount >= 140 && vga_in.vcount <= 150 )
-      rgb_nxt = 12'hf_f_f;
-
-  // Litera 'K' (X: 280-320)
-  else if ( (vga_in.hcount >= 280 && vga_in.hcount <= 290 && vga_in.vcount >= 100 && vga_in.vcount <= 150) || // Lewa krawędź
-            (vga_in.hcount >= 290 && vga_in.hcount <= 305 && vga_in.vcount >= 120 && vga_in.vcount <= 130) || // Łącznik
-            (vga_in.hcount >= 305 && vga_in.hcount <= 320 && vga_in.vcount >= 100 && vga_in.vcount <= 120) || // Prawe górne ramię
-            (vga_in.hcount >= 305 && vga_in.hcount <= 320 && vga_in.vcount >= 130 && vga_in.vcount <= 150) )  // Prawe dolne ramię
-      rgb_nxt = 12'hf_f_f;
-
-  // Litera 'J' (X: 340-380)
-  else if ( (vga_in.hcount >= 370 && vga_in.hcount <= 380 && vga_in.vcount >= 100 && vga_in.vcount <= 150) || // Prawa długa krawędź
-            (vga_in.hcount >= 340 && vga_in.hcount <= 370 && vga_in.vcount >= 140 && vga_in.vcount <= 150) || // Dolna krawędź
-            (vga_in.hcount >= 340 && vga_in.hcount <= 350 && vga_in.vcount >= 120 && vga_in.vcount <= 140) )  // Lewy krótszy haczyk
-      rgb_nxt = 12'hf_f_f;
-
             else                                    // The rest of active display pixels:
                 rgb_nxt = 12'h8_8_8;                // - fill with gray.
         end

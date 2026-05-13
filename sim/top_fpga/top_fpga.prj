@@ -13,7 +13,6 @@ sv work ../../rtl/vga_pkg.sv \
         ../../rtl/vga_timing.sv \
         ../../rtl/draw_bg.sv \
         ../../rtl/top_vga.sv \
-        ../../rtl/draw_rect.sv \
         ../../rtl/vga_if.sv \
         ../../clock/clk_wiz_0.v \
         ../../clock/clk_wiz_0_clk_wiz.v \
