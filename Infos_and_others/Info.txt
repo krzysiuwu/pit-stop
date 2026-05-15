@@ -1,0 +1,45 @@
+!!!!!Przy każdym commicie pisałbym czy coś się zmieniło w info.txt lub to_do.txt. Oprócz tego pisać skrót co się zrobiło w Changes.txt, i aktualizować plik To_do.txt!!!!!!!
+
+
+Zaproponowany podział na foldery:
+
+    clock - wszystko związane z generacją zegara
+
+    fpga - wszystko związane z wgrywaniem na basysa
+
+    Infos_and_others - Pliki służące do planowania prac, koordynacji, itp. Taka część informacyjna
+
+    Pictures - Wszelkie pliki zdjęciowe, np. tekstury, podglądy, itp. Nie będzie to wgrywane na basysa
+
+    Rtl - Przechowuje wszystkie moduły:
+
+        All_purpose - Uniwersalne moduły, interfejsy, parametry, które będą używane przez różnorodne moduły
+
+        Game_logic - Odpowiada za samą logikę gry, maszyny stanów, itp
+
+        Graphics - Wszystko co ma za zadanie wyświetlanie czegoś, w tym obsługa timingu vga
+
+        Input Control - Obsługa myszki, ewentualnie innych wejść
+
+        UART - komunikacja między basysami
+
+    sim - wszystko potrzebne do odpalenia symulacji i testowania modułów
+
+    tools - skrypty, programy, narzędzia
+
+    vhd - pliki napisane w VHDL, można przenieść do rtl w razie potrzeby
+
+
+
+
+
+
+Ważne info:
+
+Rozdzielczość 256x192 (skalowanie x 4)
+
+Trzeba użyć zegara 65MHz do obrazu
+
+Użycie PNG2LUT.py : python PNG2LUT.py -i ./Obraz_do_konwersji.png -o ../Folder_docelowy      
+
+Użycie mem2PNG.py : python mem2PNG.py -s ../Plik_do_podgladu.mem -p ../LUT_do_konwersji.mem -o ./Folder_docelowy

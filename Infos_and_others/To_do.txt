@@ -1,0 +1,69 @@
+ _ _   _                      _     
+| | | | |_ __ __ _  ___ _ __ | |_ _ 
+| | | | | '__/ _` |/ _ \ '_ \| __(_)
+|_| |_| | | | (_| |  __/ | | | |_ _ 
+(_)\___/|_|  \__, |\___|_| |_|\__(_)
+             |___/                  
+
+
+
+
+
+ _   _       _                                _     
+| \ | | ___ | |_   _   _ _ __ __ _  ___ _ __ | |_ _ 
+|  \| |/ _ \| __| | | | | '__/ _` |/ _ \ '_ \| __(_)
+| |\  | (_) | |_  | |_| | | | (_| |  __/ | | | |_ _ 
+|_| \_|\___/ \__|  \__,_|_|  \__, |\___|_| |_|\__(_)
+                             |___/                  
+
+
+Podział na foldery:
+
+    clock:
+        - Wygenerować zegar 65MHz
+        - Zweryfikować działanie pozostałych plików i czy mogą razem pracować (tzn. czy zegar 65MHz będzie działał z jakimś innym)
+
+    fpga:
+
+        - Prawdopodobnie będzie trzeba pozmieniać ściezki
+        - Nie trzeba na razie tego ruszać, chyba że będziemy chcieli wgrać coś na basysa
+
+    rtl:
+
+        - All_purpose:
+
+            - VGA_if: sprawdzenie czy nie trzeba poprawić dla downscalowanej rozdzielczości
+            - VGA_pkg: poprawić parametry dla rozdzielczości 1024x768 
+        
+        - Game_logic :
+
+            - do napisania w sumie wszystko
+
+        - Graphics:
+
+            - do napisania wszystko
+
+        - Input_Control:
+
+            - Trzeba sprawdzić czy jest coś do napisania, czy wszystko co potrzebne mamy już w vhdl, ewentualnie skopiować z labów
+
+        - Uart:
+
+            - Napisać wszystko, do ogarnięcia na końcu. Trzeba wyspecyfikować na czym będzie polegać transmisja
+
+    sim:
+
+        - Pewnie będziemy to pisać na bieżąco, ale do tego co mamy na pewno będzie trochę rzeczy do zmienienia, m.in. ścieżki plików
+
+    tools:
+
+        - to co wyżej
+
+    vhd: 
+    
+        -ogarnięcie czy wszystko jest jak należy
+
+
+Niezależnie od plików:
+
+    Trzeba co parę commitów ogarniać czy kod spełnia specyfikację, bądź ogarnąć ten skrypt do poprawiania

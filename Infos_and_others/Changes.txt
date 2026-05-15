@@ -1,0 +1,3 @@
+14.05.2026 - Adam - Wygenerowanie grafik sprite'ów, skryptów do konwersji na LUT i odwrotnie, wygenerowanie podglądów grafik.
+
+15.05.2026 - Adam - Restrukturyzacja projektu
