@@ -13,6 +13,7 @@ fpga/xvlog*
 fpga/xelab*
 fpga/xsim*
 fpga/.hbs
+fpga/.dvt.vivado.log*
 
 sim/build
 sim/.Xil
@@ -36,7 +37,7 @@ dvt_build.log
 xcelium.d
 xrun.log
 
-results/
-
+results/*
+!results/top_vga_basys3.bit
 
 .vscode/
