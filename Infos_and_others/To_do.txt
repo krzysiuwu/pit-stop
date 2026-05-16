@@ -33,7 +33,6 @@ Podział na foldery:
         - All_purpose:
 
             - VGA_if: sprawdzenie czy nie trzeba poprawić dla downscalowanej rozdzielczości
-            - VGA_pkg: poprawić parametry dla rozdzielczości 1024x768 
         
         - Game_logic :
 
@@ -67,3 +66,5 @@ Podział na foldery:
 Niezależnie od plików:
 
     Trzeba co parę commitów ogarniać czy kod spełnia specyfikację, bądź ogarnąć ten skrypt do poprawiania
+
+    Aby ustawiać kolor bolidu (żeby drugi gracz miał inny kolor) można zaimplementować zmianę koloru w zależności od pozycji switchy na basysie. Jeśli będziemy tak chcieli, dopisz do to_do odpowiednie rzeczy.
