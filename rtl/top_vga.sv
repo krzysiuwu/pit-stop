@@ -14,7 +14,6 @@
 
 module top_vga (
         input  logic clk,
-        input logic clk_100MHz,
         input  logic rst,
         output logic vs,
         output logic hs,
@@ -33,22 +32,45 @@ module top_vga (
      * Local variables and signals
      */
 
+    wire [11:0] x_pos;
+    wire [11:0] y_pos;
+
     // VGA signals from timing
     vga_if vga_timing();
     // VGA signals from background
     vga_if vga_bg();
-
+    // VGA signals from mouse
     vga_if vga_mouse();
 
     /**
      * Signals assignments
      */
 
-
-    assign vs = vga_mouse.vsync;
-    assign hs = vga_mouse.hsync;
+    assign vs = ~vga_mouse.vsync;
+    assign hs = ~vga_mouse.hsync;
     assign {r,g,b} = vga_mouse.rgb;
 
+    /**
+     * Signals synchronization
+     */
+
+    always_ff @(posedge clk or negedge rst) begin : bg_ff_blk
+        if (!rst) begin
+            vga_mouse.vcount <= '0;
+            vga_mouse.vsync  <= '0;
+            vga_mouse.vblnk  <= '0;
+            vga_mouse.hcount <= '0;
+            vga_mouse.hsync  <= '0;
+            vga_mouse.hblnk  <= '0;
+        end else begin
+            vga_mouse.vcount <= vga_bg.vcount;
+            vga_mouse.vsync  <= vga_bg.vsync;
+            vga_mouse.vblnk <= vga_bg.vblnk;
+            vga_mouse.hcount <= vga_bg.hcount;
+            vga_mouse.hsync  <= vga_bg.hsync;
+            vga_mouse.hblnk  <= vga_bg.hblnk;
+        end
+    end
 
     /**
      * Submodules instances
@@ -72,31 +94,8 @@ module top_vga (
         .vga_out (vga_bg)
     );
 
-    wire [11:0] x_pos;
-    wire [11:0] y_pos;
-
-    
-    logic [11:0] xpos_sync1, xpos_sync2;
-    logic [11:0] ypos_sync1, ypos_sync2;
-
-    always_ff @(posedge clk) begin
-        if (!rst) begin
-            xpos_sync1 <= 12'd0;
-            xpos_sync2 <= 12'd0;
-            ypos_sync1 <= 12'd0;
-            ypos_sync2 <= 12'd0;
-        end else begin
-            
-            xpos_sync1 <= x_pos;
-            xpos_sync2 <= xpos_sync1;
-
-            ypos_sync1 <= y_pos;
-            ypos_sync2 <= ypos_sync1;
-        end
-    end
-
     MouseCtl uMouseCtl(
-        .clk(clk_100MHz),
+        .clk,
         .rst(!rst),
         .ps2_clk,
         .ps2_data,
@@ -104,13 +103,15 @@ module top_vga (
         .ypos(y_pos)
     );
 
-    draw_mouse u_draw_mouse(
-        .clk,
-        .rst,
-        .x_pos,
-        .y_pos,
-        .vga_in(vga_bg),
-        .vga_out(vga_mouse)
+    MouseDisplay uMouseDisplay(
+        .xpos(x_pos),
+        .ypos(y_pos),
+        .hcount(vga_bg.hcount),
+        .vcount(vga_bg.vcount),
+        .blank(vga_bg.hblnk | vga_bg.vblnk),
+        .rgb_in(vga_bg.rgb),
+        .rgb_out(vga_mouse.rgb),
+        .pixel_clk(clk)
     );
 
 endmodule

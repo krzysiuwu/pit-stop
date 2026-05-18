@@ -36,8 +36,7 @@ module top_vga_basys3 (
     wire locked;
     wire pclk_mirror;
 
-    wire clk_100M;
-    wire clk_40M;
+    wire clk_65M;
 
     (* KEEP = "TRUE" *)
     (* ASYNC_REG = "TRUE" *)
@@ -57,17 +56,15 @@ module top_vga_basys3 (
      */
 
     clk_wiz_0 CLK0(
-
-        .clk100MHz(clk_100M),
-        .clk40MHz(clk_40M),
-        .clk,
+        .clk_in(clk),
+        .clk_out1(clk_65M),
         .locked
     );
 
 
     ODDR pclk_oddr (
         .Q(pclk_mirror),
-        .C(clk_40M),
+        .C(clk_65M),
         .CE(1'b1),
         .D1(1'b1),
         .D2(1'b0),
@@ -81,8 +78,7 @@ module top_vga_basys3 (
      */
 
     top_vga u_top_vga (
-        .clk(clk_40M),
-        .clk_100MHz(clk_100M),
+        .clk(clk_65M),
         .rst(!btnC),
         .r(vgaRed),
         .g(vgaGreen),

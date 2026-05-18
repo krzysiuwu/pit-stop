@@ -29,7 +29,7 @@ module top_vga_tb;
      *  Local parameters
      */
 
-    localparam CLK_PERIOD = 25;     // 40 MHz
+    localparam CLK_PERIOD = 15.38;     // 65 MHz
     localparam RST_START_TIME = 30;
     localparam RST_ACTIVE_TIME = 30;
 
@@ -48,11 +48,11 @@ module top_vga_tb;
      */
 
     initial begin
-        clk = 1'b0;
-        force dut.x_pos = 12'd0;
-        force dut.y_pos = 12'd0;
-        forever #(CLK_PERIOD/2) clk = ~clk;
-    end
+     clk = 1'b0;
+     force dut.x_pos = 12'd200;
+     force dut.y_pos = 12'd200;
+     forever #(CLK_PERIOD/2) clk = ~clk;
+     end
 
 
     /**
@@ -70,8 +70,8 @@ module top_vga_tb;
     );
 
     tiff_writer #(
-        .XDIM(16'd1056),
-        .YDIM(16'd628),
+        .XDIM(16'd1344),
+        .YDIM(16'd806),
         .FILE_DIR("../../results")
     ) u_tiff_writer (
         .clk(clk),
@@ -98,9 +98,10 @@ module top_vga_tb;
         wait (vs == 1'b0);
         @(negedge vs) $display("Info: negedge VS at %t",$time);
         @(negedge vs) $display("Info: negedge VS at %t",$time);
-
+        @(posedge vs);
         // End the simulation.
         $display("Simulation is over, check the waveforms.");
+        
         $finish;
     end
 

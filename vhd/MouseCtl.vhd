@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------
 -- mouse_controller.vhd
 ------------------------------------------------------------------------
--- Author : Ulrich Zoltán
+-- Author : Ulrich Zoltï¿½n
 --          Copyright 2006 Digilent, Inc.
 ------------------------------------------------------------------------
 -- This file contains a controller for a ps/2 compatible mouse device.
@@ -143,7 +143,7 @@
 ------------------------------------------------------------------------
 --  Port definitions
 ------------------------------------------------------------------------
--- clk            - global clock signal (100MHz)
+-- clk            - global clock signal (65MHz)
 -- rst            - global reset signal
 -- xpos           - output pin, 10 bits
 --                - the x position of the mouse relative to the upper
@@ -180,7 +180,7 @@ use UNISIM.VComponents.all;
 	entity MouseCtl is
 	generic
 	(
-	   SYSCLK_FREQUENCY_HZ : integer := 100000000;
+	   SYSCLK_FREQUENCY_HZ : integer := 65000000;
 	   CHECK_PERIOD_MS     : integer := 500;
 	   TIMEOUT_PERIOD_MS   : integer := 100
 	);
@@ -259,9 +259,8 @@ constant DEFAULT_MAX_Y : std_logic_vector(11 downto 0) := x"3FF";
                                                       -- 1023
 
 -- Mouse check tick constants
-constant CHECK_PERIOD_CLOCKS   : integer := ((CHECK_PERIOD_MS*1000000)/(1000000000/SYSCLK_FREQUENCY_HZ));
-constant TIMEOUT_PERIOD_CLOCKS : integer := ((TIMEOUT_PERIOD_MS*1000000)/(1000000000/SYSCLK_FREQUENCY_HZ));
-
+constant CHECK_PERIOD_CLOCKS   : integer := (CHECK_PERIOD_MS * (SYSCLK_FREQUENCY_HZ / 1000));
+constant TIMEOUT_PERIOD_CLOCKS : integer := (TIMEOUT_PERIOD_MS * (SYSCLK_FREQUENCY_HZ / 1000));
 ------------------------------------------------------------------------
 -- SIGNALS
 ------------------------------------------------------------------------
