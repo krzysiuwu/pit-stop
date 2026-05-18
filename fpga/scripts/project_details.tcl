@@ -34,7 +34,7 @@ set sv_files {
     ../rtl/Graphics/VGA/vga_pkg.sv 
     ../rtl/Graphics/VGA/vga_timing.sv
     ../rtl/Graphics/Draw_modules/draw_bg.sv
-    ../rtl/Graphics/Draw_modules/draw_mouse.sv
+    ../rtl/Graphics/VGA/upscale_4x.sv
     ../rtl/top_vga.sv
     ../rtl/Graphics/VGA/vga_if.sv
     ../clock/clk_wiz_0.v

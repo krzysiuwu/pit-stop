@@ -15,7 +15,6 @@ sv work ../../rtl/Graphics/VGA/vga_pkg.sv \
         ../../rtl/top_vga.sv \
         ../../rtl/Graphics/VGA/vga_if.sv \
         ../../clock/clk_wiz_0.v \
-        ../../rtl/Graphics/Draw_modules/draw_mouse.sv \
         ../../clock/clk_wiz_0_clk_wiz.v \
         ../common/tiff_writer.sv \
         top_vga_tb.sv

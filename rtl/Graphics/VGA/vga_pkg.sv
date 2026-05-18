@@ -9,6 +9,10 @@ package vga_pkg;
     localparam HOR_PIXELS = 1024;
     localparam VER_PIXELS = 768;
 
+    // Internal scaled resolution downscaled by 4x
+    localparam HOR_PIXELS_INT = 256;
+    localparam VER_PIXELS_INT = 192;
+
     // Horizontal Timing Parameters
     localparam HOR_TOTAL_TIME  = 1344;
     localparam HOR_BLANK_START = 1024;
