@@ -35,10 +35,14 @@ module top_vga (
     wire [11:0] x_pos;
     wire [11:0] y_pos;
 
+    low_res_if low_res_pipe();
+
     // VGA signals from timing
     vga_if vga_timing();
     // VGA signals from background
     vga_if vga_bg();
+    // VGA signals from upscaler
+    vga_if vga_upscale();
     // VGA signals from mouse
     vga_if vga_mouse();
 
@@ -91,7 +95,17 @@ module top_vga (
         .clk,
         .rst,
         .vga_in (vga_timing),
-        .vga_out (vga_bg)
+        .vga_out (vga_bg),
+        .low_res_in(low_res_pipe)
+    );
+
+    upscale_4x u_upscale_4x (
+        .clk,
+        .rst,
+        .vga_in (vga_bg),
+        .vga_out (vga_upscale),
+        .rgb_in(vga_bg.rgb),
+        .low_res_out(low_res_pipe)
     );
 
     MouseCtl uMouseCtl(
@@ -106,10 +120,10 @@ module top_vga (
     MouseDisplay uMouseDisplay(
         .xpos(x_pos),
         .ypos(y_pos),
-        .hcount(vga_bg.hcount),
-        .vcount(vga_bg.vcount),
-        .blank(vga_bg.hblnk | vga_bg.vblnk),
-        .rgb_in(vga_bg.rgb),
+        .hcount(vga_upscale.hcount),
+        .vcount(vga_upscale.vcount),
+        .blank(vga_upscale.hblnk | vga_upscale.vblnk),
+        .rgb_in(vga_upscale.rgb),
         .rgb_out(vga_mouse.rgb),
         .pixel_clk(clk)
     );

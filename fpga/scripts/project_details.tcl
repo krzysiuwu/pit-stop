@@ -31,12 +31,14 @@ set xdc_files {
 
 # Specify SystemVerilog design files location   -- EDIT
 set sv_files {
-    ../rtl/Graphics/VGA/vga_pkg.sv 
-    ../rtl/Graphics/VGA/vga_timing.sv
+    ../rtl/Graphics/VGA/Target_res/vga_pkg.sv
+    ../rtl/Graphics/VGA/Low_res/low_res_pkg.sv 
+    ../rtl/Graphics/VGA/Target_res/vga_timing.sv
     ../rtl/Graphics/Draw_modules/draw_bg.sv
-    ../rtl/Graphics/Draw_modules/draw_mouse.sv
+    ../rtl/Graphics/VGA/Target_res/upscale_4x.sv
     ../rtl/top_vga.sv
-    ../rtl/Graphics/VGA/vga_if.sv
+    ../rtl/Graphics/VGA/Target_res/vga_if.sv
+    ../rtl/Graphics/VGA/Low_res/low_res_if.sv
     ../clock/clk_wiz_0.v
     ../clock/clk_wiz_0_clk_wiz.v
     rtl/top_vga_basys3.sv
