@@ -28,12 +28,12 @@ module vga_timing (
 
     always_ff @(posedge clk or negedge rst) begin
         if (!rst) begin
-            vcount <= 'b0;
-            vsync <= 'b0;
-            vblnk <= 'b0;
-            hcount <= 'b0;
-            hsync <= 'b0;
-            hblnk <= 'b0;
+            vcount <= 11'b0;
+            vsync <= 1'b0;
+            vblnk <= 1'b0;
+            hcount <= 11'b0;
+            hsync <= 1'b0;
+            hblnk <= 1'b0;
         end else begin
             vcount <= vcount_nxt;
             vsync <= vsync_nxt;
@@ -53,32 +53,32 @@ module vga_timing (
         hblnk_nxt = hblnk;
 
         if(hcount == HOR_TOTAL_TIME - 1) begin
-            hcount_nxt = 'b0;
+            hcount_nxt = 11'b0;
 
             if(vcount != 807) begin
                 vcount_nxt++;
             end
             //vcount_nxt++;
-            hblnk_nxt = 'b0;
+            hblnk_nxt = 1'b0;
 
             if (vcount >= VER_BLANK_START - 1) begin
-                vblnk_nxt = 'b1;
+                vblnk_nxt = 1'b1;
             end
 
             if (vcount >= (VER_SYNC_START - 1 )&& vcount <= (VER_SYNC_START + VER_SYNC_TIME - 2)) begin
-                vsync_nxt = 'b1;
+                vsync_nxt = 1'b1;
             end else begin
-                vsync_nxt = 'b0;
+                vsync_nxt = 1'b0;
             end
         end else begin
             hcount_nxt++;
             if (hcount >= HOR_BLANK_START - 1) begin
-                hblnk_nxt = 'b1;
+                hblnk_nxt = 1'b1;
             end
             if (hcount >= (HOR_SYNC_START -1 ) && hcount <= (HOR_SYNC_START + HOR_SYNC_TIME - 2)) begin
-                hsync_nxt = 'b1;
+                hsync_nxt = 1'b1;
             end else begin
-                hsync_nxt = 'b0;
+                hsync_nxt = 1'b0;
             end
         end
 

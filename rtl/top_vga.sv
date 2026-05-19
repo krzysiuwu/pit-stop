@@ -37,6 +37,8 @@ module top_vga (
     wire [10:0] hcount_scaled_pipe;
     wire [10:0] vcount_scaled_pipe;
 
+    low_res_if low_res_pipe();
+
     // VGA signals from timing
     vga_if vga_timing();
     // VGA signals from background
@@ -96,8 +98,7 @@ module top_vga (
         .rst,
         .vga_in (vga_timing),
         .vga_out (vga_bg),
-        .hcount_scaled(hcount_scaled_pipe),
-        .vcount_scaled(vcount_scaled_pipe)
+        .low_res_in(low_res_pipe)
     );
 
     upscale_4x u_upscale_4x (
@@ -106,8 +107,7 @@ module top_vga (
         .vga_in (vga_bg),
         .vga_out (vga_upscale),
         .rgb_in(vga_bg.rgb),
-        .hcount_scaled(hcount_scaled_pipe),
-        .vcount_scaled(vcount_scaled_pipe)
+        .low_res_out(low_res_pipe)
     );
 
     MouseCtl uMouseCtl(

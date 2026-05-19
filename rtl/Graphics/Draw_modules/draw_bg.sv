@@ -10,11 +10,10 @@
 module draw_bg (
         input  logic clk,
         input  logic rst,
-        input logic [10:0] hcount_scaled,
-        input logic [10:0] vcount_scaled,
-        output logic [10:0] hcount_scaled_out,
-        output logic [10:0] vcount_scaled_out,
-        vga_if.in vga_in, 
+
+        low_res_if.in low_res_in,
+
+        vga_if.in vga_in,
         vga_if.out vga_out
     );
 
@@ -22,6 +21,7 @@ module draw_bg (
     timeprecision 1ps;
 
     import vga_pkg::*;
+    import low_res_pkg::*;
 
     /**
      * Local variables and signals
@@ -56,17 +56,17 @@ module draw_bg (
     end
 
     always_comb begin : bg_comb_blk
-        begin                              // Active region:
-            if (vcount_scaled == 0)                     // - top edge:
-                rgb_nxt = 12'hf_f_0;                // - - make a yellow line.
-            else if (vcount_scaled == VER_PIXELS_INT - 1)   // - bottom edge:
-                rgb_nxt = 12'hf_0_0;                // - - make a red line.
-            else if (hcount_scaled == 0)                // - left edge:
-                rgb_nxt = 12'h0_f_0;                // - - make a green line.
-            else if (hcount_scaled == HOR_PIXELS_INT - 1)   // - right edge:
-                rgb_nxt = 12'h0_0_f;                // - - make a blue line.
-            else                                    // The rest of active display pixels:
-                rgb_nxt = 12'h8_8_8;                // - fill with gray.
+        begin
+            if (low_res_in.vcount == 0)                            // - top edge:
+                rgb_nxt = 12'hf_f_0;                               // - - make a yellow line.
+            else if (low_res_in.vcount == LOW_RES_VER_PIXELS - 1)  // - bottom edge:
+                rgb_nxt = 12'hf_0_0;                               // - - make a red line.
+            else if (low_res_in.hcount == 0)                       // - left edge:
+                rgb_nxt = 12'h0_f_0;                               // - - make a green line.
+            else if (low_res_in.hcount == LOW_RES_HOR_PIXELS - 1)  // - right edge:
+                rgb_nxt = 12'h0_0_f;                               // - - make a blue line.
+            else                                                   // The rest of active display pixels:
+                rgb_nxt = 12'h8_8_8;                               // - fill with gray.
         end
     end
 
