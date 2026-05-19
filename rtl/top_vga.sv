@@ -34,6 +34,8 @@ module top_vga (
 
     wire [11:0] x_pos;
     wire [11:0] y_pos;
+    wire [10:0] hcount_scaled_pipe;
+    wire [10:0] vcount_scaled_pipe;
 
     low_res_if low_res_pipe();
 
