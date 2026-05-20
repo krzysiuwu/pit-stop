@@ -34,8 +34,9 @@ module top_vga (
 
     wire [11:0] x_pos;
     wire [11:0] y_pos;
-    wire [10:0] hcount_scaled_pipe;
-    wire [10:0] vcount_scaled_pipe;
+    wire [3:0] lut_pipe;
+    wire [11:0] rgb_pipe;
+    wire [11:0] rgb_out;
 
     low_res_if low_res_pipe();
 
@@ -54,7 +55,7 @@ module top_vga (
 
     assign vs = ~vga_mouse.vsync;
     assign hs = ~vga_mouse.hsync;
-    assign {r,g,b} = vga_mouse.rgb;
+    assign {r,g,b} = rgb_out;
 
     /**
      * Signals synchronization
@@ -85,29 +86,26 @@ module top_vga (
     vga_timing u_vga_timing (
         .clk,
         .rst,
-        .vcount (vga_timing.vcount),
-        .vsync  (vga_timing.vsync),
-        .vblnk  (vga_timing.vblnk),
-        .hcount (vga_timing.hcount),
-        .hsync  (vga_timing.hsync),
-        .hblnk  (vga_timing.hblnk)
+        .vga_out(vga_timing),
+        .low_res_out(low_res_pipe)
     );
 
     draw_bg u_draw_bg (
         .clk,
         .rst,
+        .lut_out(lut_pipe),
+        .low_res_in(low_res_pipe),
         .vga_in (vga_timing),
-        .vga_out (vga_bg),
-        .low_res_in(low_res_pipe)
+        .vga_out (vga_bg)
     );
 
-    upscale_4x u_upscale_4x (
+    LUT2RGB_converter u_LUT2RGB_converter (
         .clk,
-        .rst,
+        .rst_n(rst),
+        .lut_value(lut_pipe),
+        .rgb_out(rgb_pipe),
         .vga_in (vga_bg),
-        .vga_out (vga_upscale),
-        .rgb_in(vga_bg.rgb),
-        .low_res_out(low_res_pipe)
+        .vga_out (vga_upscale)
     );
 
     MouseCtl uMouseCtl(
@@ -125,8 +123,8 @@ module top_vga (
         .hcount(vga_upscale.hcount),
         .vcount(vga_upscale.vcount),
         .blank(vga_upscale.hblnk | vga_upscale.vblnk),
-        .rgb_in(vga_upscale.rgb),
-        .rgb_out(vga_mouse.rgb),
+        .rgb_in(rgb_pipe),
+        .rgb_out(rgb_out),
         .pixel_clk(clk)
     );
 

@@ -9,11 +9,15 @@
 # https://docs.xilinx.com/r/en-US/ug900-vivado-logic-simulation/Project-File-.prj-Syntax
 
 
-sv work ../../rtl/Graphics/VGA/vga_pkg.sv \
-        ../../rtl/Graphics/VGA/vga_timing.sv \
+sv work ../../rtl/Graphics/VGA/Target_res/vga_pkg.sv \
+        ../../rtl/Graphics/VGA/Target_res/vga_timing.sv \
+        ../../rtl/Graphics/VGA/Low_res/low_res_pkg.sv \
+        ../../rtl/Graphics/VGA/Low_res/low_res_if.sv \
         ../../rtl/Graphics/Draw_modules/draw_bg.sv \
+        ../../rtl/Graphics/Rom_modules/BolidF1Default_Rom.sv \
+        ../../rtl/Graphics/VGA/Target_res/downscale_4x.sv \
         ../../rtl/top_vga.sv \
-        ../../rtl/Graphics/VGA/vga_if.sv \
+        ../../rtl/Graphics/VGA/Target_res/vga_if.sv \
         ../../clock/clk_wiz_0.v \
         ../../clock/clk_wiz_0_clk_wiz.v \
         ../common/tiff_writer.sv \
