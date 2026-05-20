@@ -37,6 +37,9 @@ module top_vga (
     wire [3:0] lut_pipe;
     wire [11:0] rgb_pipe;
     wire [11:0] rgb_out;
+    wire [11:0] mouse_value_pipe;
+    wire setmax_x_pipe;
+    wire setmax_y_pipe;
 
     low_res_if low_res_pipe();
 
@@ -63,25 +66,25 @@ module top_vga (
 
     always_ff @(posedge clk or negedge rst) begin : bg_ff_blk
         if (!rst) begin
-            vga_mouse.vcount <= '0;
             vga_mouse.vsync  <= '0;
-            vga_mouse.vblnk  <= '0;
-            vga_mouse.hcount <= '0;
             vga_mouse.hsync  <= '0;
-            vga_mouse.hblnk  <= '0;
         end else begin
-            vga_mouse.vcount <= vga_bg.vcount;
             vga_mouse.vsync  <= vga_bg.vsync;
-            vga_mouse.vblnk <= vga_bg.vblnk;
-            vga_mouse.hcount <= vga_bg.hcount;
             vga_mouse.hsync  <= vga_bg.hsync;
-            vga_mouse.hblnk  <= vga_bg.hblnk;
         end
     end
 
     /**
      * Submodules instances
      */
+
+    mouse_limits u_mouse_limits (
+        .clk,
+        .rst,
+        .value(mouse_value_pipe),
+        .setmax_x(setmax_x_pipe),
+        .setmax_y(setmax_y_pipe)
+    );
 
     vga_timing u_vga_timing (
         .clk,
@@ -114,7 +117,17 @@ module top_vga (
         .ps2_clk,
         .ps2_data,
         .xpos(x_pos),
-        .ypos(y_pos)
+        .ypos(y_pos),
+        .zpos(),
+        .left(),
+        .middle(),
+        .right(),
+        .new_event(),
+        .value(mouse_value_pipe),
+        .setx(1'b0),
+        .sety(1'b0),
+        .setmax_x(setmax_x_pipe),
+        .setmax_y(setmax_y_pipe)
     );
 
     MouseDisplay uMouseDisplay(
@@ -125,7 +138,8 @@ module top_vga (
         .blank(vga_upscale.hblnk | vga_upscale.vblnk),
         .rgb_in(rgb_pipe),
         .rgb_out(rgb_out),
-        .pixel_clk(clk)
+        .pixel_clk(clk),
+        .enable_mouse_display_out()
     );
 
 endmodule
