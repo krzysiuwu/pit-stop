@@ -17,7 +17,7 @@ reg [3:0] rom [0:5375];
  */
 
 /* Relative path from the simulation or synthesis working directory */
-initial $readmemh("../Sprites_and_textures/Grandstand_sprite.mem", rom);
+initial $readmemh("../../rtl/Graphics/Sprites_and_textures/Grandstand_sprite.mem", rom);
 
 
 /**

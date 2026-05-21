@@ -58,6 +58,13 @@ module draw_bg (
     logic [3:0] bg_lut;
     logic [3:0] lut_nxt;
 
+    // --- Delayed singnals ---
+    logic is_cloud_d;
+    logic is_grandstand_d;
+    logic [3:0] bg_lut_d;
+    logic [11:0] hcount_d, vcount_d;
+    logic vsync_d, hsync_d, vblnk_d, hblnk_d;
+
     /**
      * Active Region Detection & Address Calculation
      */
@@ -105,6 +112,33 @@ module draw_bg (
      * Internal logic
      */
 
+    // Delaying signals because reading from ROM takes 1 clock cycle
+    always_ff @(posedge clk or negedge rst) begin
+        if (!rst) begin
+            is_cloud_d      <= '0;
+            is_grandstand_d <= '0;
+            bg_lut_d        <= '0;
+
+            hcount_d <= '0;
+            vcount_d <= '0;
+            vsync_d  <= '0;
+            hsync_d  <= '0;
+            vblnk_d  <= '0;
+            hblnk_d  <= '0;
+        end else begin
+            is_cloud_d      <= is_cloud;
+            is_grandstand_d <= is_grandstand;
+            bg_lut_d        <= bg_lut;
+
+            hcount_d <= vga_in.hcount;
+            vcount_d <= vga_in.vcount;
+            vsync_d  <= vga_in.vsync;
+            hsync_d  <= vga_in.hsync;
+            vblnk_d  <= vga_in.vblnk;
+            hblnk_d  <= vga_in.hblnk;
+        end
+    end
+
     always_ff @(posedge clk or negedge rst) begin : bg_ff_blk
         if (!rst) begin
             vga_out.vcount <= '0;
@@ -115,22 +149,27 @@ module draw_bg (
             vga_out.hblnk  <= '0;
             lut_out        <= '0;
         end else begin
-            vga_out.vcount <= vga_in.vcount;
-            vga_out.vsync  <= vga_in.vsync;
-            vga_out.vblnk  <= vga_in.vblnk;
-            vga_out.hcount <= vga_in.hcount;
-            vga_out.hsync  <= vga_in.hsync;
-            vga_out.hblnk  <= vga_in.hblnk;
+            vga_out.vcount <= vcount_d;
+            vga_out.vsync  <= vsync_d;
+            vga_out.vblnk  <= vblnk_d;
+            vga_out.hcount <= hcount_d;
+            vga_out.hsync  <= hsync_d;
+            vga_out.hblnk  <= hblnk_d;
             lut_out        <= lut_nxt;
         end
     end
 
     always_comb begin : bg_comb_blk
-        begin
-            if (low_res_in.vcount > 140)
-                bg_lut = 4'h1;   // concrete in the bottom                                                                 // - - make a blue line.
-            else
-                bg_lut = 4'hB;   // blue sky
+        if (low_res_in.vcount >= 96) begin
+            bg_lut = 4'h1;                                              //grey asphalt
+        end else if (low_res_in.vcount >= 72) begin
+            bg_lut = 4'hB;                                              //light blue sky
+        end else if (low_res_in.vcount >= 48) begin
+            bg_lut = (low_res_in.vcount[0]) ? 4'hB : 4'hA;              // 50/50 mixture of light blue and dark blue for a gradient
+        end else if (low_res_in.vcount >= 24) begin
+            bg_lut = (low_res_in.vcount[1:0] == 2'b11) ? 4'hB : 4'hA;   // 25/75 mixture of light blue and dark blue for a gradient
+        end else begin
+            bg_lut = 4'hA;                                              //dark blue sky 
         end
     end
 
@@ -148,12 +187,12 @@ module draw_bg (
 
     // Setting correct LUT value based on the active sprite
     always_comb begin
-        if (is_cloud && cloud_lut != 4'hF ) begin
+        if (is_cloud_d && cloud_lut != 4'hF ) begin
             lut_nxt = cloud_lut; // Draw the cloud
-        end else if(is_grandstand && grandstand_lut != 4'hF) begin
+        end else if(is_grandstand_d && grandstand_lut != 4'hF) begin
             lut_nxt = grandstand_lut; // Draw the grandstand
         end else begin
-            lut_nxt = bg_lut;    // Draw the sky
+            lut_nxt = bg_lut_d;    // Draw the sky
         end
     end
 
