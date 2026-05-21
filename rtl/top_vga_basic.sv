@@ -36,9 +36,6 @@ module top_vga_basic (
     /**
      * Signals assignments
      */
-
-    // Podlaczenie bezposrednie z ostatniego modulu potoku (LUT2RGB),
-    // poniewaz to on podaje finalne piksele na wyjscie, odpowiednio opozniajac vga_out.
     assign vs = ~vga_upscale.vsync;
     assign hs = ~vga_upscale.hsync;
     assign {r,g,b} = rgb_pipe;
