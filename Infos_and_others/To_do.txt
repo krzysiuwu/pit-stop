@@ -38,15 +38,19 @@ Podział na foldery:
 
             - do napisania w sumie wszystko
 
+            - Trzeba wymyślić maszynę stanów
+
         - Graphics:
 
-            - do napisania wszystko
+            - sprawdzić czy nie ma jakiegoś problemu z timingami, ponieważ po symulacji obraz wygląda trochę dziwnie, tak jakby wyświetlało blank i wgl
 
-            - do napisania moduł do rysowania tła: niebieskie niebo z gradientem do gdzieś połowy, od drugiej połowy szary jak asfalt (Wszystko używając LUT, potem na to tło będziemy nakładać sprite'y)
+            - Zamienić kolory dachu grandstanda, żeby było lepiej go widać na niebie. Trzeba też go przesunąć trochę wyżej, aby się zmieścił bolid
 
-            - do napisania sprite engines: sprawdzanie czy aktualny count jest w miejscu gdzie chcemy miec sprite'a, i odczytanie z niego koloru (Wszystkie romy równocześnie wystawiają kolor, ale odczytujemy z wybranego)
+            - (Optional) Wymyślić coś żeby asfalt trochę lepiej wyglądał
 
             - ewentualnie do napisania mikser, czyli moduł do decydowania które warstwy mają jaki priorytet
+
+            - Aby dodać kolejne sprite'y, trzeba już zacząć robić logikę gry, aby wiedzieć co potrzebujemy przesyłać do modułów rysowania, i co odbierać
 
         - Input_Control:
 
