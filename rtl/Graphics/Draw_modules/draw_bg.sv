@@ -162,14 +162,8 @@ module draw_bg (
     always_comb begin : bg_comb_blk
         if (low_res_in.vcount >= 96) begin
             bg_lut = 4'h1;                                              //grey asphalt
-        end else if (low_res_in.vcount >= 72) begin
-            bg_lut = 4'hB;                                              //light blue sky
-        end else if (low_res_in.vcount >= 48) begin
-            bg_lut = (low_res_in.vcount[0]) ? 4'hB : 4'hA;              // 50/50 mixture of light blue and dark blue for a gradient
-        end else if (low_res_in.vcount >= 24) begin
-            bg_lut = (low_res_in.vcount[1:0] == 2'b11) ? 4'hB : 4'hA;   // 25/75 mixture of light blue and dark blue for a gradient
         end else begin
-            bg_lut = 4'hA;                                              //dark blue sky 
+            bg_lut = 4'hB;                                              //light blue sky 
         end
     end
 
