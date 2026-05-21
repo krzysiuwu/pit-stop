@@ -36,6 +36,8 @@ set sv_files {
     ../rtl/Graphics/VGA/Target_res/vga_timing.sv
     ../rtl/Graphics/Draw_modules/draw_bg.sv
     ../rtl/Graphics/VGA/LUT2RGB_converter.sv
+    ../rtl/Graphics/Rom_modules/Cloud_Rom.sv
+    ../rtl/Graphics/Rom_modules/Grandstand_Rom.sv
     ../rtl/mouse_limits.sv
     ../rtl/top_vga.sv
     ../rtl/Graphics/VGA/Target_res/vga_if.sv
