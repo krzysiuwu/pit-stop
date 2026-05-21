@@ -58,11 +58,11 @@ module LUT2RGB_converter (
             vga_out.hblnk <= vga_in.hblnk;
             vga_out.hsync <= vga_in.hsync;
 
-            if (vga_in.hblnk || vga_in.vblnk) begin
+            // Sygnał RGB musi być zerowany podczas trwania HBLANK i VBLANK
+            if (vga_in.hblnk || vga_in.vblnk)
                 rgb_out <= 12'h000;
-            end else begin
+            else
                 rgb_out <= rgb_next;
-            end
 
         end
     end
