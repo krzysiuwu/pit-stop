@@ -1,6 +1,6 @@
 module Grandstand_Rom (
     input  logic clk ,
-    input  logic [12:0] address,  // address = (Y * 96) + X
+    input  logic [12:0] address,  // address = (Y * 55) + X
     output logic [3:0] LUT_value
 );
 
@@ -9,7 +9,7 @@ module Grandstand_Rom (
  * Local variables and signals
  */
 
-reg [3:0] rom [0:5375];
+reg [3:0] rom [0:3079];
 
 
 /**

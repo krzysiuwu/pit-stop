@@ -36,13 +36,13 @@ Podział na foldery:
         
         - Game_logic :
 
-            - do napisania w sumie wszystko
+            - do napisania moduł do akceleracji bolidu
 
-            - Trzeba wymyślić maszynę stanów
+            - moduł obsługujący rysowanie w zależności od stanu gry
+
+            - detektor kolizji
 
         - Graphics:
-
-            - sprawdzić czy nie ma jakiegoś problemu z timingami, ponieważ po symulacji obraz wygląda trochę dziwnie, tak jakby wyświetlało blank i wgl
 
             - Zamienić kolory dachu grandstanda, żeby było lepiej go widać na niebie. Trzeba też go przesunąć trochę wyżej, aby się zmieścił bolid
 
@@ -51,6 +51,8 @@ Podział na foldery:
             - ewentualnie do napisania mikser, czyli moduł do decydowania które warstwy mają jaki priorytet
 
             - Aby dodać kolejne sprite'y, trzeba już zacząć robić logikę gry, aby wiedzieć co potrzebujemy przesyłać do modułów rysowania, i co odbierać
+
+            - ogarnąć czcionkę i menu
 
         - Input_Control:
 
