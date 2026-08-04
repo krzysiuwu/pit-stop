@@ -1,6 +1,6 @@
 /**
  * Description:
- * Draw background
+ * Draw background with static asphalt (dithering, depth, curbs) for 256x192 resolution
  */
 
  module draw_bg (
@@ -24,12 +24,16 @@ import low_res_pkg::*;
  * Local variables and signals
  */
 
+// --- Road Parameters (Horizontal, Resolution 256x192) ---
+localparam int ROAD_TOP_EDGE    = 104; // Asfalt zaczyna się trochę poniżej horyzontu (zostawiamy miejsce na krawężnik/trawę)
+localparam int ROAD_BOTTOM_EDGE = 184; // Asfalt kończy się przed samym dołem ekranu
+localparam int ROAD_CENTER_Y    = 144; // Środek drogi w osi Y
+
 // --- Cloud Sprite Parameters ---
 localparam int CLOUD_W = 26;
 localparam int CLOUD_H = 20;
 
 // --- Grandstand Sprite Parameters ---
-
 localparam int Grandstand_W = 55; 
 localparam int Grandstand_H = 56;
 
@@ -38,7 +42,7 @@ localparam int C1_X = 30,  C1_Y = 15;
 localparam int C2_X = 120, C2_Y = 10;
 localparam int C3_X = 220, C3_Y = 12;
 
-// --- Grandstand Positions
+// --- Grandstand Positions ---
 localparam int G1_X = 0;
 localparam int G2_X = G1_X + Grandstand_W;
 localparam int G3_X = G2_X + Grandstand_W;
@@ -75,6 +79,10 @@ logic is_grandstand_d;
 logic [3:0] bg_lut_d;
 logic [11:0] hcount_d, vcount_d;
 logic vsync_d, hsync_d, vblnk_d, hblnk_d;
+
+logic is_shadow;
+// Cień rzucany przez trybuny - pas od 96 do 107 piksela w osi Y
+assign is_shadow = (low_res_in.vcount >= 96 && low_res_in.vcount < 108);
 
 /**
  * Active Region Detection & Address Calculation
@@ -206,10 +214,38 @@ always_ff @(posedge clk or negedge rst) begin : bg_ff_blk
 end
 
 always_comb begin : bg_comb_blk
+    // Domyślne tło (jasnoniebieskie niebo)
+    bg_lut = 4'hB; 
+    
     if (low_res_in.vcount >= 96) begin
-        bg_lut = 4'h1;                                              //grey asphalt
-    end else begin
-        bg_lut = 4'hB;                                              //light blue sky 
+        
+        // 1. ELEMENTY STRUKTURALNE (Statyczna jezdnia w POZIOMIE)
+        if (low_res_in.vcount < ROAD_TOP_EDGE || low_res_in.vcount > ROAD_BOTTOM_EDGE) begin
+            // Poziome krawężniki (zmiana koloru co 16 pikseli w osi X)
+            if (low_res_in.hcount[4] == 1'b0) bg_lut = 4'h4; // Biały
+            else                              bg_lut = 4'h5; // Czerwony
+            
+        // Przerywana linia na środku asfaltu (zmiana co 32 piksele w osi X)
+        end else if (low_res_in.vcount >= ROAD_CENTER_Y - 1 && low_res_in.vcount <= ROAD_CENTER_Y + 1) begin
+            if (low_res_in.hcount[5] == 1'b0) bg_lut = 4'h4; // Biały
+            else                              bg_lut = 4'h1; // Przerwa w linii (kolor asfaltu)
+            
+        end else begin
+            // Właściwy, gładki asfalt
+            bg_lut = 4'h1; // Średni szary
+        end
+        
+        // 2. CIEŃ OD TRYBUN
+        if (is_shadow) begin
+            // Sprzętowe mapowanie kolorów na ciemniejsze w strefie cienia
+            case (bg_lut)
+                4'h4: bg_lut = 4'h2; // Biały -> Ciemnoszary
+                4'h5: bg_lut = 4'h6; // Czerwony -> Ciemnoczerwony
+                4'h1: bg_lut = 4'h0; // Średni asfalt -> Ciemny (Czarny)
+                default: bg_lut = 4'h0; 
+            endcase
+        end
+        
     end
 end
 
@@ -219,7 +255,6 @@ Cloud_Rom u_Cloud_Rom (
     .LUT_value(cloud_lut)
 );
 
-// Pojedyncza, wydajna instancja ROM
 Grandstand_Rom u_Grandstand_Rom (
     .clk,
     .address(addr_grandstand),
