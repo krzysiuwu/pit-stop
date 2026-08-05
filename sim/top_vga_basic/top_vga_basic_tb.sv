@@ -10,14 +10,7 @@
  *
  * Description:
  * Testbench for top_vga.
- * Thanks to the tiff_writer module, an expected image
- * produced by the project is exported to a tif file.
- * Since the vs signal is connected to the go input of
- * the tiff_writer, the first (top-left) pixel of the tif
- * will not correspond to the vga project (0,0) pixel.
- * The active image (not blanked space) in the tif file
- * will be shifted down by the number of lines equal to
- * the difference between VER_SYNC_START and VER_TOTAL_TIME.
+ * Automatically stops simulation after generating a specific number of frames.
  */
 
 module top_vga_basic_tb;
@@ -28,35 +21,31 @@ module top_vga_basic_tb;
     /**
      *  Local parameters
      */
-
     localparam CLK_PERIOD = 15.38;     // 65 MHz
     localparam RST_START_TIME = 30;
     localparam RST_ACTIVE_TIME = 30;
-
+    
+    // Liczba klatek do wygenerowania przed automatycznym zakończeniem
+    localparam int FRAMES_TO_SIMULATE = 4;
 
     /**
      * Local variables and signals
      */
-
     logic clk, rst;
     wire vs, hs;
     wire [3:0] r, g, b;
 
-
     /**
      * Clock generation
      */
-
     initial begin
-     clk = 1'b0;
-     forever #(CLK_PERIOD/2) clk = ~clk;
-     end
-
+        clk = 1'b0;
+        forever #(CLK_PERIOD/2) clk = ~clk;
+    end
 
     /**
      * Submodules instances
      */
-
     top_vga_basic dut (
         .clk(clk),
         .rst(rst),
@@ -67,38 +56,48 @@ module top_vga_basic_tb;
         .b(b)
     );
 
+    // Używamy Twojej wersji modułu tiff_writer
     tiff_writer #(
         .XDIM(16'd1344),
         .YDIM(16'd806),
-        .FILE_DIR("../../results")
+        .FILE_DIR("../../results") // Zmieniono na poprawny parametr
     ) u_tiff_writer (
         .clk(clk),
-        .r({r,r}), // fabricate an 8-bit value
-        .g({g,g}), // fabricate an 8-bit value
-        .b({b,b}), // fabricate an 8-bit value
-        .go(vs)
+        .r({r,r}), // fabricate an 8-bit value (4 bity powielone 2x)
+        .g({g,g}), 
+        .b({b,b}), 
+        .go(vs)    // Zgodnie z Twoim plikiem tiff_writer, tu wchodzi vs
     );
 
-
     /**
-     * Main test
+     * Main test & Auto-Stop Logic
      */
-
     initial begin
+        // Inicjalizacja i Reset
         rst = 1'b1;
         #(RST_START_TIME) rst = 1'b0;
         #(RST_ACTIVE_TIME) rst = 1'b1;
 
-        $display("If simulation ends before the testbench");
-        $display("completes, use the menu option to run all.");
-        $display("Prepare to wait a long time...");
+        $display("Rozpoczeto symulacje...");
+        $display("Czekam na wygenerowanie %0d klatek...", FRAMES_TO_SIMULATE);
 
+        // Poczekaj aż VS opadnie na początku
         wait (vs == 1'b0);
-        @(negedge vs) $display("Info: negedge VS at %t",$time);
-        @(negedge vs) $display("Info: negedge VS at %t",$time);
-        @(posedge vs);
-        // End the simulation.
-        $display("Simulation is over, check the waveforms.");
+        
+        // Moduł tiff_writer otwiera plik na posedge go (vs) i zamyka na kolejnym posedge.
+        // Pętla odliczy dokładnie tyle cykli, by zamknąć ostatnią klatkę.
+        for (int i = 0; i <= FRAMES_TO_SIMULATE; i++) begin
+            @(posedge vs);
+            if (i > 0) begin
+                $display("Info: Zapisano klatke %0d/%0d w czasie %0t", i, FRAMES_TO_SIMULATE, $time);
+            end
+        end
+
+        // Zakończenie symulacji
+        $display("==================================================");
+        $display("Symulacja zakonczona sukcesem.");
+        $display("Sprawdz folder 'results' i uzyj skryptu Python!");
+        $display("==================================================");
         
         $finish;
     end

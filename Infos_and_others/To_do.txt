@@ -44,15 +44,13 @@ Podział na foldery:
 
         - Graphics:
 
-            - Zamienić kolory dachu grandstanda, żeby było lepiej go widać na niebie. Trzeba też go przesunąć trochę wyżej, aby się zmieścił bolid
-
-            - (Optional) Wymyślić coś żeby asfalt trochę lepiej wyglądał
-
             - ewentualnie do napisania mikser, czyli moduł do decydowania które warstwy mają jaki priorytet
 
             - Aby dodać kolejne sprite'y, trzeba już zacząć robić logikę gry, aby wiedzieć co potrzebujemy przesyłać do modułów rysowania, i co odbierać
 
-            - ogarnąć czcionkę i menu
+            - ogarnąć menu
+
+            - sprawdzić czy wszystike moduły do rysowania działają
 
         - Input_Control:
 

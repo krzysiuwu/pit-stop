@@ -1,6 +1,6 @@
-module Wheel_Rom (
-    input  logic clk ,
-    input  logic [9:0] address,  // address = (Y * 26) + X
+module PitstopLogo_Rom (
+    input  logic clk,
+    input  logic [13:0] address,  // address = (Frame * 4096) + (Y * 128) + X
     output logic [3:0] LUT_value
 );
 
@@ -9,7 +9,7 @@ module Wheel_Rom (
  * Local variables and signals
  */
 
-reg [3:0] rom [0:701];
+reg [3:0] rom [0:16383];
 
 
 /**
@@ -17,7 +17,7 @@ reg [3:0] rom [0:701];
  */
 
 /* Relative path from the simulation or synthesis working directory */
-initial $readmemh("../../rtl/Graphics/Sprites_and_textures/Wheel_sprite.mem", rom);
+initial $readmemh("../../rtl/Graphics/Sprites_and_textures/PitstopLogo.mem", rom);
 
 
 /**
