@@ -1,7 +1,7 @@
 /**
  * Basic VGA Top Module
  * Description:
- * Modul top do wyswietlania tla i zbuforowanego potoku sprite'ow.
+ * Modul top do wyswietlania tla i potoku testowego dla nowych sprite'ow.
  */
 
 module top_vga_basic (
@@ -22,22 +22,27 @@ module top_vga_basic (
     // -------------------------------------------------------------------------
     logic [11:0] rgb_pipe;
 
-    // Współrzędne o niskiej rozdzielczości wspóldzielone dla wszystkich modułów
     low_res_if low_res_pipe();
 
     // Magistrale VGA przekazujące koordynaty między etapami
     vga_if vga_timing_if();
     vga_if vga_step1_bg();
-    vga_if vga_step2_wr();
-    vga_if vga_step3_str();
-    vga_if vga_step4_logo();
+    vga_if vga_step2_btn1();
+    vga_if vga_step3_btn2();
+    vga_if vga_step4_btn3();
+    vga_if vga_step5_bolid_def();
+    vga_if vga_step6_bolid_nw();
+    vga_if vga_step7_wheel();
     vga_if vga_upscale();
 
     // Sygnały z kolorami wędrujące z warstwy na warstwę
     logic [3:0] lut_step1_bg;
-    logic [3:0] lut_step2_wr;
-    logic [3:0] lut_step3_str;
-    logic [3:0] lut_step4_logo;
+    logic [3:0] lut_step2_btn1;
+    logic [3:0] lut_step3_btn2;
+    logic [3:0] lut_step4_btn3;
+    logic [3:0] lut_step5_bolid_def;
+    logic [3:0] lut_step6_bolid_nw;
+    logic [3:0] lut_step7_wheel;
 
 
     // -------------------------------------------------------------------------
@@ -63,7 +68,7 @@ module top_vga_basic (
     );
 
     // -------------------------------------------------------------------------
-    // ETAP 1: Tło (Najniższa warstwa - generuje pierwotny kolor)
+    // ETAP 1: Tło
     // -------------------------------------------------------------------------
     draw_bg u_draw_bg (
         .clk(clk),
@@ -76,67 +81,121 @@ module top_vga_basic (
     );
 
     // -------------------------------------------------------------------------
-    // ETAP 2: Stojak z Oponami (Krok 2)
+    // ETAP 2: Przycisk 1 (Stan: Normalny)
     // -------------------------------------------------------------------------
-    draw_WheelRack u_draw_WheelRack (
+
+    draw_button_with_text #(
+        .STR_LEN(6) // Słowo ma dokładnie 6 liter
+    ) u_btn_normal (
         .clk(clk),
         .rst(rst),
         .enable(1'b1),
-        .x_pos(12'd10),     // Ustaw testową pozycję X
-        .y_pos(12'd120),    // Ustaw testową pozycję Y
+        .is_hovered(1'b0),
+        .is_pressed(1'b0),
+        .x_pos(12'd5),
+        .y_pos(12'd20),
+        .text_string("NORMAL"), // Bez spacji!
         .low_res_in(low_res_pipe),
         
-        // Wejście z Etapu 1
         .lut_in(lut_step1_bg),
         .vga_in(vga_step1_bg),
-        
-        // Wyjście do Etapu 3
-        .lut_out(lut_step2_wr),
-        .vga_out(vga_step2_wr)
+        .lut_out(lut_step2_btn1),
+        .vga_out(vga_step2_btn1)
     );
 
     // -------------------------------------------------------------------------
-    // ETAP 3: Napis na ekranie (Krok 3)
+    // ETAP 3: Przycisk 2 (Stan: Hovered)
     // -------------------------------------------------------------------------
-    draw_string #(
-        .MAX_CHARS(10)
-    ) u_draw_string (
+    draw_button_with_text #(
+        .STR_LEN(5) // Słowo ma dokładnie 5 liter
+    ) u_btn_hover (
         .clk(clk),
         .rst(rst),
         .enable(1'b1),
-        .x_pos(12'd88),     // Centrowanie w osi X
-        .y_pos(12'd100),
-        .text_string(" PIT STOP "), // Równo 10 znaków
-        .text_color(4'hE),  // Żółty z Twojej palety
+        .is_hovered(1'b1),
+        .is_pressed(1'b0),
+        .x_pos(12'd88),
+        .y_pos(12'd20),
+        .text_string("HOVER"), // Bez spacji!
         .low_res_in(low_res_pipe),
         
-        // Wejście z Etapu 2
-        .lut_in(lut_step2_wr),
-        .vga_in(vga_step2_wr),
-        
-        // Wyjście do Etapu 4
-        .lut_out(lut_step3_str),
-        .vga_out(vga_step3_str)
+        .lut_in(lut_step2_btn1),
+        .vga_in(vga_step2_btn1),
+        .lut_out(lut_step3_btn2),
+        .vga_out(vga_step3_btn2)
     );
 
     // -------------------------------------------------------------------------
-    // ETAP 4: Animowane Logo (Krok 4 - Najwyższa warstwa)
+    // ETAP 4: Przycisk 3 (Stan: Pressed)
     // -------------------------------------------------------------------------
-    draw_PitstopLogo u_draw_logo (
+    draw_button_with_text #(
+        .STR_LEN(7) // Słowo ma dokładnie 7 liter
+    ) u_btn_pressed (
         .clk(clk),
         .rst(rst),
         .enable(1'b1),
-        .x_pos(12'd64),
-        .y_pos(12'd10),
+        .is_hovered(1'b1),
+        .is_pressed(1'b1),
+        .x_pos(12'd171),
+        .y_pos(12'd20),
+        .text_string("PRESSED"), // Bez spacji!
         .low_res_in(low_res_pipe),
         
-        // Wejście z Etapu 3
-        .lut_in(lut_step3_str),
-        .vga_in(vga_step3_str),
+        .lut_in(lut_step3_btn2),
+        .vga_in(vga_step3_btn2),
+        .lut_out(lut_step4_btn3),
+        .vga_out(vga_step4_btn3)
+    );
+
+    // -------------------------------------------------------------------------
+    // ETAP 5: Bolid F1 (Domyślny / Z kołami)
+    // -------------------------------------------------------------------------
+    draw_BolidF1Default u_draw_bolid_def (
+        .clk(clk),
+        .rst(rst),
+        .enable(1'b1),
+        .x_pos(12'd10),
+        .y_pos(12'd120),
+        .low_res_in(low_res_pipe),
         
-        // Wyjście do Konwertera
-        .lut_out(lut_step4_logo),
-        .vga_out(vga_step4_logo)
+        .lut_in(lut_step4_btn3),
+        .vga_in(vga_step4_btn3),
+        .lut_out(lut_step5_bolid_def),
+        .vga_out(vga_step5_bolid_def)
+    );
+
+    // -------------------------------------------------------------------------
+    // ETAP 6: Bolid F1 (Bez kół - podczas Pit Stopu)
+    // -------------------------------------------------------------------------
+    draw_BolidF1NoWheels u_draw_bolid_nw (
+        .clk(clk),
+        .rst(rst),
+        .enable(1'b1),
+        .x_pos(12'd140),
+        .y_pos(12'd120),
+        .low_res_in(low_res_pipe),
+        
+        .lut_in(lut_step5_bolid_def),
+        .vga_in(vga_step5_bolid_def),
+        .lut_out(lut_step6_bolid_nw),
+        .vga_out(vga_step6_bolid_nw)
+    );
+
+    // -------------------------------------------------------------------------
+    // ETAP 7: Opona (Do testu zmiany kół)
+    // -------------------------------------------------------------------------
+    draw_Wheel u_draw_wheel (
+        .clk(clk),
+        .rst(rst),
+        .enable(1'b1),
+        .x_pos(12'd110),
+        .y_pos(12'd160),
+        .low_res_in(low_res_pipe),
+        
+        .lut_in(lut_step6_bolid_nw),
+        .vga_in(vga_step6_bolid_nw),
+        .lut_out(lut_step7_wheel),
+        .vga_out(vga_step7_wheel)
     );
 
     // -------------------------------------------------------------------------
@@ -146,9 +205,9 @@ module top_vga_basic (
         .clk(clk),
         .rst_n(rst),
         
-        // Przyjmujemy zsumowane kolory z najwyższej warstwy (Logo)
-        .lut_value(lut_step4_logo),
-        .vga_in(vga_step4_logo),
+        // Przyjmujemy zsumowane kolory z ostatniej warstwy (Koła)
+        .lut_value(lut_step7_wheel),
+        .vga_in(vga_step7_wheel),
         
         .rgb_out(rgb_pipe),
         .vga_out(vga_upscale)
