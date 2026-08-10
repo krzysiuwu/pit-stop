@@ -42,51 +42,24 @@ module vga_timing (
     end
 
     always_comb begin
-        vcount_nxt = vga_out.vcount;
-        vsync_nxt = vga_out.vsync;
-        vblnk_nxt = vga_out.vblnk;
-        hcount_nxt = vga_out.hcount;
-        hsync_nxt = vga_out.hsync;
-        hblnk_nxt = vga_out.hblnk;
-
-        if(vga_out.hcount == HOR_TOTAL_TIME - 1) begin
+   
+        if (vga_out.hcount == HOR_TOTAL_TIME - 1) begin
             hcount_nxt = 11'b0;
-
-            if(vga_out.vcount != 807) begin
-                vcount_nxt++;
-            end
-            //vcount_nxt++;
-            hblnk_nxt = 1'b0;
-
-            if (vga_out.vcount >= VER_BLANK_START - 1) begin
-                vblnk_nxt = 1'b1;
-            end
-
-            if (vga_out.vcount >= (VER_SYNC_START - 1 )&& vga_out.vcount <= (VER_SYNC_START + VER_SYNC_TIME - 2)) begin
-                vsync_nxt = 1'b1;
+            if (vga_out.vcount == VER_TOTAL_TIME - 1) begin
+                vcount_nxt = 11'b0;
             end else begin
-                vsync_nxt = 1'b0;
+                vcount_nxt = vga_out.vcount + 1;
             end
         end else begin
-            hcount_nxt++;
-            if (vga_out.hcount >= HOR_BLANK_START - 1) begin
-                hblnk_nxt = 1'b1;
-            end
-            if (vga_out.hcount >= (HOR_SYNC_START -1 ) && vga_out.hcount <= (HOR_SYNC_START + HOR_SYNC_TIME - 2)) begin
-                hsync_nxt = 1'b1;
-            end else begin
-                hsync_nxt = 1'b0;
-            end
+            hcount_nxt = vga_out.hcount + 1;
+            vcount_nxt = vga_out.vcount;
         end
 
-        if (vga_out.vcount == VER_TOTAL_TIME -1 && vga_out.hcount == HOR_TOTAL_TIME - 1) begin
-            hcount_nxt = 11'b0;
-            vcount_nxt = 11'b0;
-            vsync_nxt = 1'b0;
-            vblnk_nxt = 1'b0;
-            hsync_nxt = 1'b0;
-            hblnk_nxt = 1'b0;
-        end
+        hblnk_nxt = (hcount_nxt >= HOR_BLANK_START);
+        hsync_nxt = (hcount_nxt >= HOR_SYNC_START && hcount_nxt < HOR_SYNC_START + HOR_SYNC_TIME);
+        
+        vblnk_nxt = (vcount_nxt >= VER_BLANK_START);
+        vsync_nxt = (vcount_nxt >= VER_SYNC_START && vcount_nxt < VER_SYNC_START + VER_SYNC_TIME);
     end
 
     assign low_res_out.hcount = vga_out.hcount >> 2;

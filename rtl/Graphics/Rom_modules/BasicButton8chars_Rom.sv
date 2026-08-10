@@ -1,6 +1,6 @@
-module Grandstand_Rom (
+module BasicButton8chars_Rom (
     input  logic clk ,
-    input  logic [12:0] address,  // address = (Y * 55) + X
+    input  logic [11:0] address,  // address = (Y * 28) + X
     output logic [3:0] LUT_value
 );
 
@@ -9,7 +9,7 @@ module Grandstand_Rom (
  * Local variables and signals
  */
 
-reg [3:0] rom [0:3079];
+reg [3:0] rom [0:2183];
 
 
 /**
@@ -17,7 +17,7 @@ reg [3:0] rom [0:3079];
  */
 
 /* Relative path from the simulation or synthesis working directory */
-initial $readmemh("../../rtl/Graphics/Sprites_and_textures/Grandstand_sprite.mem", rom);
+initial $readmemh("../../rtl/Graphics/Sprites_and_textures/BasicButton8chars_sprite.mem", rom);
 
 
 /**
