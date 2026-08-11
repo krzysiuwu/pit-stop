@@ -9,11 +9,11 @@
  * Piotr Kaczmarczyk
  *
  * Description:
- * Testbench for top_vga.
- * Automatically stops simulation after generating a specific number of frames.
+ * Testbench for anim_test.
+ * Generates enough frames to capture the full F1 pit stop animation.
  */
 
-module top_vga_basic_tb;
+module anim_test_tb;
 
     timeunit 1ns;
     timeprecision 1ps;
@@ -25,8 +25,8 @@ module top_vga_basic_tb;
     localparam RST_START_TIME = 30;
     localparam RST_ACTIVE_TIME = 30;
     
-    // Liczba klatek do wygenerowania przed automatycznym zakończeniem
-    localparam int FRAMES_TO_SIMULATE = 4;
+    // Generujemy 180 klatek (ok. 3 sekundy w 60FPS), by uchwycić cały wjazd i odjazd bolidu
+    localparam int FRAMES_TO_SIMULATE = 180;
 
     /**
      * Local variables and signals
@@ -46,7 +46,7 @@ module top_vga_basic_tb;
     /**
      * Submodules instances
      */
-    top_vga_basic dut (
+    anim_test dut (
         .clk(clk),
         .rst(rst),
         .vs(vs),
@@ -56,17 +56,17 @@ module top_vga_basic_tb;
         .b(b)
     );
 
-    // Używamy Twojej wersji modułu tiff_writer
+    // Moduł zapisujący klatki do plików .tiff
     tiff_writer #(
         .XDIM(16'd1344),
         .YDIM(16'd806),
-        .FILE_DIR("../../results") // Zmieniono na poprawny parametr
+        .FILE_DIR("../../results") 
     ) u_tiff_writer (
         .clk(clk),
-        .r({r,r}), // fabricate an 8-bit value (4 bity powielone 2x)
+        .r({r,r}), // powielenie z 4 do 8 bitów
         .g({g,g}), 
         .b({b,b}), 
-        .go(vs)    // Zgodnie z Twoim plikiem tiff_writer, tu wchodzi vs
+        .go(vs)    // Zapis nowej klatki przy każdym impulsie synchronizacji pionowej
     );
 
     /**
@@ -78,25 +78,27 @@ module top_vga_basic_tb;
         #(RST_START_TIME) rst = 1'b0;
         #(RST_ACTIVE_TIME) rst = 1'b1;
 
-        $display("Rozpoczeto symulacje...");
-        $display("Czekam na wygenerowanie %0d klatek...", FRAMES_TO_SIMULATE);
+        $display("Rozpoczeto symulacje animacji...");
+        $display("Czekam na wygenerowanie %0d klatek (To moze chwile potrwac!)...", FRAMES_TO_SIMULATE);
 
         // Poczekaj aż VS opadnie na początku
         wait (vs == 1'b0);
         
-        // Moduł tiff_writer otwiera plik na posedge go (vs) i zamyka na kolejnym posedge.
-        // Pętla odliczy dokładnie tyle cykli, by zamknąć ostatnią klatkę.
+        // Pętla odliczająca klatki wideo
         for (int i = 0; i <= FRAMES_TO_SIMULATE; i++) begin
             @(posedge vs);
             if (i > 0) begin
-                $display("Info: Zapisano klatke %0d/%0d w czasie %0t", i, FRAMES_TO_SIMULATE, $time);
+                // Wyświetlanie postępu, abyś wiedział, że symulacja nie "zamarzła"
+                if (i % 10 == 0 || i == FRAMES_TO_SIMULATE) begin
+                    $display("Info: Zapisano klatke %0d/%0d w czasie %0t", i, FRAMES_TO_SIMULATE, $time);
+                end
             end
         end
 
         // Zakończenie symulacji
         $display("==================================================");
-        $display("Symulacja zakonczona sukcesem.");
-        $display("Sprawdz folder 'results' i uzyj skryptu Python!");
+        $display("Symulacja animacji zakonczona sukcesem.");
+        $display("Sprawdz folder 'results'. Klatki sa gotowe do zlaczenia!");
         $display("==================================================");
         
         $finish;

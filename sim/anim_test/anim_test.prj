@@ -1,0 +1,39 @@
+# Copyright (C) 2025  AGH University of Science and Technology
+# MTM UEC2
+# Author: Piotr Kaczmarczyk
+#
+# Description:
+# List of files defining the modules used during the test.
+# Specify the file paths relative to THIS file.
+# For syntax detail see AMD Xilinx UG 900:
+# https://docs.xilinx.com/r/en-US/ug900-vivado-logic-simulation/Project-File-.prj-Syntax
+
+
+sv work ../../rtl/Graphics/VGA/Target_res/vga_pkg.sv
+sv work ../../rtl/Graphics/VGA/Low_res/low_res_pkg.sv
+sv work ../../rtl/Graphics/VGA/Target_res/vga_if.sv
+sv work ../../rtl/Graphics/VGA/Low_res/low_res_if.sv
+sv work ../../rtl/Graphics/VGA/LUT2RGB_converter.sv
+sv work ../../rtl/Graphics/Draw_modules/draw_button_with_text.sv
+sv work ../../rtl/Graphics/Draw_modules/draw_BolidF1Default.sv
+sv work ../../rtl/Graphics/Draw_modules/draw_BolidF1NoWheels.sv
+sv work ../../rtl/Graphics/Draw_modules/draw_Wheel.sv
+sv work ../../rtl/Graphics/Rom_modules/BasicButton8chars_Rom.sv
+sv work ../../rtl/Graphics/Rom_modules/BolidF1Default_Rom.sv
+sv work ../../rtl/Graphics/Rom_modules/BolidF1NoWheels_Rom.sv
+sv work ../../rtl/Graphics/Rom_modules/Wheel_Rom.sv
+sv work ../../rtl/Graphics/Rom_modules/Cloud_Rom.sv
+sv work ../../rtl/Graphics/Rom_modules/Grandstand_Rom.sv
+sv work ../../rtl/Graphics/Rom_modules/WheelRack_Rom.sv
+sv work ../../rtl/Graphics/Rom_modules/Font_Rom.sv
+sv work ../../rtl/Graphics/Rom_modules/PitstopLogo_Rom.sv
+sv work ../../rtl/Graphics/VGA/Target_res/vga_timing.sv
+sv work ../../rtl/Graphics/Draw_modules/sprite_renderer.sv
+sv work ../../rtl/Graphics/Draw_modules/draw_bg.sv
+sv work ../../rtl/Graphics/Draw_modules/draw_PitstopLogo.sv
+sv work ../../rtl/Graphics/Draw_modules/draw_string.sv
+sv work ../../rtl/Graphics/Draw_modules/draw_WheelRack.sv
+sv work ../../rtl/Game_logic/Sprite_control/bolid_anim_ctl.sv
+sv work ../../rtl/anim_test.sv
+sv work ../common/tiff_writer.sv
+sv work anim_test_tb.sv

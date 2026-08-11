@@ -33,6 +33,6 @@ sv work ../../rtl/Graphics/Draw_modules/draw_bg.sv
 sv work ../../rtl/Graphics/Draw_modules/draw_PitstopLogo.sv
 sv work ../../rtl/Graphics/Draw_modules/draw_string.sv
 sv work ../../rtl/Graphics/Draw_modules/draw_WheelRack.sv
-sv work ../../rtl/top_vga_basic.sv
+sv work ../../rtl/drawing_test.sv
 sv work ../common/tiff_writer.sv
-sv work top_vga_basic_tb.sv
+sv work drawing_test_tb.sv
