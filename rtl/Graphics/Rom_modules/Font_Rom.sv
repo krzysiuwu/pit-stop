@@ -8,7 +8,7 @@ module Font_Rom (
     logic [7:0] font_array [0:1023]; 
 
     initial begin
-        $readmemh("../../rtl/Graphics/Sprites_and_textures/font_zx.mem", font_array);
+        $readmemh("font_zx.mem", font_array);
     end
 
     always_ff @(posedge clk) begin

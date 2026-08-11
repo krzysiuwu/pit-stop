@@ -32,12 +32,23 @@ set xdc_files {
 # Specify SystemVerilog design files location   -- EDIT
 set sv_files {
     ../rtl/Graphics/VGA/Target_res/vga_pkg.sv
-    ../rtl/Graphics/VGA/Low_res/low_res_pkg.sv 
     ../rtl/Graphics/VGA/Target_res/vga_timing.sv
-    ../rtl/Graphics/Draw_modules/draw_bg.sv
+    ../rtl/Graphics/VGA/Low_res/low_res_pkg.sv 
     ../rtl/Graphics/VGA/LUT2RGB_converter.sv
     ../rtl/Graphics/Rom_modules/Cloud_Rom.sv
     ../rtl/Graphics/Rom_modules/Grandstand_Rom.sv
+    ../rtl/Graphics/Rom_modules/BasicButton8chars_Rom.sv
+    ../rtl/Graphics/Rom_modules/Font_Rom.sv
+    ../rtl/Graphics/Rom_modules/BolidF1Default_Rom.sv
+    ../rtl/Graphics/Rom_modules/BolidF1NoWheels_Rom.sv
+    ../rtl/Graphics/Rom_modules/PitstopLogo_Rom.sv
+    ../rtl/Graphics/Rom_modules/Wheel_Rom.sv
+    ../rtl/Graphics/Rom_modules/WheelRack_Rom.sv
+    ../rtl/Graphics/Draw_modules/draw_button_with_text.sv
+    ../rtl/Graphics/Draw_modules/draw_bg.sv
+    ../rtl/Graphics/Draw_modules/draw_BolidF1Default.sv
+    ../rtl/Graphics/Draw_modules/draw_BolidF1NoWheels.sv
+    ../rtl/Graphics/Draw_modules/draw_Wheel.sv
     ../rtl/mouse_limits.sv
     ../rtl/top_vga.sv
     ../rtl/Graphics/VGA/Target_res/vga_if.sv
@@ -60,6 +71,12 @@ set vhdl_files {
 }
 
 # Specify files for a memory initialization     -- EDIT
-# set mem_files {
-#    path/to/file.data
-# }
+set mem_files {
+    ../rtl/Graphics/Sprites_and_textures/Cloud_sprite.mem
+    ../rtl/Graphics/Sprites_and_textures/Grandstand_sprite.mem
+    ../rtl/Graphics/Sprites_and_textures/BasicButton8chars_sprite.mem
+    ../rtl/Graphics/Sprites_and_textures/font_zx.mem
+    ../rtl/Graphics/Sprites_and_textures/BolidF1Default_sprite.mem
+    ../rtl/Graphics/Sprites_and_textures/BolidF1NoWheels_sprite.mem
+    ../rtl/Graphics/Sprites_and_textures/Wheel_sprite.mem
+}

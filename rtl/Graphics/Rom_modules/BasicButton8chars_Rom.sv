@@ -17,7 +17,7 @@ reg [3:0] rom [0:2183];
  */
 
 /* Relative path from the simulation or synthesis working directory */
-initial $readmemh("../../rtl/Graphics/Sprites_and_textures/BasicButton8chars_sprite.mem", rom);
+initial $readmemh("BasicButton8chars_sprite.mem", rom);
 
 
 /**

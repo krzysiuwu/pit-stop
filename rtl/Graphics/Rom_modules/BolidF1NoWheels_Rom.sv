@@ -17,7 +17,7 @@ reg [3:0] rom [0:7259];
  */
 
 /* Relative path from the simulation or synthesis working directory */
-initial $readmemh("../../rtl/Graphics/Sprites_and_textures/BolidF1NoWheels_sprite.mem", rom);
+initial $readmemh("BolidF1NoWheels_sprite.mem", rom);
 
 
 /**
