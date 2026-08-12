@@ -16,9 +16,11 @@ reg [3:0] rom [0:2339];
  * Memory initialization from a file
  */
 
-/* Relative path from the simulation or synthesis working directory */
-initial $readmemh("../../rtl/Graphics/Sprites_and_textures/WheelRack_sprite.mem", rom);
-
+`ifndef SYNTHESIS
+    initial $readmemh("../../rtl/Graphics/Sprites_and_textures/WheelRack_sprite.mem", rom);
+`else
+    initial $readmemh("WheelRack_sprite.mem", rom);
+`endif
 
 /**
  * Internal logic

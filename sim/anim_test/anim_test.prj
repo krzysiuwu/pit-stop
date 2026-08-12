@@ -33,6 +33,10 @@ sv work ../../rtl/Graphics/Draw_modules/draw_bg.sv
 sv work ../../rtl/Graphics/Draw_modules/draw_PitstopLogo.sv
 sv work ../../rtl/Graphics/Draw_modules/draw_string.sv
 sv work ../../rtl/Graphics/Draw_modules/draw_WheelRack.sv
+sv work ../../rtl/Graphics/Draw_modules/sprite_renderer.sv
+sv work ../../rtl/Graphics/Draw_modules/char_renderer.sv
+sv work ../../rtl/Graphics/Draw_modules/draw_BasicButton8chars.sv
+sv work ../../rtl/Graphics/Draw_modules/draw_char.sv
 sv work ../../rtl/Game_logic/Sprite_control/bolid_anim_ctl.sv
 sv work ../../rtl/anim_test.sv
 sv work ../common/tiff_writer.sv

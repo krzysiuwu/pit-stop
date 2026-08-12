@@ -49,6 +49,7 @@ set sv_files {
     ../rtl/Graphics/Draw_modules/draw_BolidF1Default.sv
     ../rtl/Graphics/Draw_modules/draw_BolidF1NoWheels.sv
     ../rtl/Graphics/Draw_modules/draw_Wheel.sv
+    ../rtl/Game_logic/Sprite_control/bolid_anim_ctl.sv
     ../rtl/mouse_limits.sv
     ../rtl/top_vga.sv
     ../rtl/Graphics/VGA/Target_res/vga_if.sv
