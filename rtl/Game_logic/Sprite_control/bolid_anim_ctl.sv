@@ -3,11 +3,12 @@ module bolid_anim_ctrl (
     input  logic rst,
 
     // --- Sygnały od/do głównej maszyny stanów gry (Game FSM) ---
-    input  logic trigger_arrive,  // Sygnał startu wjazdu
-    input  logic trigger_depart,  // Sygnał startu odjazdu po zmianie kół
+    input  logic trigger_arrive,        // Sygnał startu wjazdu do pit stopu
+    input  logic trigger_depart,        // Sygnał startu odjazdu po zmianie kół
+    input  logic trigger_drive_through, // NOWE: Sygnał ciągłego przejazdu bez zatrzymania
     
     output logic arrive_done,     // Informuje Game FSM, że bolid stoi w pit stopie
-    output logic depart_done,     // Informuje Game FSM, że bolid zniknął za ekranem
+    output logic depart_done,     // Informuje Game FSM, że bolid zniknął za ekranem (dla obu typów odjazdu)
 
     // --- Sygnały sterujące modułem rysującym (draw_BolidF1Default) ---
     output logic        car_enable,
@@ -16,17 +17,18 @@ module bolid_anim_ctrl (
 );
 
     // Pozycje na ekranie (zakładając low_res_in 256x192)
-    localparam int POS_START = 260; // Poza ekranem z prawej
-    localparam int POS_STOP  = 60;  // Miejsce zatrzymania w pit stopie
+    localparam int POS_START = 260;  // Poza ekranem z prawej
+    localparam int POS_STOP  = 60;   // Miejsce zatrzymania w pit stopie
     localparam int POS_END   = -170; // Poza ekranem z lewej (bolid ma 165px szerokości)
 
     // Stany kontrolera animacji
     typedef enum logic [2:0] {
-        IDLE,           // Oczekiwanie na wjazd
-        ARRIVING,       // Wjazd do pit stopu (z hamowaniem)
-        PITSTOP_WAIT,   // Oczekiwanie na zmianę kół
-        DEPARTING,      // Odjazd (z przyspieszeniem)
-        DONE            // Koniec
+        IDLE,            // Oczekiwanie na wjazd
+        ARRIVING,        // Wjazd do pit stopu (z hamowaniem)
+        PITSTOP_WAIT,    // Oczekiwanie na zmianę kół
+        DEPARTING,       // Odjazd (z przyspieszeniem)
+        DRIVING_THROUGH, // NOWE: Ciągły przejazd ze stałą prędkością
+        DONE             // Koniec
     } anim_state_t;
 
     anim_state_t state, next_state;
@@ -43,17 +45,23 @@ module bolid_anim_ctrl (
             state           <= IDLE;
             current_x       <= POS_START;
             speed_counter   <= '0;
-            speed_threshold <= 24'd650_000; // Szybki wjazd na start
+            speed_threshold <= 24'd120_000; 
             wheel_step      <= '0;
         end else begin
             state <= next_state;
 
             case (state)
                 IDLE: begin
-                    current_x       <= POS_START;
-                    speed_threshold <= 24'd120_000; // Niski próg -> duża prędkość na starcie
-                    wheel_step      <= '0;
-                    if (trigger_arrive) speed_counter <= '0;
+                    current_x  <= POS_START;
+                    wheel_step <= '0;
+                    
+                    if (trigger_arrive) begin
+                        speed_counter   <= '0;
+                        speed_threshold <= 24'd120_000; // Duża prędkość początkowa dla hamowania
+                    end else if (trigger_drive_through) begin
+                        speed_counter   <= '0;
+                        speed_threshold <= 24'd250_000; // Średnia, stała prędkość przelotowa
+                    end
                 end
 
                 ARRIVING: begin
@@ -63,23 +71,19 @@ module bolid_anim_ctrl (
                         current_x     <= current_x - 1'b1; // Przesunięcie w lewo
                         
                         // HAMOWANIE: Zwiększamy próg opóźnienia z każdym pikselem
-                        // Bolid będzie zwalniał, aż próg osiągnie dużą wartość przed samym zatrzymaniem
                         if (speed_threshold < 24'd1_200_000) begin
-                            // Szybciej narastające hamowanie przed samym pit stopem
-                        speed_threshold <= speed_threshold + 24'd12_000; 
+                            speed_threshold <= speed_threshold + 24'd12_000; 
                         end
                         
-                        
-                        // Animacja koła (kręci się proporcjonalnie do aktualnej prędkości)
+                        // Animacja koła
                         if (wheel_step == 2'd2) wheel_step <= '0;
                         else                    wheel_step <= wheel_step + 1'b1;
                     end
                 end
 
                 PITSTOP_WAIT: begin
-                    // Bolid stoi w miejscu, resetujemy liczniki pod start odjazdu
                     speed_counter   <= '0;
-                    speed_threshold <= 24'd1_200_000; // Wysoki próg -> bolid rusza bardzo ciężko i powoli
+                    speed_threshold <= 24'd1_200_000; // Wysoki próg -> powolny start
                 end
 
                 DEPARTING: begin
@@ -90,10 +94,23 @@ module bolid_anim_ctrl (
                         
                         // PRZYSPIESZANIE: Zmniejszamy próg opóźnienia
                         if (speed_threshold > 24'd120_000) begin
-                        // Dynamiczne przyspieszenie przy wyjeździe
-                        speed_threshold <= speed_threshold - 24'd15_000;
+                            speed_threshold <= speed_threshold - 24'd15_000;
                         end
 
+                        // Animacja koła
+                        if (wheel_step == 2'd2) wheel_step <= '0;
+                        else                    wheel_step <= wheel_step + 1'b1;
+                    end
+                end
+
+                DRIVING_THROUGH: begin
+                    speed_counter <= speed_counter + 1'b1;
+                    if (speed_counter >= speed_threshold) begin
+                        speed_counter <= '0;
+                        current_x     <= current_x - 1'b1;
+                        
+                        // BRAK HAMOWANIA/PRZYSPIESZANIA - Stała prędkość
+                        
                         // Animacja koła
                         if (wheel_step == 2'd2) wheel_step <= '0;
                         else                    wheel_step <= wheel_step + 1'b1;
@@ -113,6 +130,7 @@ module bolid_anim_ctrl (
         case (state)
             IDLE: begin
                 if (trigger_arrive) next_state = ARRIVING;
+                else if (trigger_drive_through) next_state = DRIVING_THROUGH;
             end
             ARRIVING: begin
                 if (current_x <= POS_STOP) next_state = PITSTOP_WAIT;
@@ -123,8 +141,11 @@ module bolid_anim_ctrl (
             DEPARTING: begin
                 if (current_x <= POS_END) next_state = DONE;
             end
+            DRIVING_THROUGH: begin
+                if (current_x <= POS_END) next_state = DONE;
+            end
             DONE: begin
-                // Zostaje w DONE, główna maszyna stanów może to ewentualnie zresetować
+                // Zostaje w DONE
             end
         endcase
     end
@@ -133,8 +154,8 @@ module bolid_anim_ctrl (
     assign car_x_pos       = current_x[11:0]; 
     assign wheel_anim_step = wheel_step;
 
-    // Bolid widoczny tylko podczas jazdy
-    assign car_enable = (state == ARRIVING || state == DEPARTING);
+    // Bolid widoczny podczas każdego rodzaju ruchu (wjazdu, wyjazdu i swobodnego przejazdu)
+    assign car_enable = (state == ARRIVING || state == DEPARTING || state == DRIVING_THROUGH);
 
     // Wysyłanie statusu do głównego modułu logicznego gry
     assign arrive_done = (state == PITSTOP_WAIT);
