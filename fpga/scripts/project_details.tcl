@@ -49,6 +49,9 @@ set sv_files {
     ../rtl/Graphics/Draw_modules/draw_BolidF1Default.sv
     ../rtl/Graphics/Draw_modules/draw_BolidF1NoWheels.sv
     ../rtl/Graphics/Draw_modules/draw_Wheel.sv
+    ../rtl/Graphics/Draw_modules/draw_game.sv
+    ../rtl/Graphics/Draw_modules/draw_PitstopLogo.sv
+    ../rtl/Game_logic/game_fsm.sv
     ../rtl/mouse_limits.sv
     ../rtl/top_vga.sv
     ../rtl/Graphics/VGA/Target_res/vga_if.sv
@@ -79,4 +82,5 @@ set mem_files {
     ../rtl/Graphics/Sprites_and_textures/BolidF1Default_sprite.mem
     ../rtl/Graphics/Sprites_and_textures/BolidF1NoWheels_sprite.mem
     ../rtl/Graphics/Sprites_and_textures/Wheel_sprite.mem
+    ../rtl/Graphics/Sprites_and_textures/PitstopLogo.mem
 }

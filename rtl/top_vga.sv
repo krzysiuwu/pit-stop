@@ -41,6 +41,7 @@ module top_vga (
     wire setmax_x_pipe;
     wire setmax_y_pipe;
 
+
     low_res_if low_res_pipe();
 
     // VGA signals from timing
@@ -140,6 +141,20 @@ module top_vga (
         .rgb_out(rgb_out),
         .pixel_clk(clk),
         .enable_mouse_display_out()
+    );
+
+    system_fsm u_system_fsm (
+        .clk(clk),
+        .rst(!rst),             // Zmiana polaryzacji resetu (zależnie od projektu)
+        .click_play(1'b0),
+        .click_setup(1'b0),
+        .click_back(1'b0),
+        .click_ready(button_clicked), // Sygnał z obszaru przycisku
+        .uart_connected(1'b1),        // Tymczasowo wymuszone na 1
+        .frame_tick(vga_timing.vsync), // Możesz użyć vsync jako tick ramki
+        .wheels_attached(1'b0),
+        .state_out(current_state),
+        .bolid_x(car_x)
     );
 
 endmodule
