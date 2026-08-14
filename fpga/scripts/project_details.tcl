@@ -50,8 +50,13 @@ set sv_files {
     ../rtl/Graphics/Draw_modules/draw_BolidF1NoWheels.sv
     ../rtl/Graphics/Draw_modules/draw_Wheel.sv
     ../rtl/Game_logic/Sprite_control/bolid_anim_ctl.sv
+    ../rtl/Game_logic/Sprite_control/mouse_hitbox.sv
+    ../rtl/Game_logic/Sprite_control/wheel_physics.sv
+    ../rtl/Game_logic/system_fsm.sv
+    ../rtl/Graphics/Draw_modules/draw_mouse_cursor.sv
     ../rtl/mouse_limits.sv
     ../rtl/top_vga.sv
+    ../rtl/top_fsm.sv
     ../rtl/Graphics/VGA/Target_res/vga_if.sv
     ../rtl/Graphics/VGA/Low_res/low_res_if.sv
     ../clock/clk_wiz_0.v

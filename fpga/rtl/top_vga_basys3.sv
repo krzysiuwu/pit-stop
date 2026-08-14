@@ -1,276 +1,92 @@
-module top_vga_basys3 (
-    input  wire clk,         // Zegar 100 MHz z płytki Basys 3
-    input  wire btnC,        // Środkowy przycisk posłuży jako Reset
-    inout  wire PS2Clk,      // Złącze PS/2 - Zegar
-    inout  wire PS2Data,     // Złącze PS/2 - Dane
+/**
+ * San Jose State University
+ * EE178 Lab #4
+ * Author: prof. Eric Crabilla
+ *
+ * Modified by:
+ * 2025  AGH University of Science and Technology
+ * MTM UEC2
+ * Piotr Kaczmarczyk
+ *
+ * Description:
+ * Top level synthesizable module including the project top and all the FPGA-referred modules.
+ */
 
-    output wire [3:0] vgaRed,
-    output wire [3:0] vgaGreen,
-    output wire [3:0] vgaBlue,
-    output wire Hsync,
-    output wire Vsync
-);
+module top_vga_basys3 (
+        input  wire clk,
+        input  wire btnC,
+        output wire Vsync,
+        output wire Hsync,
+        output wire [3:0] vgaRed,
+        output wire [3:0] vgaGreen,
+        output wire [3:0] vgaBlue,
+        output wire JA1,
+
+        inout wire PS2Data,
+        inout wire PS2Clk
+    );
 
     timeunit 1ns;
     timeprecision 1ps;
 
-    wire rst = btnC; // Reset podpięty pod przycisk
+    /**
+     * Local variables and signals
+     */
 
-    // =========================================================================
-    // 1. ZEGAR 65 MHz (Dla rozdzielczości 1024x768)
-    // =========================================================================
-    wire pclk;
     wire locked;
+    wire pclk_mirror;
 
-    clk_wiz_0 u_clk_wiz (
-        .clk_in1(clk),
-        .clk_out1(pclk),
-        .reset(rst),
+    wire clk_65M;
+
+    (* KEEP = "TRUE" *)
+    (* ASYNC_REG = "TRUE" *)
+    // For details on synthesis attributes used above, see AMD Xilinx UG 901:
+    // https://docs.xilinx.com/r/en-US/ug901-vivado-synthesis/Synthesis-Attributes
+
+
+    /**
+     * Signals assignments
+     */
+
+    assign JA1 = pclk_mirror;
+
+
+    /**
+     * FPGA submodules placement
+     */
+
+    clk_wiz_0 CLK0(
+        .clk_in(clk),       // Zmieniono na clk_in1 (domyślna nazwa Vivado)
+        .clk_out1(clk_65M),
         .locked(locked)
     );
 
-    // =========================================================================
-    // 2. SPRZĘTOWA MYSZKA PS/2 (Moduł VHDL)
-    // =========================================================================
-    logic [11:0] mouse_x, mouse_y;
-    logic mouse_btn_left;
 
-    MouseCtl u_mouse_ctl (
-        .clk(pclk),
-        .rst(rst),
-        .xpos(mouse_x),
-        .ypos(mouse_y),
-        .zpos(),             // Scroll (nieużywany)
-        .left(mouse_btn_left),
-        .middle(),
-        .right(),
-        .new_event(),
-        .value(12'b0),
-        .setx(1'b0),
-        .sety(1'b0),
-        .setmax_x(1'b0),
-        .setmax_y(1'b0),
-        .ps2_clk(PS2Clk),
-        .ps2_data(PS2Data)
+    ODDR pclk_oddr (
+        .Q(pclk_mirror),
+        .C(clk_65M),
+        .CE(1'b1),
+        .D1(1'b1),
+        .D2(1'b0),
+        .R(1'b0),
+        .S(1'b0)
     );
 
-    // Konwersja koordynatów myszy z monitora (1024x768) do logicznej rozdzielczości gry (256x192)
-    logic [11:0] low_res_mouse_x, low_res_mouse_y;
-    assign low_res_mouse_x = mouse_x >> 2;
-    assign low_res_mouse_y = mouse_y >> 2;
 
-    // =========================================================================
-    // 3. KANAŁY WIDEO (PIPELINE)
-    // =========================================================================
-    low_res_if low_res_pipe();
-    vga_if vga_timing_if();
-    vga_if vga_bg();
-    vga_if vga_bolid();
-    vga_if vga_btn_play();
-    vga_if vga_btn_opts();
-    vga_if vga_btn_back();
-    vga_if vga_wheel();
-    vga_if vga_cursor();
-    vga_if vga_upscale();
+    /**
+     *  Project functional top module
+     */
 
-    logic [3:0] lut_bg, lut_bolid, lut_btn_play, lut_btn_opts, lut_btn_back, lut_wheel, lut_cursor;
-    logic [11:0] rgb_pipe;
-
-    // Podpięcie fizycznych pinów VGA (tylko w strefie aktywnej ekranu)
-    assign Vsync = ~vga_upscale.vsync;
-    assign Hsync = ~vga_upscale.hsync;
-    assign vgaRed   = (vga_upscale.hblnk || vga_upscale.vblnk) ? 4'h0 : rgb_pipe[11:8];
-    assign vgaGreen = (vga_upscale.hblnk || vga_upscale.vblnk) ? 4'h0 : rgb_pipe[7:4];
-    assign vgaBlue  = (vga_upscale.hblnk || vga_upscale.vblnk) ? 4'h0 : rgb_pipe[3:0];
-
-    // Generator sygnałów wideo
-    vga_timing u_vga_timing (.clk(pclk), .rst(rst), .vga_out(vga_timing_if), .low_res_out(low_res_pipe));
-
-    // =========================================================================
-    // 4. GENERATOR FRAME TICK (60 Hz dla fizyki)
-    // =========================================================================
-    logic vsync_prev;
-    logic frame_tick;
-    
-    always_ff @(posedge pclk or posedge rst) begin
-        if (rst) begin
-            vsync_prev <= 1'b0;
-            frame_tick <= 1'b0;
-        end else begin
-            vsync_prev <= vga_upscale.vsync;
-            if (!vga_upscale.vsync && vsync_prev) frame_tick <= 1'b1;
-            else                                  frame_tick <= 1'b0;
-        end
-    end
-
-    // =========================================================================
-    // 5. GŁÓWNA MASZYNA STANÓW GRY (FSM)
-    // =========================================================================
-    logic [2:0] sys_state;
-    logic signed [11:0] bolid_bg_x;
-    logic play_clicked, opts_clicked, back_clicked;
-
-    system_fsm u_sys_fsm (
-        .clk(pclk), .rst(rst),
-        .click_play(play_clicked),
-        .click_setup(opts_clicked),
-        .click_back(back_clicked),
-        .frame_tick(frame_tick),
-        .state_out(sys_state),
-        .bolid_x(bolid_bg_x)
-    );
-
-    localparam logic [2:0] ST_MAIN_MENU = 3'b000;
-    localparam logic [2:0] ST_OPTIONS   = 3'b001;
-    localparam logic [2:0] ST_GAMEPLAY  = 3'b010;
-    localparam logic [2:0] ST_SUMMARY   = 3'b011;
-
-    // =========================================================================
-    // 6. PARAMETRY I ENABLE OBIEKTÓW
-    // =========================================================================
-    logic en_bolid, en_btn_play, en_btn_opts, en_btn_back, en_wheel;
-    
-    assign en_bolid    = (sys_state == ST_MAIN_MENU || sys_state == ST_OPTIONS);
-    assign en_btn_play = (sys_state == ST_MAIN_MENU);
-    assign en_btn_opts = (sys_state == ST_MAIN_MENU);
-    assign en_btn_back = (sys_state != ST_MAIN_MENU);
-    assign en_wheel    = (sys_state == ST_GAMEPLAY);
-
-    localparam int BTN_PLAY_X = 108, BTN_PLAY_Y = 60, BTN_W = 40, BTN_H = 15;
-    localparam int BTN_OPTS_X = 108, BTN_OPTS_Y = 90;
-    localparam int BTN_BACK_X = 210, BTN_BACK_Y = 5;
-
-    // =========================================================================
-    // 7. HITBOXY Z PRZYCISKÓW I MYSZY
-    // =========================================================================
-    logic play_hover, opts_hover, back_hover, wheel_hover;
-    logic wheel_click;
-
-    mouse_hitbox u_hitbox_play (
-        .clk(pclk), .rst(rst), .mouse_x(low_res_mouse_x), .mouse_y(low_res_mouse_y), .mouse_btn(mouse_btn_left),
-        .obj_x(en_btn_play ? 12'(BTN_PLAY_X) : -12'sd100), .obj_y(12'(BTN_PLAY_Y)), .obj_w(12'(BTN_W)), .obj_h(12'(BTN_H)),
-        .is_hovered(play_hover), .is_clicked(play_clicked)
-    );
-
-    mouse_hitbox u_hitbox_opts (
-        .clk(pclk), .rst(rst), .mouse_x(low_res_mouse_x), .mouse_y(low_res_mouse_y), .mouse_btn(mouse_btn_left),
-        .obj_x(en_btn_opts ? 12'(BTN_OPTS_X) : -12'sd100), .obj_y(12'(BTN_OPTS_Y)), .obj_w(12'(BTN_W)), .obj_h(12'(BTN_H)),
-        .is_hovered(opts_hover), .is_clicked(opts_clicked)
-    );
-
-    mouse_hitbox u_hitbox_back (
-        .clk(pclk), .rst(rst), .mouse_x(low_res_mouse_x), .mouse_y(low_res_mouse_y), .mouse_btn(mouse_btn_left),
-        .obj_x(en_btn_back ? 12'(BTN_BACK_X) : -12'sd100), .obj_y(12'(BTN_BACK_Y)), .obj_w(12'(BTN_W)), .obj_h(12'(BTN_H)),
-        .is_hovered(back_hover), .is_clicked(back_clicked)
-    );
-
-    // =========================================================================
-    // 8. FIZYKA KOŁA I RESPAWN
-    // =========================================================================
-    logic [11:0] dyn_wheel_x, dyn_wheel_y;
-    logic wheel_is_removed, do_respawn, wheel_rst_n;
-    logic [7:0] respawn_timer;
-
-    mouse_hitbox u_hitbox_wheel (
-        .clk(pclk), .rst(rst), .mouse_x(low_res_mouse_x), .mouse_y(low_res_mouse_y), .mouse_btn(mouse_btn_left),
-        .obj_x(en_wheel ? dyn_wheel_x : -12'sd100), .obj_y(dyn_wheel_y), .obj_w(12'd24), .obj_h(12'd24),
-        .is_hovered(wheel_hover), .is_clicked(wheel_click)
-    );
-
-    always_ff @(posedge pclk or posedge rst) begin
-        if (rst) begin
-            respawn_timer <= '0;
-            do_respawn    <= 1'b0;
-        end else begin
-            do_respawn <= 1'b0; 
-            if (frame_tick && en_wheel) begin
-                if (wheel_is_removed) begin
-                    if (respawn_timer < 8'd120) respawn_timer <= respawn_timer + 1'b1;
-                    else begin do_respawn <= 1'b1; respawn_timer <= '0; end
-                end else respawn_timer <= '0;
-            end
-        end
-    end
-
-    // Na sprzęcie używamy resetu aktywnego stanem wysokim, zamieniamy wheel_rst na wysoki dla modułu jeśli potrzeba
-    // Nasz moduł wheel_physics domyślnie używa negedge rst (rst_n), więc tworzymy odpowiedni sygnał:
-    assign wheel_rst_n = ~rst & ~do_respawn & en_wheel; 
-
-    wheel_physics u_wheel_physics (
-        .clk(pclk), .rst(wheel_rst_n), .frame_tick(frame_tick),
-        .mouse_x(low_res_mouse_x), .mouse_y(low_res_mouse_y), .mouse_btn(mouse_btn_left), .is_hovered(wheel_hover), 
-        .car_mount_x(12'd100), .car_mount_y(12'd130),
-        .wheel_x(dyn_wheel_x), .wheel_y(dyn_wheel_y),
-        .is_removed(wheel_is_removed)
-    );
-
-    // =========================================================================
-    // 9. RYSOWANIE POTOKU GRAFICZNEGO
-    // =========================================================================
-    draw_bg u_draw_bg (
-        .clk(pclk), .rst(~rst), .low_res_in(low_res_pipe), 
-        .vga_in(vga_timing_if), .lut_out(lut_bg), .vga_out(vga_bg)
-    );
-
-    draw_BolidF1Default u_draw_bolid_bg (
-        .clk(pclk), .rst(~rst), .enable(en_bolid), 
-        .wheel_anim_step(2'b00), 
-        .x_pos(bolid_bg_x), 
-        .low_res_in(low_res_pipe), .lut_in(lut_bg), .vga_in(vga_bg), 
-        .lut_out(lut_bolid), .vga_out(vga_bolid)
-    );
-
-    draw_button_with_text #(.STR_LEN(4)) u_draw_btn_play (
-        .clk(pclk), .rst(~rst), .enable(en_btn_play),
-        .is_hovered(play_hover), .is_pressed(play_hover && mouse_btn_left),
-        .x_pos(12'(BTN_PLAY_X)), .y_pos(12'(BTN_PLAY_Y)), .text_string("PLAY"),
-        .low_res_in(low_res_pipe), .lut_in(lut_bolid), .vga_in(vga_bolid),
-        .lut_out(lut_btn_play), .vga_out(vga_btn_play)
-    );
-
-    draw_button_with_text #(.STR_LEN(4)) u_draw_btn_opts (
-        .clk(pclk), .rst(~rst), .enable(en_btn_opts),
-        .is_hovered(opts_hover), .is_pressed(opts_hover && mouse_btn_left),
-        .x_pos(12'(BTN_OPTS_X)), .y_pos(12'(BTN_OPTS_Y)), .text_string("OPTS"),
-        .low_res_in(low_res_pipe), .lut_in(lut_btn_play), .vga_in(vga_btn_play),
-        .lut_out(lut_btn_opts), .vga_out(vga_btn_opts)
-    );
-
-    draw_button_with_text #(.STR_LEN(4)) u_draw_btn_back (
-        .clk(pclk), .rst(~rst), .enable(en_btn_back),
-        .is_hovered(back_hover), .is_pressed(back_hover && mouse_btn_left),
-        .x_pos(12'(BTN_BACK_X)), .y_pos(12'(BTN_BACK_Y)), .text_string("BACK"),
-        .low_res_in(low_res_pipe), .lut_in(lut_btn_opts), .vga_in(vga_btn_opts),
-        .lut_out(lut_btn_back), .vga_out(vga_btn_back)
-    );
-
-    draw_Wheel u_draw_wheel (
-        .clk(pclk), .rst(~rst), .enable(en_wheel), 
-        .x_pos(dyn_wheel_x), .y_pos(dyn_wheel_y), 
-        .low_res_in(low_res_pipe), .lut_in(lut_btn_back), .vga_in(vga_btn_back), 
-        .lut_out(lut_wheel), .vga_out(vga_wheel)
-    );
-
-    // --- SYSTEM ZMIANY KURSORA ---
-    logic [1:0] current_cursor;
-    always_comb begin
-        if (en_wheel && wheel_hover && !wheel_is_removed) current_cursor = 2'b10;
-        else if (play_hover || opts_hover || back_hover)  current_cursor = 2'b01; 
-        else if (en_wheel && wheel_hover && wheel_is_removed) current_cursor = 2'b01;
-        else current_cursor = 2'b00; 
-    end
-
-    draw_mouse_cursor u_draw_cursor (
-        .clk(pclk), .rst(~rst), .enable(1'b1),
-        .cursor_type(current_cursor),
-        .mouse_x(low_res_mouse_x), .mouse_y(low_res_mouse_y),
-        .low_res_in(low_res_pipe), .lut_in(lut_wheel), .vga_in(vga_wheel),
-        .lut_out(lut_cursor), .vga_out(vga_cursor)
-    );
-
-    LUT2RGB_converter u_LUT2RGB_converter (
-        .clk(pclk), .rst_n(~rst), .lut_value(lut_cursor), .vga_in(vga_cursor),
-        .rgb_out(rgb_pipe), .vga_out(vga_upscale)
+    top_fsm u_top_fsm (
+        .clk(clk_65M),
+        .rst(!btnC && locked), // Bezpieczny reset Active Low (!btnC to 1, gdy nie wciśnięty)
+        .r(vgaRed),
+        .g(vgaGreen),
+        .b(vgaBlue),
+        .hs(Hsync),
+        .vs(Vsync),
+        .ps2_data(PS2Data),             
+        .ps2_clk(PS2Clk)
     );
 
 endmodule

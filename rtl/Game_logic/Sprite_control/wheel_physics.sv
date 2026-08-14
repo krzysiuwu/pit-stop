@@ -16,7 +16,7 @@ module wheel_physics (
     output logic        is_removed 
 );
 
-    localparam int GROUND_LEVEL = 135; 
+    localparam int GROUND_LEVEL = 135;
 
     typedef enum logic [1:0] {
         MOUNTED,
@@ -32,7 +32,12 @@ module wheel_physics (
     
     logic signed [11:0] prev_mouse_x, prev_mouse_y;
 
-    localparam signed [15:0] GRAVITY = 16'd6; 
+    localparam logic signed [15:0] GRAVITY          = 16'sd6;
+    localparam logic signed [15:0] GROUND_LEVEL_Q   = GROUND_LEVEL * 16;
+    localparam logic signed [15:0] MIN_BOUNCE_SPEED = 16'sd32;
+
+    logic signed [15:0] next_pos_y;
+    assign next_pos_y = pos_y + vel_y;
 
     always_ff @(posedge clk or negedge rst) begin
         if (!rst) begin
@@ -73,18 +78,29 @@ module wheel_physics (
 
                     AIRBORNE: begin
                         pos_x <= pos_x + vel_x;
-                        pos_y <= pos_y + vel_y;
-                        
-                        if (pos_y >= {1'b0, 12'(GROUND_LEVEL), 4'b0000}) begin
-                            pos_y <= {1'b0, 12'(GROUND_LEVEL), 4'b0000}; 
-                            
-                            // ZMIANA 2: Utrata tylko 1/8 energii (>>> 3).
-                            // Zachowujemy 87.5% prędkości odbicia (było 75%).
-                            vel_y <= -(vel_y - (vel_y >>> 3));
-                            
-                            // Tarcie w poziomie
-                            vel_x <= vel_x - (vel_x >>> 3); 
+
+                        // Kolizję sprawdzamy dla pozycji z następnej klatki i
+                        // tylko podczas ruchu w dół. Po odbiciu vel_y jest
+                        // ujemne, więc koło może faktycznie odlecieć od ziemi.
+                        if ((vel_y > 0) && (next_pos_y >= GROUND_LEVEL_Q)) begin
+                            pos_y <= GROUND_LEVEL_Q;
+
+                            // Bardzo małe odbicia wygaszamy, aby koło nie
+                            // drgało bez końca na poziomie podłoża.
+                            if (vel_y <= MIN_BOUNCE_SPEED)
+                                vel_y <= '0;
+                            else
+                                vel_y <= -(vel_y - (vel_y >>> 3));
+
+                            // Tarcie w poziomie działa podczas kontaktu z ziemią.
+                            vel_x <= vel_x - (vel_x >>> 3);
+                        end else if ((pos_y == GROUND_LEVEL_Q) && (vel_y == 0)) begin
+                            // Koło pozostaje w spoczynku po wygaśnięciu odbić.
+                            pos_y <= GROUND_LEVEL_Q;
+                            vel_y <= '0;
+                            vel_x <= vel_x - (vel_x >>> 3);
                         end else begin
+                            pos_y <= next_pos_y;
                             vel_y <= vel_y + GRAVITY;
                         end
                     end
