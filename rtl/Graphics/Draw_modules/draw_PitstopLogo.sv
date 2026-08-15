@@ -30,12 +30,21 @@ module draw_PitstopLogo (
     logic [6:0] local_x; 
     logic [4:0] local_y; 
 
-    assign in_hitbox = enable && 
-                       (low_res_in.hcount >= x_pos) && (low_res_in.hcount < x_pos + WIDTH) && 
-                       (low_res_in.vcount >= y_pos) && (low_res_in.vcount < y_pos + HEIGHT);
+    logic [11:0] cur_x;
+    logic [11:0] cur_y;
 
-    assign local_x = low_res_in.hcount[6:0] - x_pos[6:0];
-    assign local_y = low_res_in.vcount[4:0] - y_pos[4:0];
+    assign cur_x = {1'b0, vga_in.hcount} >> 2;
+    assign cur_y = {1'b0, vga_in.vcount} >> 2;
+
+    assign in_hitbox =
+        enable &&
+        (cur_x >= x_pos) &&
+        (cur_x <  x_pos + SPRITE_WIDTH) &&
+        (cur_y >= y_pos) &&
+        (cur_y <  y_pos + SPRITE_HEIGHT);
+
+    assign local_x = cur_x - x_pos;
+    assign local_y = cur_y - y_pos;
 
     logic vsync_d;
     logic [5:0] anim_counter;

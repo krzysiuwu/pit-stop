@@ -19,8 +19,11 @@ module mouse_hitbox (
 );
 
     // 1. Sprawdzenie, czy kursor jest wewnątrz prostokąta
-    assign is_hovered = (mouse_x >= obj_x) && (mouse_x <= obj_x + obj_w) &&
-                        (mouse_y >= obj_y) && (mouse_y <= obj_y + obj_h);
+    assign is_hovered =
+        (mouse_x >= obj_x) &&
+        (mouse_x <  obj_x + obj_w) &&
+        (mouse_y >= obj_y) &&
+        (mouse_y <  obj_y + obj_h);
 
     // 2. Detektor zbocza narastającego dla kliknięcia
     logic mouse_btn_prev;

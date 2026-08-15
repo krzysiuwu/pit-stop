@@ -35,6 +35,12 @@ module draw_BasicButton8chars (
     logic [11:0] dynamic_y_pos;
     assign dynamic_y_pos = is_pressed ? (y_pos + 12'd2) : y_pos;
 
+    logic [11:0] cur_x;
+    logic [11:0] cur_y;
+
+    assign cur_x = {1'b0, vga_in.hcount} >> 2;
+    assign cur_y = {1'b0, vga_in.vcount} >> 2;
+
     BasicButton8chars_Rom u_rom (
         .clk(clk),
         .address(rom_addr),
@@ -52,8 +58,8 @@ module draw_BasicButton8chars (
         .x_pos(x_pos),
         .y_pos(dynamic_y_pos), // Przekazanie nowej, dynamicznej pozycji!
         
-        .hcount(low_res_in.hcount),
-        .vcount(low_res_in.vcount),
+        .hcount(cur_x),
+        .vcount(cur_y),
         
         .rom_data(rom_data),
         .rom_addr(rom_addr),

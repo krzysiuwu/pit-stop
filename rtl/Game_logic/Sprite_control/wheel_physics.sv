@@ -11,8 +11,8 @@ module wheel_physics (
     input  logic [11:0] car_mount_x,
     input  logic [11:0] car_mount_y,
     
-    output logic [11:0] wheel_x,
-    output logic [11:0] wheel_y,
+    output logic signed [11:0] wheel_x,
+    output logic signed [11:0] wheel_y,
     output logic        is_removed 
 );
 

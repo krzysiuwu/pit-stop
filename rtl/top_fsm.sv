@@ -38,9 +38,17 @@ module top_fsm (
     );
 
     // Konwersja z 1024x768 do 256x192
+    logic [11:0] mouse_x_div4, mouse_y_div4;
     logic [11:0] low_res_mouse_x, low_res_mouse_y;
-    assign low_res_mouse_x = mouse_x >> 2;
-    assign low_res_mouse_y = mouse_y >> 2;
+
+    assign mouse_x_div4 = mouse_x >> 2;
+    assign mouse_y_div4 = mouse_y >> 2;
+
+    assign low_res_mouse_x =
+        (mouse_x_div4 > 12'd255) ? 12'd255 : mouse_x_div4;
+
+    assign low_res_mouse_y =
+        (mouse_y_div4 > 12'd191) ? 12'd191 : mouse_y_div4;
 
     // =========================================================================
     // 2. KANAŁY WIDEO (PIPELINE)
@@ -117,9 +125,9 @@ module top_fsm (
     assign en_btn_back = (sys_state != ST_MAIN_MENU);
     assign en_wheel    = (sys_state == ST_GAMEPLAY);
 
-    localparam int BTN_PLAY_X = 108, BTN_PLAY_Y = 60, BTN_W = 40, BTN_H = 15;
+    localparam int BTN_PLAY_X = 108, BTN_PLAY_Y = 60, BTN_W = 78, BTN_H = 28;
     localparam int BTN_OPTS_X = 108, BTN_OPTS_Y = 90;
-    localparam int BTN_BACK_X = 210, BTN_BACK_Y = 5;
+    localparam int BTN_BACK_X = 140, BTN_BACK_Y = 5;
 
     // =========================================================================
     // 6. HITBOXY Z PRZYCISKÓW I MYSZY
@@ -148,7 +156,8 @@ module top_fsm (
     // =========================================================================
     // 7. FIZYKA KOŁA I RESPAWN
     // =========================================================================
-    logic [11:0] dyn_wheel_x, dyn_wheel_y;
+    logic signed [11:0] dyn_wheel_x;
+    logic signed [11:0] dyn_wheel_y;
     logic wheel_is_removed, do_respawn, wheel_rst_n;
     logic [7:0] respawn_timer;
 

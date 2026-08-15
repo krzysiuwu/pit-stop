@@ -9,7 +9,7 @@ module draw_BolidF1Default (
     // --- Sygnał sterujący animacją ---
     input  logic [1:0]  wheel_anim_step, // Stan animacji (od 0 do 2)
     
-    input  logic [11:0] x_pos,
+    input  logic signed [11:0] x_pos,
     // Usunięto port wejściowy y_pos, wartość jest teraz stała
     
     input  logic [3:0] lut_in,
@@ -27,17 +27,35 @@ module draw_BolidF1Default (
     localparam logic [11:0] Y_POS = 12'd120;
 
     logic in_hitbox;
+
+    logic [11:0] cur_x;
+    logic [11:0] cur_y;
+
+    logic signed [12:0] cur_x_signed;
+    logic signed [12:0] sprite_left;
+    logic signed [12:0] sprite_right;
+
     logic [11:0] local_x;
     logic [11:0] local_y;
 
-    // Zamiana y_pos na stałą Y_POS w warunkach brzegowych
-    assign in_hitbox = enable && 
-                       (low_res_in.hcount >= x_pos) && (low_res_in.hcount < x_pos + SPRITE_WIDTH) && 
-                       (low_res_in.vcount >= Y_POS) && (low_res_in.vcount < Y_POS + SPRITE_HEIGHT);
+    // Współrzędne pobierane z właściwego etapu potoku VGA.
+    assign cur_x = {1'b0, vga_in.hcount} >> 2;
+    assign cur_y = {1'b0, vga_in.vcount} >> 2;
 
-    // Wyliczanie lokalnej współrzędnej również ze stałej
-    assign local_x = low_res_in.hcount - x_pos;
-    assign local_y = low_res_in.vcount - Y_POS;
+    // Rozszerzenie znaku jest konieczne, gdy bolid wyjeżdża za lewą krawędź.
+    assign cur_x_signed = $signed({1'b0, cur_x});
+    assign sprite_left  = x_pos;
+    assign sprite_right = sprite_left + 13'sd165;
+
+    assign in_hitbox =
+        enable &&
+        (cur_x_signed >= sprite_left) &&
+        (cur_x_signed <  sprite_right) &&
+        (cur_y >= Y_POS) &&
+        (cur_y <  Y_POS + SPRITE_HEIGHT);
+
+    assign local_x = cur_x_signed - sprite_left;
+    assign local_y = cur_y - Y_POS;
 
     logic [$clog2(SPRITE_WIDTH * SPRITE_HEIGHT)-1:0] rom_addr;
     assign rom_addr = in_hitbox ? ((local_y * SPRITE_WIDTH) + local_x) : '0;

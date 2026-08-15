@@ -74,16 +74,24 @@ module draw_mouse_cursor (
         64'h0000000000000000
     };
 
+    logic [11:0] cur_x, cur_y;
+
+    assign cur_x = {1'b0, vga_in.hcount} >> 2;
+    assign cur_y = {1'b0, vga_in.vcount} >> 2;
+
     logic in_hitbox;
     logic [3:0] local_x, local_y;
 
-    assign in_hitbox = enable && 
-                       (low_res_in.hcount >= mouse_x) && (low_res_in.hcount < mouse_x + CURSOR_SIZE) && 
-                       (low_res_in.vcount >= mouse_y) && (low_res_in.vcount < mouse_y + CURSOR_SIZE);
+    assign in_hitbox =
+        enable &&
+        (cur_x >= mouse_x) &&
+        (cur_x <  mouse_x + CURSOR_SIZE) &&
+        (cur_y >= mouse_y) &&
+        (cur_y <  mouse_y + CURSOR_SIZE);
 
-    assign local_x = low_res_in.hcount[3:0] - mouse_x[3:0];
-    assign local_y = low_res_in.vcount[3:0] - mouse_y[3:0];
-
+    assign local_x = cur_x[3:0] - mouse_x[3:0];
+    assign local_y = cur_y[3:0] - mouse_y[3:0];
+    
     int color_shift;
     assign color_shift = 63 - (int'(local_x) * 4);
 
