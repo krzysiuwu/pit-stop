@@ -81,21 +81,15 @@ module draw_WheelRack (
         end
     end
 
-    // 4. Inteligentne nakładanie warstw
+    // 4. Nakładanie warstw. Kolory wheelracka są indeksami tej samej,
+    // globalnej palety co pozostałe sprite'y.
+    logic rack_pixel_active;
+    assign rack_pixel_active = in_hitbox_d && (rom_data != 4'hF);
+
     always_comb begin
-        if (in_hitbox_d) begin
-            if (rom_data === 4'hx || rom_data === 4'hz) begin
-                // BŁĄD ODCZYTU PAMIĘCI (X): Rysuj czerwony prostokąt
-                lut_out = 4'h5; 
-            end else if (rom_data != 4'hF) begin
-                // POPRAWNY ODCZYT: Rysuj normalny piksel z ROM
-                lut_out = rom_data; 
-            end else begin
-                // KOLOR PRZEZROCZYSTY: Przepuść tło
-                lut_out = lut_in_d; 
-            end
+        if (rack_pixel_active) begin
+            lut_out = rom_data;
         end else begin
-            // POZA HITBOXEM: Przepuść tło
             lut_out = lut_in_d;
         end
     end

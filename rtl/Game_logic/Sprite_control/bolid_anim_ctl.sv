@@ -1,163 +1,216 @@
 module bolid_anim_ctrl (
     input  logic clk,
     input  logic rst,
+    input  logic frame_tick,
 
-    // --- Sygnały od/do głównej maszyny stanów gry (Game FSM) ---
-    input  logic trigger_arrive,        // Sygnał startu wjazdu do pit stopu
-    input  logic trigger_depart,        // Sygnał startu odjazdu po zmianie kół
-    input  logic trigger_drive_through, // NOWE: Sygnał ciągłego przejazdu bez zatrzymania
-    
-    output logic arrive_done,     // Informuje Game FSM, że bolid stoi w pit stopie
-    output logic depart_done,     // Informuje Game FSM, że bolid zniknął za ekranem (dla obu typów odjazdu)
+    input  logic trigger_arrive,
+    input  logic trigger_depart,
+    input  logic trigger_drive_through,
 
-    // --- Sygnały sterujące modułem rysującym (draw_BolidF1Default) ---
-    output logic        car_enable,
-    output logic [11:0] car_x_pos,
-    output logic [1:0]  wheel_anim_step
+    output logic arrive_done,
+    output logic depart_done,
+
+    output logic               car_enable,
+    output logic signed [11:0] car_x_pos,
+    output logic [1:0]         wheel_anim_step
 );
 
-    // Pozycje na ekranie (zakładając low_res_in 256x192)
-    localparam int POS_START = 260;  // Poza ekranem z prawej
-    localparam int POS_STOP  = 60;   // Miejsce zatrzymania w pit stopie
-    localparam int POS_END   = -170; // Poza ekranem z lewej (bolid ma 165px szerokości)
+    timeunit 1ns;
+    timeprecision 1ps;
 
-    // Stany kontrolera animacji
+    // Wspolrzedne odnosza sie do obrazu roboczego 256x192.
+    localparam int POS_START =  260;
+    localparam int POS_STOP  =   60;
+    localparam int POS_END   = -170;
+
+    // Pozycja i predkosc w formacie Q12.8.
+    localparam int FP_SHIFT     = 8;
+    localparam int POS_FP_WIDTH = 20;
+
+    localparam logic signed [POS_FP_WIDTH-1:0] POS_START_FP = 20'sd260 <<< FP_SHIFT;
+    localparam logic signed [POS_FP_WIDTH-1:0] POS_STOP_FP  = 20'sd60  <<< FP_SHIFT;
+    localparam logic signed [POS_FP_WIDTH-1:0] POS_END_FP   = -20'sd170 <<< FP_SHIFT;
+
+    // Profil dla ok. 60 klatek/s. Bolid wjezdza szybko, lagodnie hamuje,
+    // a po pit stopie rusza wolno i jednostajnie przyspiesza.
+    localparam logic [15:0] MAX_SPEED_FP           = 16'd896; // 3.50 px/klatke
+    localparam logic [15:0] DEPART_START_SPEED_FP  = 16'd64;  // 0.25 px/klatke
+    localparam logic [15:0] MIN_APPROACH_SPEED_FP  = 16'd64;
+    localparam logic [15:0] ACCELERATION_FP        = 16'd8;   // 0.03125 px/klatke^2
+    localparam logic [15:0] BRAKING_FP             = 16'd8;
+    localparam logic [15:0] DRIVE_THROUGH_SPEED_FP = 16'd768; // 3.00 px/klatke
+
+    // Zmiana koloru kola co cztery przebyte piksele.
+    localparam logic [15:0] WHEEL_STEP_DISTANCE_FP = 16'd1024;
+
     typedef enum logic [2:0] {
-        IDLE,            // Oczekiwanie na wjazd
-        ARRIVING,        // Wjazd do pit stopu (z hamowaniem)
-        PITSTOP_WAIT,    // Oczekiwanie na zmianę kół
-        DEPARTING,       // Odjazd (z przyspieszeniem)
-        DRIVING_THROUGH, // NOWE: Ciągły przejazd ze stałą prędkością
-        DONE             // Koniec
+        IDLE,
+        ARRIVING,
+        PITSTOP_WAIT,
+        DEPARTING,
+        DRIVING_THROUGH,
+        DONE
     } anim_state_t;
 
-    anim_state_t state, next_state;
+    anim_state_t state;
 
-    // --- Rejestry i liczniki ---
-    logic signed [12:0] current_x;       
-    logic [23:0]        speed_counter;   // Licznik opóźnienia ruchu (steruje prędkością)
-    logic [23:0]        speed_threshold; // Próg licznika (mniejszy = szybciej, większy = wolniej)
-    logic [1:0]         wheel_step;      // Aktualna klatka animacji kół
+    logic signed [POS_FP_WIDTH-1:0] position_fp;
+    logic signed [POS_FP_WIDTH-1:0] speed_fp_signed;
+    logic signed [POS_FP_WIDTH-1:0] position_after_step;
+    logic [15:0] speed_fp;
+    logic [15:0] wheel_distance_fp;
+    logic [1:0]  wheel_step;
 
-    // --- Logika ruchu i animacji ---
+    assign speed_fp_signed     = $signed({1'b0, speed_fp});
+    assign position_after_step = position_fp - speed_fp_signed;
+
+    function automatic logic [1:0] next_wheel_step(input logic [1:0] step);
+        if (step == 2'd2)
+            next_wheel_step = 2'd0;
+        else
+            next_wheel_step = step + 1'b1;
+    endfunction
+
     always_ff @(posedge clk or negedge rst) begin
         if (!rst) begin
-            state           <= IDLE;
-            current_x       <= POS_START;
-            speed_counter   <= '0;
-            speed_threshold <= 24'd120_000; 
-            wheel_step      <= '0;
+            state             <= IDLE;
+            position_fp       <= POS_START_FP;
+            speed_fp          <= '0;
+            wheel_distance_fp <= '0;
+            wheel_step        <= '0;
+        end else if (trigger_arrive) begin
+            // Polecenie wjazdu moze przerwac animacje menu. Dzieki temu po
+            // kliknieciu PLAY nowy bolid zawsze zaczyna poza prawa krawedzia.
+            state             <= ARRIVING;
+            position_fp       <= POS_START_FP;
+            speed_fp          <= MAX_SPEED_FP;
+            wheel_distance_fp <= '0;
+            wheel_step        <= '0;
+        end else if (trigger_drive_through) begin
+            // Ponowne wyzwolenie w stanie DONE zapetla przejazd w menu.
+            state             <= DRIVING_THROUGH;
+            position_fp       <= POS_START_FP;
+            speed_fp          <= DRIVE_THROUGH_SPEED_FP;
+            wheel_distance_fp <= '0;
+            wheel_step        <= '0;
         end else begin
-            state <= next_state;
-
             case (state)
                 IDLE: begin
-                    current_x  <= POS_START;
-                    wheel_step <= '0;
-                    
-                    if (trigger_arrive) begin
-                        speed_counter   <= '0;
-                        speed_threshold <= 24'd120_000; // Duża prędkość początkowa dla hamowania
-                    end else if (trigger_drive_through) begin
-                        speed_counter   <= '0;
-                        speed_threshold <= 24'd250_000; // Średnia, stała prędkość przelotowa
-                    end
+                    position_fp       <= POS_START_FP;
+                    speed_fp          <= '0;
+                    wheel_distance_fp <= '0;
+                    wheel_step        <= '0;
                 end
 
                 ARRIVING: begin
-                    speed_counter <= speed_counter + 1'b1;
-                    if (speed_counter >= speed_threshold) begin
-                        speed_counter <= '0;
-                        current_x     <= current_x - 1'b1; // Przesunięcie w lewo
-                        
-                        // HAMOWANIE: Zwiększamy próg opóźnienia z każdym pikselem
-                        if (speed_threshold < 24'd1_200_000) begin
-                            speed_threshold <= speed_threshold + 24'd12_000; 
+                    if (frame_tick) begin
+                        if (position_after_step <= POS_STOP_FP) begin
+                            position_fp       <= POS_STOP_FP;
+                            speed_fp          <= '0;
+                            wheel_distance_fp <= '0;
+                            state             <= PITSTOP_WAIT;
+                        end else begin
+                            position_fp <= position_after_step;
+
+                            if (speed_fp > MIN_APPROACH_SPEED_FP + BRAKING_FP)
+                                speed_fp <= speed_fp - BRAKING_FP;
+                            else
+                                speed_fp <= MIN_APPROACH_SPEED_FP;
+
+                            if (wheel_distance_fp + speed_fp >= WHEEL_STEP_DISTANCE_FP) begin
+                                wheel_distance_fp <= wheel_distance_fp + speed_fp
+                                                     - WHEEL_STEP_DISTANCE_FP;
+                                wheel_step <= next_wheel_step(wheel_step);
+                            end else begin
+                                wheel_distance_fp <= wheel_distance_fp + speed_fp;
+                            end
                         end
-                        
-                        // Animacja koła
-                        if (wheel_step == 2'd2) wheel_step <= '0;
-                        else                    wheel_step <= wheel_step + 1'b1;
                     end
                 end
 
                 PITSTOP_WAIT: begin
-                    speed_counter   <= '0;
-                    speed_threshold <= 24'd1_200_000; // Wysoki próg -> powolny start
+                    position_fp       <= POS_STOP_FP;
+                    speed_fp          <= '0;
+                    wheel_distance_fp <= '0;
+
+                    if (trigger_depart) begin
+                        state    <= DEPARTING;
+                        speed_fp <= DEPART_START_SPEED_FP;
+                    end
                 end
 
                 DEPARTING: begin
-                    speed_counter <= speed_counter + 1'b1;
-                    if (speed_counter >= speed_threshold) begin
-                        speed_counter <= '0;
-                        current_x     <= current_x - 1'b1;
-                        
-                        // PRZYSPIESZANIE: Zmniejszamy próg opóźnienia
-                        if (speed_threshold > 24'd120_000) begin
-                            speed_threshold <= speed_threshold - 24'd15_000;
-                        end
+                    if (frame_tick) begin
+                        if (position_after_step <= POS_END_FP) begin
+                            position_fp       <= POS_END_FP;
+                            speed_fp          <= '0;
+                            wheel_distance_fp <= '0;
+                            state             <= DONE;
+                        end else begin
+                            position_fp <= position_after_step;
 
-                        // Animacja koła
-                        if (wheel_step == 2'd2) wheel_step <= '0;
-                        else                    wheel_step <= wheel_step + 1'b1;
+                            if (speed_fp < MAX_SPEED_FP - ACCELERATION_FP)
+                                speed_fp <= speed_fp + ACCELERATION_FP;
+                            else
+                                speed_fp <= MAX_SPEED_FP;
+
+                            if (wheel_distance_fp + speed_fp >= WHEEL_STEP_DISTANCE_FP) begin
+                                wheel_distance_fp <= wheel_distance_fp + speed_fp
+                                                     - WHEEL_STEP_DISTANCE_FP;
+                                wheel_step <= next_wheel_step(wheel_step);
+                            end else begin
+                                wheel_distance_fp <= wheel_distance_fp + speed_fp;
+                            end
+                        end
                     end
                 end
 
                 DRIVING_THROUGH: begin
-                    speed_counter <= speed_counter + 1'b1;
-                    if (speed_counter >= speed_threshold) begin
-                        speed_counter <= '0;
-                        current_x     <= current_x - 1'b1;
-                        
-                        // BRAK HAMOWANIA/PRZYSPIESZANIA - Stała prędkość
-                        
-                        // Animacja koła
-                        if (wheel_step == 2'd2) wheel_step <= '0;
-                        else                    wheel_step <= wheel_step + 1'b1;
+                    if (frame_tick) begin
+                        if (position_after_step <= POS_END_FP) begin
+                            position_fp       <= POS_END_FP;
+                            speed_fp          <= '0;
+                            wheel_distance_fp <= '0;
+                            state             <= DONE;
+                        end else begin
+                            position_fp <= position_after_step;
+                            speed_fp    <= DRIVE_THROUGH_SPEED_FP;
+
+                            if (wheel_distance_fp + speed_fp >= WHEEL_STEP_DISTANCE_FP) begin
+                                wheel_distance_fp <= wheel_distance_fp + speed_fp
+                                                     - WHEEL_STEP_DISTANCE_FP;
+                                wheel_step <= next_wheel_step(wheel_step);
+                            end else begin
+                                wheel_distance_fp <= wheel_distance_fp + speed_fp;
+                            end
+                        end
                     end
                 end
 
                 DONE: begin
-                    // Koniec sekwencji
+                    speed_fp          <= '0;
+                    wheel_distance_fp <= '0;
+                end
+
+                default: begin
+                    state             <= IDLE;
+                    position_fp       <= POS_START_FP;
+                    speed_fp          <= '0;
+                    wheel_distance_fp <= '0;
+                    wheel_step        <= '0;
                 end
             endcase
         end
     end
 
-    // --- Przejścia między stanami ---
-    always_comb begin
-        next_state = state;
-        case (state)
-            IDLE: begin
-                if (trigger_arrive) next_state = ARRIVING;
-                else if (trigger_drive_through) next_state = DRIVING_THROUGH;
-            end
-            ARRIVING: begin
-                if (current_x <= POS_STOP) next_state = PITSTOP_WAIT;
-            end
-            PITSTOP_WAIT: begin
-                if (trigger_depart) next_state = DEPARTING;
-            end
-            DEPARTING: begin
-                if (current_x <= POS_END) next_state = DONE;
-            end
-            DRIVING_THROUGH: begin
-                if (current_x <= POS_END) next_state = DONE;
-            end
-            DONE: begin
-                // Zostaje w DONE
-            end
-        endcase
-    end
-
-    // --- Przypisanie wyjść ---
-    assign car_x_pos       = current_x[11:0]; 
+    assign car_x_pos       = position_fp >>> FP_SHIFT;
     assign wheel_anim_step = wheel_step;
 
-    // Bolid widoczny podczas każdego rodzaju ruchu (wjazdu, wyjazdu i swobodnego przejazdu)
-    assign car_enable = (state == ARRIVING || state == DEPARTING || state == DRIVING_THROUGH);
+    // W czasie obslugi renderowany jest osobny sprite bolidu bez kol.
+    assign car_enable = (state == ARRIVING) ||
+                        (state == DEPARTING) ||
+                        (state == DRIVING_THROUGH);
 
-    // Wysyłanie statusu do głównego modułu logicznego gry
     assign arrive_done = (state == PITSTOP_WAIT);
     assign depart_done = (state == DONE);
 

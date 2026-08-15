@@ -81,21 +81,24 @@ module anim_test (
     draw_button_with_text #(.STR_LEN(6)) u_btn_normal (
         .clk(clk), .rst(rst), .enable(1'b1), .is_hovered(1'b0), .is_pressed(1'b0),
         .x_pos(12'd5), .y_pos(12'd20), .text_string("NORMAL"),
-        .low_res_in(low_res_pipe), .lut_in(lut_step1_bg), .vga_in(vga_step1_bg),
+        .low_res_in(low_res_pipe), .lut_in(lut_step1_bg),
+        .vga_in(vga_step1_bg),
         .lut_out(lut_step2_btn1), .vga_out(vga_step2_btn1)
     );
 
     draw_button_with_text #(.STR_LEN(5)) u_btn_hover (
         .clk(clk), .rst(rst), .enable(1'b1), .is_hovered(1'b1), .is_pressed(1'b0),
         .x_pos(12'd88), .y_pos(12'd20), .text_string("HOVER"),
-        .low_res_in(low_res_pipe), .lut_in(lut_step2_btn1), .vga_in(vga_step2_btn1),
+        .low_res_in(low_res_pipe), .lut_in(lut_step2_btn1),
+        .vga_in(vga_step2_btn1),
         .lut_out(lut_step3_btn2), .vga_out(vga_step3_btn2)
     );
 
     draw_button_with_text #(.STR_LEN(7)) u_btn_pressed (
         .clk(clk), .rst(rst), .enable(1'b1), .is_hovered(1'b1), .is_pressed(1'b1),
         .x_pos(12'd171), .y_pos(12'd20), .text_string("PRESSED"),
-        .low_res_in(low_res_pipe), .lut_in(lut_step3_btn2), .vga_in(vga_step3_btn2),
+        .low_res_in(low_res_pipe), .lut_in(lut_step3_btn2),
+        .vga_in(vga_step3_btn2),
         .lut_out(lut_step4_btn3), .vga_out(vga_step4_btn3)
     );
 
@@ -105,35 +108,46 @@ module anim_test (
     logic trigger_arrive, trigger_depart;
     logic arrive_done, depart_done;
     logic car_enable;
-    logic [11:0] car_x_pos;
+    logic signed [11:0] car_x_pos;
     logic [1:0]  wheel_anim_step;
 
-    logic [31:0] test_timer;
+    logic vsync_prev;
+    logic frame_tick;
+    logic animation_started;
+    logic [6:0] pitstop_frames;
+
+    always_ff @(posedge clk or negedge rst) begin
+        if (!rst) begin
+            vsync_prev <= 1'b0;
+            frame_tick <= 1'b0;
+        end else begin
+            vsync_prev <= vga_upscale.vsync;
+            frame_tick <= !vga_upscale.vsync && vsync_prev;
+        end
+    end
 
     // Prosty sekwencer wymuszający sygnały dla testu
     always_ff @(posedge clk or negedge rst) begin
         if (!rst) begin
             trigger_arrive <= 1'b0;
             trigger_depart <= 1'b0;
-            test_timer     <= '0;
+            animation_started <= 1'b0;
+            pitstop_frames <= '0;
         end else begin
             trigger_arrive <= 1'b0;
             trigger_depart <= 1'b0;
-            test_timer     <= test_timer + 1'b1;
 
-            // Start animacji niedługo po resecie
-            if (test_timer == 32'd1000) begin
+            if (!animation_started) begin
                 trigger_arrive <= 1'b1;
+                animation_started <= 1'b1;
             end
-            
-            // Jeśli bolid wjechał do pitstopu, odczekaj czas (np. około 3 miliony taktów) i każ mu odjechać
-            if (arrive_done) begin
-                if (test_timer == 32'd3_000_000) begin 
+
+            if (arrive_done && frame_tick) begin
+                if (pitstop_frames == 7'd60) begin
                     trigger_depart <= 1'b1;
+                end else begin
+                    pitstop_frames <= pitstop_frames + 1'b1;
                 end
-            end else if (!depart_done && !car_enable) begin
-                // Zatrzymujemy timer przed wjazdem, by nie przegapić trigger_depart
-                if (test_timer > 32'd1000) test_timer <= 32'd1001; 
             end
         end
     end
@@ -141,8 +155,10 @@ module anim_test (
     bolid_anim_ctrl u_bolid_anim_ctrl (
         .clk(clk),
         .rst(rst),
+        .frame_tick(frame_tick),
         .trigger_arrive(trigger_arrive),
         .trigger_depart(trigger_depart),
+        .trigger_drive_through(1'b0),
         .arrive_done(arrive_done),
         .depart_done(depart_done),
         .car_enable(car_enable),
@@ -192,6 +208,7 @@ module anim_test (
         .clk(clk),
         .rst(rst),
         .enable(arrive_done), // Również widoczna tylko podczas wymiany kół
+        .wheel_anim_step(2'b00),
         .x_pos(12'd85),       // Dopasowane pozycje względem środka bolidu
         .y_pos(12'd137),
         .low_res_in(low_res_pipe),

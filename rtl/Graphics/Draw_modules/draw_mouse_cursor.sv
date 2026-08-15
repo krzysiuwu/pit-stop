@@ -144,7 +144,10 @@ module draw_mouse_cursor (
     end
 
     always_comb begin
-        if (pixel_active_d) lut_out = pixel_color_d;
-        else                lut_out = lut_in_d;     
+        if (pixel_active_d) begin
+            lut_out = pixel_color_d;
+        end else begin
+            lut_out = lut_in_d;
+        end
     end
 endmodule

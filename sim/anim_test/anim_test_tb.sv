@@ -25,8 +25,8 @@ module anim_test_tb;
     localparam RST_START_TIME = 30;
     localparam RST_ACTIVE_TIME = 30;
     
-    // Generujemy 180 klatek (ok. 3 sekundy w 60FPS), by uchwycić cały wjazd i odjazd bolidu
-    localparam int FRAMES_TO_SIMULATE = 180;
+    // Profil obejmuje lagodne hamowanie, sekunde postoju i przyspieszanie.
+    localparam int FRAMES_TO_SIMULATE = 360;
 
     /**
      * Local variables and signals

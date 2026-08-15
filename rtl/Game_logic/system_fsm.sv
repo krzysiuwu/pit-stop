@@ -1,112 +1,229 @@
 module system_fsm (
     input  logic clk,
-    input  logic rst,              
+    input  logic rst,
 
-    // --- Sygnały z przycisków (np. z modułów mouse_hitbox) ---
     input  logic click_play,
     input  logic click_setup,
     input  logic click_back,
-    
-    // --- Sygnały synchronizacji ---
-    input  logic frame_tick,       
-    
-    // --- Wyjścia do renderowania ---
-    output logic [2:0] state_out,  
-    output logic signed [11:0] bolid_x    
+    input  logic frame_tick,
+
+    input  logic front_wheel_done,
+    input  logic rear_wheel_done,
+
+    output logic [2:0] state_out,
+
+    output logic enable_bolid_default,
+    output logic enable_bolid_no_wheels,
+    output logic enable_button_play,
+    output logic enable_button_options,
+    output logic enable_button_back,
+    output logic enable_wheel_rack,
+    output logic enable_wheel_service,
+
+    output logic signed [11:0] bolid_x,
+    output logic [1:0]         bolid_wheel_anim_step,
+    output logic [3:0]         sequence_debug
 );
 
     timeunit 1ns;
     timeprecision 1ps;
 
-    // Zdefiniowane 4 główne stany gry
-    typedef enum logic [2:0] {
-        MAIN_MENU = 3'b000, // Stan 1: Menu główne (Bolid w tle, przyciski Play, Options)
-        OPTIONS   = 3'b001, // Stan 2: Opcje (Bolid w tle, przycisk Back)
-        GAMEPLAY  = 3'b010, // Stan 3: Właściwa gra z kołem (Przycisk Back)
-        SUMMARY   = 3'b011  // Stan 4: Podsumowanie (Przycisk Back)
-    } state_t;
+    localparam logic [2:0] SCREEN_MAIN_MENU = 3'b000;
+    localparam logic [2:0] SCREEN_OPTIONS   = 3'b001;
+    localparam logic [2:0] SCREEN_GAMEPLAY  = 3'b010;
+    localparam logic [2:0] SCREEN_SUMMARY   = 3'b011;
 
-    state_t state, next_state;
+    // Stany sekwencji sa oddzielone od numeru ekranu. Pozwala to zachowac
+    // prosty interfejs renderera, a jednoczesnie trzymac caly przebieg rundy
+    // poza modulem top.
+    typedef enum logic [3:0] {
+        MENU_BOOT,
+        MAIN_MENU,
+        OPTIONS,
+        GAME_ARRIVE_START,
+        GAME_ARRIVING,
+        GAME_SERVICE,
+        GAME_DEPART_START,
+        GAME_DEPARTING,
+        SUMMARY
+    } system_state_t;
 
-    logic signed [11:0] current_x, next_x;
+    system_state_t state, next_state;
 
-    // Parametry dla tła w Menu (dostosowane pod rozdzielczość 256x192)
-    localparam int START_POS = 300;  // Zaczyna poza ekranem z prawej
-    localparam int END_POS   = -200; // Kończy poza ekranem z lewej
-    localparam int SPEED     = 2;    // Szybkość przejazdu w tle (piksele na klatkę)
+    logic trigger_arrive;
+    logic trigger_depart;
+    logic trigger_drive_through;
+    logic arrive_done;
+    logic depart_done;
+    logic anim_car_enable;
 
-    // =========================================================================
-    // REJESTRY STANU
-    // =========================================================================
+    bolid_anim_ctrl u_bolid_anim_ctrl (
+        .clk(clk),
+        .rst(rst),
+        .frame_tick(frame_tick),
+        .trigger_arrive(trigger_arrive),
+        .trigger_depart(trigger_depart),
+        .trigger_drive_through(trigger_drive_through),
+        .arrive_done(arrive_done),
+        .depart_done(depart_done),
+        .car_enable(anim_car_enable),
+        .car_x_pos(bolid_x),
+        .wheel_anim_step(bolid_wheel_anim_step)
+    );
+
     always_ff @(posedge clk or negedge rst) begin
-        if (!rst) begin
-            state     <= MAIN_MENU;
-            current_x <= START_POS;
-        end else begin
-            state     <= next_state;
-            current_x <= next_x;
-        end
+        if (!rst)
+            state <= MENU_BOOT;
+        else
+            state <= next_state;
     end
 
-    // =========================================================================
-    // LOGIKA PRZEJŚĆ I RUCHU
-    // =========================================================================
     always_comb begin
-        // Wartości domyślne (zatrzymanie stanu)
         next_state = state;
-        next_x     = current_x;
 
-        // --- Logika ruchu bolidu w tle (Tylko w MENU i OPTIONS) ---
-        if (state == MAIN_MENU || state == OPTIONS) begin
-            if (frame_tick) begin
-                if (current_x <= END_POS) begin
-                    next_x = START_POS; // Zapętlenie przelotu
-                end else begin
-                    next_x = current_x - SPEED; // Ciągły ruch w lewo
-                end
-            end
-        end else begin
-            next_x = START_POS; // Reset pozycji, gdy wchodzimy do gry
-        end
-
-        // --- Logika przechodzenia między ekranami ---
         case (state)
+            MENU_BOOT: begin
+                next_state = MAIN_MENU;
+            end
+
             MAIN_MENU: begin
-                if (click_play) begin
-                    next_state = GAMEPLAY;
-                end else if (click_setup) begin
+                if (click_play)
+                    next_state = GAME_ARRIVE_START;
+                else if (click_setup)
                     next_state = OPTIONS;
-                end
             end
 
             OPTIONS: begin
-                if (click_back) begin
+                if (click_back)
                     next_state = MAIN_MENU;
-                end
             end
 
-            GAMEPLAY: begin
-                // Tutaj dzieje się fizyka koła w innych modułach.
-                // Maszyna stanów czeka tylko na wyjście z gry.
-                if (click_back) begin
+            GAME_ARRIVE_START: begin
+                next_state = GAME_ARRIVING;
+            end
+
+            GAME_ARRIVING: begin
+                if (click_back)
                     next_state = SUMMARY;
-                end
+                else if (arrive_done)
+                    next_state = GAME_SERVICE;
+            end
+
+            GAME_SERVICE: begin
+                if (click_back)
+                    next_state = SUMMARY;
+                else if (front_wheel_done && rear_wheel_done)
+                    next_state = GAME_DEPART_START;
+            end
+
+            GAME_DEPART_START: begin
+                next_state = GAME_DEPARTING;
+            end
+
+            GAME_DEPARTING: begin
+                if (click_back)
+                    next_state = SUMMARY;
+                else if (depart_done)
+                    next_state = GAME_ARRIVE_START;
             end
 
             SUMMARY: begin
-                if (click_back) begin 
-                    next_state = MAIN_MENU;
-                end
+                if (click_back)
+                    next_state = MENU_BOOT;
             end
 
-            default: next_state = MAIN_MENU;
+            default: begin
+                next_state = MENU_BOOT;
+            end
         endcase
     end
 
-    // =========================================================================
-    // PRZYPISANIE WYJŚĆ
-    // =========================================================================
-    assign state_out = state;
-    assign bolid_x   = current_x;
+    always_comb begin
+        trigger_arrive       = 1'b0;
+        trigger_depart       = 1'b0;
+        trigger_drive_through = 1'b0;
+
+        state_out               = SCREEN_MAIN_MENU;
+        enable_bolid_default    = 1'b0;
+        enable_bolid_no_wheels  = 1'b0;
+        enable_button_play      = 1'b0;
+        enable_button_options   = 1'b0;
+        enable_button_back      = 1'b0;
+        enable_wheel_rack       = 1'b0;
+        enable_wheel_service    = 1'b0;
+
+        case (state)
+            MENU_BOOT: begin
+                state_out             = SCREEN_MAIN_MENU;
+                enable_button_play    = 1'b1;
+                enable_button_options = 1'b1;
+                trigger_drive_through = 1'b1;
+            end
+
+            MAIN_MENU: begin
+                state_out             = SCREEN_MAIN_MENU;
+                enable_bolid_default  = anim_car_enable;
+                enable_button_play    = 1'b1;
+                enable_button_options = 1'b1;
+
+                // depart_done jest aktywny do chwili przyjecia nowego rozkazu,
+                // wiec pojedynczy warunek wystarcza do bezszwowego zapetlenia.
+                if (depart_done)
+                    trigger_drive_through = 1'b1;
+            end
+
+            OPTIONS: begin
+                state_out            = SCREEN_OPTIONS;
+                enable_bolid_default = anim_car_enable;
+                enable_button_back   = 1'b1;
+
+                if (depart_done)
+                    trigger_drive_through = 1'b1;
+            end
+
+            GAME_ARRIVE_START: begin
+                state_out            = SCREEN_GAMEPLAY;
+                enable_button_back   = 1'b1;
+                trigger_arrive       = 1'b1;
+            end
+
+            GAME_ARRIVING: begin
+                state_out            = SCREEN_GAMEPLAY;
+                enable_bolid_default = anim_car_enable;
+                enable_button_back   = 1'b1;
+            end
+
+            GAME_SERVICE: begin
+                state_out              = SCREEN_GAMEPLAY;
+                enable_bolid_no_wheels = 1'b1;
+                enable_button_back     = 1'b1;
+                enable_wheel_rack      = 1'b1;
+                enable_wheel_service   = 1'b1;
+            end
+
+            GAME_DEPART_START: begin
+                state_out            = SCREEN_GAMEPLAY;
+                enable_button_back   = 1'b1;
+                trigger_depart       = 1'b1;
+            end
+
+            GAME_DEPARTING: begin
+                state_out            = SCREEN_GAMEPLAY;
+                enable_bolid_default = anim_car_enable;
+                enable_button_back   = 1'b1;
+            end
+
+            SUMMARY: begin
+                state_out          = SCREEN_SUMMARY;
+                enable_button_back = 1'b1;
+            end
+
+            default: begin
+                state_out = SCREEN_MAIN_MENU;
+            end
+        endcase
+    end
+
+    assign sequence_debug = state;
 
 endmodule

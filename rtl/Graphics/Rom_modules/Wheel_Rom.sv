@@ -16,11 +16,13 @@ reg [3:0] rom [0:701];
  * Memory initialization from a file
  */
 
-`ifndef SYNTHESIS
-    initial $readmemh("../../rtl/Graphics/Sprites_and_textures/Wheel_sprite.mem", rom);
-`else
+`ifdef VERILATOR
+    initial $readmemh("rtl/Graphics/Sprites_and_textures/Wheel_sprite.mem", rom);
+`elsif SYNTHESIS
     initial $readmemh("Wheel_sprite.mem", rom);
-`endif  
+`else
+    initial $readmemh("../../rtl/Graphics/Sprites_and_textures/Wheel_sprite.mem", rom);
+`endif
 
 /**
  * Internal logic

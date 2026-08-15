@@ -154,8 +154,8 @@ module drawing_test (
         .clk(clk),
         .rst(rst),
         .enable(1'b1),
+        .wheel_anim_step(2'b00),
         .x_pos(12'd10),
-        .y_pos(12'd120),
         .low_res_in(low_res_pipe),
         
         .lut_in(lut_step4_btn3),
@@ -188,6 +188,7 @@ module drawing_test (
         .clk(clk),
         .rst(rst),
         .enable(1'b1),
+        .wheel_anim_step(2'b00),
         .x_pos(12'd110),
         .y_pos(12'd160),
         .low_res_in(low_res_pipe),

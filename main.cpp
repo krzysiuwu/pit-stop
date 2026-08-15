@@ -26,11 +26,19 @@ int main(int argc, char** argv) {
     bool quit = false;
     SDL_Event e;
 
+    top->mouse_x = 0;
+    top->mouse_y = 0;
+    top->mouse_btn_left = 0;
+    top->mouse_scroll = 0;
+    top->mouse_new_event = 0;
+
     top->rst = 1; top->clk = 0; top->eval();
     top->rst = 0; top->eval();
     top->rst = 1;
 
     while (!quit) {
+        int pending_scroll = 0;
+
         while (SDL_PollEvent(&e) != 0) {
             if (e.type == SDL_QUIT) quit = true;
             if (e.type == SDL_MOUSEMOTION) {
@@ -43,12 +51,34 @@ int main(int argc, char** argv) {
             if (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT) {
                 top->mouse_btn_left = 0;
             }
+            if (e.type == SDL_MOUSEWHEEL) {
+                int wheel_delta = e.wheel.y;
+                if (e.wheel.direction == SDL_MOUSEWHEEL_FLIPPED) {
+                    wheel_delta = -wheel_delta;
+                }
+                pending_scroll += wheel_delta;
+            }
         }
 
+        // Interfejs PS/2 dostarcza impuls new_event przez jeden takt. Symulator
+        // odwzorowuje to samo zachowanie, aby jeden ruch rolki liczyl sie raz.
+        if (pending_scroll > 7) pending_scroll = 7;
+        if (pending_scroll < -7) pending_scroll = -7;
+        top->mouse_scroll = pending_scroll & 0x0f;
+        top->mouse_new_event = (pending_scroll != 0);
+
         bool frame_done = false;
+        bool scroll_event_sent = false;
         while (!frame_done && !quit) {
             main_time++;
             top->clk = 1; top->eval();
+
+            if (!scroll_event_sent && top->mouse_new_event) {
+                top->mouse_new_event = 0;
+                top->mouse_scroll = 0;
+                scroll_event_sent = true;
+            }
+
             main_time++;
             top->clk = 0; top->eval();
 
