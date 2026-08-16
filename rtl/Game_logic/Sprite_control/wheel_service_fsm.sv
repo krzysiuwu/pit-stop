@@ -1,6 +1,7 @@
 module wheel_service_fsm #(
     parameter int SCROLL_STEPS_REQUIRED        = 6,
-    parameter bit LOOSEN_WITH_NEGATIVE_SCROLL = 1'b1
+    parameter bit LOOSEN_WITH_NEGATIVE_SCROLL = 1'b1,
+    parameter bit INITIAL_MOUNT_IS_REAR        = 1'b0
 )(
     input  logic clk,
     input  logic rst,
@@ -15,11 +16,15 @@ module wheel_service_fsm #(
     input  logic wheel_detached,
     input  logic wheel_dragging,
     input  logic wheel_removed,
-    input  logic wheel_near_mount,
+    input  logic wheel_near_front_mount,
+    input  logic wheel_near_rear_mount,
+    input  logic front_mount_available,
+    input  logic rear_mount_available,
 
     output logic grab_enable,
     output logic attach_to_anchor,
     output logic anchor_at_rack,
+    output logic anchor_at_rear,
     output logic wheel_visible,
     output logic wheel_locked,
     output logic old_wheel_removed,
@@ -52,6 +57,10 @@ module wheel_service_fsm #(
     logic scroll_negative;
     logic loosen_scroll;
     logic tighten_scroll;
+    logic target_rear;
+    logic snap_to_front;
+    logic snap_to_rear;
+    logic snap_to_mount;
 
     assign scroll_positive = mouse_new_event && (mouse_scroll > 0);
     assign scroll_negative = mouse_new_event && (mouse_scroll < 0);
@@ -61,6 +70,14 @@ module wheel_service_fsm #(
                            scroll_negative : scroll_positive;
     assign tighten_scroll = LOOSEN_WITH_NEGATIVE_SCROLL ?
                             scroll_positive : scroll_negative;
+
+    // Nowe kola sa wymienne. O miejscu montazu decyduje polozenie kola
+    // w chwili puszczenia myszy, a nie instancja FSM, ktora wydala je z racka.
+    assign snap_to_front = wheel_dragging && !mouse_btn &&
+                           wheel_near_front_mount && front_mount_available;
+    assign snap_to_rear  = wheel_dragging && !mouse_btn &&
+                           wheel_near_rear_mount && rear_mount_available;
+    assign snap_to_mount = snap_to_front || snap_to_rear;
 
     function automatic logic [1:0] rotate_forward(input logic [1:0] step);
         if (step == 2'd2)
@@ -81,11 +98,13 @@ module wheel_service_fsm #(
             state            <= OLD_LOCKED;
             service_progress <= '0;
             wheel_anim_step  <= '0;
+            target_rear      <= INITIAL_MOUNT_IS_REAR;
         end else if (!enable) begin
             // Kazdy nowy bolid rozpoczyna pelny cykl z zalozonym starym kolem.
             state            <= OLD_LOCKED;
             service_progress <= '0;
             wheel_anim_step  <= '0;
+            target_rear      <= INITIAL_MOUNT_IS_REAR;
         end else begin
             case (state)
                 OLD_LOCKED: begin
@@ -124,6 +143,7 @@ module wheel_service_fsm #(
                         state            <= NEW_AT_RACK;
                         service_progress <= '0;
                         wheel_anim_step  <= '0;
+                        target_rear      <= INITIAL_MOUNT_IS_REAR;
                     end
                 end
 
@@ -138,9 +158,11 @@ module wheel_service_fsm #(
                         state            <= WAITING_FOR_NEW;
                         service_progress <= '0;
                         wheel_anim_step  <= '0;
-                    end else if (wheel_dragging && !mouse_btn && wheel_near_mount) begin
+                        target_rear      <= INITIAL_MOUNT_IS_REAR;
+                    end else if (snap_to_mount) begin
                         state            <= NEW_POSITIONED;
                         service_progress <= '0;
+                        target_rear      <= snap_to_rear;
                     end
                 end
 
@@ -170,6 +192,7 @@ module wheel_service_fsm #(
                     state            <= OLD_LOCKED;
                     service_progress <= '0;
                     wheel_anim_step  <= '0;
+                    target_rear      <= INITIAL_MOUNT_IS_REAR;
                 end
             endcase
         end
@@ -179,6 +202,7 @@ module wheel_service_fsm #(
         grab_enable      = 1'b0;
         attach_to_anchor = 1'b0;
         anchor_at_rack   = 1'b0;
+        anchor_at_rear   = target_rear;
         wheel_visible    = 1'b0;
         wheel_locked     = 1'b0;
         old_wheel_removed = 1'b0;
@@ -206,6 +230,7 @@ module wheel_service_fsm #(
                     // Przeniesienie fizyki z wyrzuconej pozycji na rack.
                     attach_to_anchor = 1'b1;
                     anchor_at_rack   = 1'b1;
+                    anchor_at_rear   = INITIAL_MOUNT_IS_REAR;
                 end
             end
 
@@ -225,8 +250,10 @@ module wheel_service_fsm #(
 
                 // Zwolnienie przycisku blisko piasty powoduje zatrzasniecie
                 // kola dokladnie w pozycji montazowej.
-                if (wheel_dragging && !mouse_btn && wheel_near_mount)
+                if (snap_to_mount) begin
                     attach_to_anchor = 1'b1;
+                    anchor_at_rear   = snap_to_rear;
+                end
             end
 
             NEW_POSITIONED: begin

@@ -1,0 +1,11 @@
+Options configuration:
+
+- added synchronized Basys 3 switch decoding
+- added single-player/multiplayer and four game-mode selections
+- added a framed VGA options panel with live values and UART OFFLINE status
+- added a multiplexed 7-segment target display
+- added keyboard-controlled virtual switches to the Verilator SDL frontend
+- updated FPGA constraints, source lists, testbench and documentation
+
+UART communication and game-mode scoring rules are intentionally left for the
+next implementation stages.

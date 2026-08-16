@@ -7,12 +7,17 @@ module pit_stop_core (
     input  logic        mouse_btn_left,
     input  logic signed [3:0] mouse_scroll,
     input  logic              mouse_new_event,
+    input  logic [15:0]       switches,
 
     output logic [3:0] r,
     output logic [3:0] g,
     output logic [3:0] b,
     output logic hs,
     output logic vs,
+
+    output logic       option_multiplayer,
+    output logic [1:0] option_game_mode,
+    output logic [7:0] option_target_value,
 
     output logic [11:0] vga_x,
     output logic [11:0] vga_y
@@ -52,6 +57,7 @@ module pit_stop_core (
     vga_if vga_bolid_default();
     vga_if vga_bolid_no_wheels();
     vga_if vga_rack();
+    vga_if vga_options_panel();
     vga_if vga_btn_play();
     vga_if vga_btn_opts();
     vga_if vga_btn_back();
@@ -64,6 +70,7 @@ module pit_stop_core (
     logic [3:0] lut_bolid_default;
     logic [3:0] lut_bolid_no_wheels;
     logic [3:0] lut_rack;
+    logic [3:0] lut_options_panel;
     logic [3:0] lut_btn_play;
     logic [3:0] lut_btn_opts;
     logic [3:0] lut_btn_back;
@@ -117,6 +124,15 @@ module pit_stop_core (
     logic signed [11:0] bolid_x;
     logic [1:0] bolid_wheel_anim_step;
 
+    game_options u_game_options (
+        .clk(clk),
+        .rst(rst),
+        .switches(switches),
+        .multiplayer(option_multiplayer),
+        .game_mode(option_game_mode),
+        .target_value(option_target_value)
+    );
+
     logic play_clicked;
     logic options_clicked;
     logic back_clicked;
@@ -154,7 +170,9 @@ module pit_stop_core (
     logic rack_hover;
     logic rack_clicked;
 
-    mouse_hitbox u_hitbox_play (
+    mouse_hitbox #(
+        .CLICK_ON_RELEASE(1'b1)
+    ) u_hitbox_play (
         .clk(clk), .rst(rst),
         .mouse_x(mouse_x), .mouse_y(mouse_y), .mouse_btn(mouse_btn_left),
         .obj_x(enable_button_play ? BTN_PLAY_X : 12'hfff),
@@ -162,7 +180,9 @@ module pit_stop_core (
         .is_hovered(play_hover), .is_clicked(play_clicked)
     );
 
-    mouse_hitbox u_hitbox_options (
+    mouse_hitbox #(
+        .CLICK_ON_RELEASE(1'b1)
+    ) u_hitbox_options (
         .clk(clk), .rst(rst),
         .mouse_x(mouse_x), .mouse_y(mouse_y), .mouse_btn(mouse_btn_left),
         .obj_x(enable_button_options ? BTN_OPTS_X : 12'hfff),
@@ -170,7 +190,9 @@ module pit_stop_core (
         .is_hovered(options_hover), .is_clicked(options_clicked)
     );
 
-    mouse_hitbox u_hitbox_back (
+    mouse_hitbox #(
+        .CLICK_ON_RELEASE(1'b1)
+    ) u_hitbox_back (
         .clk(clk), .rst(rst),
         .mouse_x(mouse_x), .mouse_y(mouse_y), .mouse_btn(mouse_btn_left),
         .obj_x(enable_button_back ? BTN_BACK_X : 12'hfff),
@@ -204,6 +226,8 @@ module pit_stop_core (
     logic rear_attach;
     logic front_anchor_at_rack;
     logic rear_anchor_at_rack;
+    logic front_anchor_at_rear;
+    logic rear_anchor_at_rear;
     logic front_visible;
     logic rear_visible;
     logic front_locked;
@@ -220,8 +244,18 @@ module pit_stop_core (
     logic rear_dragging;
     logic front_removed;
     logic rear_removed;
-    logic front_near_mount;
-    logic rear_near_mount;
+    logic front_wheel_near_front_mount;
+    logic front_wheel_near_rear_mount;
+    logic rear_wheel_near_front_mount;
+    logic rear_wheel_near_rear_mount;
+    logic front_mount_occupied;
+    logic rear_mount_occupied;
+    logic front_mount_available;
+    logic rear_mount_available;
+    logic front_new_mounted;
+    logic rear_new_mounted;
+    logic front_grab_to_physics;
+    logic rear_grab_to_physics;
     logic front_rack_take;
     logic rear_rack_take;
     logic rack_select_rear;
@@ -240,22 +274,60 @@ module pit_stop_core (
 
     assign wheel_rst = rst & enable_wheel_service;
 
-    assign front_anchor_x = front_anchor_at_rack ? RACK_PICK_X : FRONT_MOUNT_X;
+    assign front_anchor_x = front_anchor_at_rack ? RACK_PICK_X :
+                            front_anchor_at_rear ? REAR_MOUNT_X : FRONT_MOUNT_X;
     assign front_anchor_y = front_anchor_at_rack ? RACK_PICK_Y : MOUNT_Y;
-    assign rear_anchor_x  = rear_anchor_at_rack  ? RACK_PICK_X : REAR_MOUNT_X;
-    assign rear_anchor_y  = rear_anchor_at_rack  ? RACK_PICK_Y : MOUNT_Y;
+    assign rear_anchor_x  = rear_anchor_at_rack ? RACK_PICK_X :
+                            rear_anchor_at_rear ? REAR_MOUNT_X : FRONT_MOUNT_X;
+    assign rear_anchor_y  = rear_anchor_at_rack ? RACK_PICK_Y : MOUNT_Y;
 
-    assign front_near_mount =
+    assign front_wheel_near_front_mount =
         (front_wheel_x >= FRONT_MOUNT_X - MOUNT_MARGIN) &&
         (front_wheel_x <= FRONT_MOUNT_X + MOUNT_MARGIN) &&
         (front_wheel_y >= MOUNT_Y - MOUNT_MARGIN) &&
         (front_wheel_y <= MOUNT_Y + MOUNT_MARGIN);
 
-    assign rear_near_mount =
+    assign front_wheel_near_rear_mount =
+        (front_wheel_x >= REAR_MOUNT_X - MOUNT_MARGIN) &&
+        (front_wheel_x <= REAR_MOUNT_X + MOUNT_MARGIN) &&
+        (front_wheel_y >= MOUNT_Y - MOUNT_MARGIN) &&
+        (front_wheel_y <= MOUNT_Y + MOUNT_MARGIN);
+
+    assign rear_wheel_near_front_mount =
+        (rear_wheel_x >= FRONT_MOUNT_X - MOUNT_MARGIN) &&
+        (rear_wheel_x <= FRONT_MOUNT_X + MOUNT_MARGIN) &&
+        (rear_wheel_y >= MOUNT_Y - MOUNT_MARGIN) &&
+        (rear_wheel_y <= MOUNT_Y + MOUNT_MARGIN);
+
+    assign rear_wheel_near_rear_mount =
         (rear_wheel_x >= REAR_MOUNT_X - MOUNT_MARGIN) &&
         (rear_wheel_x <= REAR_MOUNT_X + MOUNT_MARGIN) &&
         (rear_wheel_y >= MOUNT_Y - MOUNT_MARGIN) &&
         (rear_wheel_y <= MOUNT_Y + MOUNT_MARGIN);
+
+    // Piasty naleza do samochodu, nie do konkretnej instancji kola. Po
+    // wyrzuceniu starych kol kazda nowa opona moze zajac dowolna wolna piaste.
+    assign front_new_mounted = front_new_active && front_locked;
+    assign rear_new_mounted  = rear_new_active && rear_locked;
+
+    assign front_mount_occupied =
+        (!front_old_removed && !front_detached) ||
+        (front_new_mounted && !front_anchor_at_rear) ||
+        (rear_new_mounted  && !rear_anchor_at_rear);
+
+    assign rear_mount_occupied =
+        (!rear_old_removed && !rear_detached) ||
+        (front_new_mounted && front_anchor_at_rear) ||
+        (rear_new_mounted  && rear_anchor_at_rear);
+
+    assign front_mount_available = !front_mount_occupied;
+    assign rear_mount_available  = !rear_mount_occupied;
+
+    // Przy nakladajacych sie hitboxach tylko gorne (pozniej renderowane) kolo
+    // moze przejac mysz. Zapobiega to jednoczesnemu przeciaganiu obu kol.
+    assign front_grab_to_physics = front_grab_enable && !rear_dragging &&
+                                   !(rear_grab_enable && rear_hover);
+    assign rear_grab_to_physics  = rear_grab_enable && !front_dragging;
 
     // Rack zapamietuje, ktore stanowisko zaczelo czekac jako pierwsze. Dzieki
     // temu kola mozna zdejmowac w dowolnej kolejnosci.
@@ -301,7 +373,7 @@ module pit_stop_core (
         .mouse_x(mouse_x), .mouse_y(mouse_y),
         .mouse_btn(mouse_btn_left), .is_hovered(front_hover),
         .anchor_x(front_anchor_x), .anchor_y(front_anchor_y),
-        .attach_to_anchor(front_attach), .grab_enable(front_grab_enable),
+        .attach_to_anchor(front_attach), .grab_enable(front_grab_to_physics),
         .wheel_x(front_wheel_x), .wheel_y(front_wheel_y),
         .is_detached(front_detached), .is_dragging(front_dragging),
         .is_removed(front_removed)
@@ -312,36 +384,50 @@ module pit_stop_core (
         .mouse_x(mouse_x), .mouse_y(mouse_y),
         .mouse_btn(mouse_btn_left), .is_hovered(rear_hover),
         .anchor_x(rear_anchor_x), .anchor_y(rear_anchor_y),
-        .attach_to_anchor(rear_attach), .grab_enable(rear_grab_enable),
+        .attach_to_anchor(rear_attach), .grab_enable(rear_grab_to_physics),
         .wheel_x(rear_wheel_x), .wheel_y(rear_wheel_y),
         .is_detached(rear_detached), .is_dragging(rear_dragging),
         .is_removed(rear_removed)
     );
 
-    wheel_service_fsm u_front_wheel_service (
+    wheel_service_fsm #(
+        .INITIAL_MOUNT_IS_REAR(1'b0)
+    ) u_front_wheel_service (
         .clk(clk), .rst(rst), .enable(enable_wheel_service),
         .wheel_hovered(front_hover), .rack_take_pulse(front_rack_take),
         .mouse_new_event(mouse_new_event), .mouse_scroll(mouse_scroll),
         .mouse_btn(mouse_btn_left),
         .wheel_detached(front_detached), .wheel_dragging(front_dragging),
-        .wheel_removed(front_removed), .wheel_near_mount(front_near_mount),
+        .wheel_removed(front_removed),
+        .wheel_near_front_mount(front_wheel_near_front_mount),
+        .wheel_near_rear_mount(front_wheel_near_rear_mount),
+        .front_mount_available(front_mount_available),
+        .rear_mount_available(rear_mount_available),
         .grab_enable(front_grab_enable), .attach_to_anchor(front_attach),
-        .anchor_at_rack(front_anchor_at_rack), .wheel_visible(front_visible),
+        .anchor_at_rack(front_anchor_at_rack),
+        .anchor_at_rear(front_anchor_at_rear), .wheel_visible(front_visible),
         .wheel_locked(front_locked), .old_wheel_removed(front_old_removed),
         .needs_new_wheel(front_needs_new), .new_wheel_active(front_new_active),
         .service_done(front_service_done), .wheel_anim_step(front_wheel_anim_step),
         .service_progress(front_progress), .state_debug(front_state_debug)
     );
 
-    wheel_service_fsm u_rear_wheel_service (
+    wheel_service_fsm #(
+        .INITIAL_MOUNT_IS_REAR(1'b1)
+    ) u_rear_wheel_service (
         .clk(clk), .rst(rst), .enable(enable_wheel_service),
         .wheel_hovered(rear_hover), .rack_take_pulse(rear_rack_take),
         .mouse_new_event(mouse_new_event), .mouse_scroll(mouse_scroll),
         .mouse_btn(mouse_btn_left),
         .wheel_detached(rear_detached), .wheel_dragging(rear_dragging),
-        .wheel_removed(rear_removed), .wheel_near_mount(rear_near_mount),
+        .wheel_removed(rear_removed),
+        .wheel_near_front_mount(rear_wheel_near_front_mount),
+        .wheel_near_rear_mount(rear_wheel_near_rear_mount),
+        .front_mount_available(front_mount_available),
+        .rear_mount_available(rear_mount_available),
         .grab_enable(rear_grab_enable), .attach_to_anchor(rear_attach),
-        .anchor_at_rack(rear_anchor_at_rack), .wheel_visible(rear_visible),
+        .anchor_at_rack(rear_anchor_at_rack),
+        .anchor_at_rear(rear_anchor_at_rear), .wheel_visible(rear_visible),
         .wheel_locked(rear_locked), .old_wheel_removed(rear_old_removed),
         .needs_new_wheel(rear_needs_new), .new_wheel_active(rear_new_active),
         .service_done(rear_service_done), .wheel_anim_step(rear_wheel_anim_step),
@@ -379,12 +465,23 @@ module pit_stop_core (
         .vga_out(vga_rack)
     );
 
+    draw_options_panel u_draw_options_panel (
+        .clk(clk), .rst(rst),
+        .enable(system_screen == 3'b001),
+        .multiplayer(option_multiplayer),
+        .game_mode(option_game_mode),
+        .target_value(option_target_value),
+        .low_res_in(low_res_pipe), .lut_in(lut_rack),
+        .vga_in(vga_rack), .lut_out(lut_options_panel),
+        .vga_out(vga_options_panel)
+    );
+
     draw_button_with_text #(.STR_LEN(4)) u_draw_btn_play (
         .clk(clk), .rst(rst), .enable(enable_button_play),
         .is_hovered(play_hover), .is_pressed(play_hover && mouse_btn_left),
         .x_pos(BTN_PLAY_X), .y_pos(BTN_PLAY_Y), .text_string("PLAY"),
-        .low_res_in(low_res_pipe), .lut_in(lut_rack),
-        .vga_in(vga_rack), .lut_out(lut_btn_play),
+        .low_res_in(low_res_pipe), .lut_in(lut_options_panel),
+        .vga_in(vga_options_panel), .lut_out(lut_btn_play),
         .vga_out(vga_btn_play)
     );
 

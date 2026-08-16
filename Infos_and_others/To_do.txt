@@ -78,3 +78,19 @@ Niezależnie od plików:
     Trzeba co parę commitów ogarniać czy kod spełnia specyfikację, bądź ogarnąć ten skrypt do poprawiania
 
     Aby ustawiać kolor bolidu (żeby drugi gracz miał inny kolor) można zaimplementować zmianę koloru w zależności od pozycji switchy na basysie. Jeśli będziemy tak chcieli, dopisz do to_do odpowiednie rzeczy.
+
+
+Opcje gry:
+
+    Gotowe:
+        - odczyt i synchronizacja 16 switchy Basys 3
+        - wybor trybu gracza i jednego z czterech trybow gry
+        - ustawianie celu przez SW7:0
+        - panel opcji VGA i wyswietlanie celu na 7-segmentach
+        - emulacja ustawien klawiatura w Verilatorze
+
+    Do zrobienia:
+        - logika punktow i czasu dla poszczegolnych trybow
+        - zapis ustawien aktywnej rozgrywki po nacisnieciu PLAY
+        - UART i synchronizacja dwoch Basysow dla multiplayera
+        - ekran wyniku oraz porownanie graczy w trybie BEST OF

@@ -52,11 +52,14 @@ set sv_files {
     ../rtl/Graphics/Draw_modules/draw_BolidF1NoWheels.sv
     ../rtl/Graphics/Draw_modules/draw_Wheel.sv
     ../rtl/Graphics/Draw_modules/draw_WheelRack.sv
+    ../rtl/Graphics/Draw_modules/draw_options_panel.sv
+    ../rtl/Game_logic/game_options.sv
     ../rtl/Game_logic/Sprite_control/bolid_anim_ctl.sv
     ../rtl/Game_logic/Sprite_control/mouse_hitbox.sv
     ../rtl/Game_logic/Sprite_control/wheel_physics.sv
     ../rtl/Game_logic/Sprite_control/wheel_service_fsm.sv
     ../rtl/Game_logic/system_fsm.sv
+    ../rtl/Hardware/seven_segment_display.sv
     ../rtl/Graphics/Draw_modules/draw_mouse_cursor.sv
     ../rtl/mouse_limits.sv
     ../rtl/top_vga.sv

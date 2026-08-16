@@ -43,3 +43,14 @@ Trzeba użyć zegara 65MHz do obrazu
 Użycie PNG2LUT.py : python PNG2LUT.py -i ./Obraz_do_konwersji.png -o ../Folder_docelowy      
 
 Użycie mem2PNG.py : python mem2PNG.py -s ../Plik_do_podgladu.mem -p ../LUT_do_konwersji.mem -o ./Folder_docelowy
+
+
+Mapowanie opcji na Basys 3:
+
+    SW15       - tryb gracza: single-player / multiplayer
+    SW14:13    - tryb gry: time attack / point race / speed up / best of
+    SW7:0      - binarna wartosc celu 1..255 (wartosc 0 jest zamieniana na 1)
+    SW12:8     - zarezerwowane na przyszle opcje
+
+Wybrany cel jest pokazywany na wyswietlaczu 7-segmentowym. UART nie jest
+jeszcze zaimplementowany; multiplayer na ekranie opcji pokazuje UART OFFLINE.

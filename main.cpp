@@ -2,6 +2,8 @@
 #include <SDL2/SDL.h>
 #include "Vtop_interactive.h"
 #include "verilated.h"
+#include <cstdint>
+#include <cstdio>
 
 // Rozwiązanie błędu sc_time_stamp
 vluint64_t main_time = 0;
@@ -12,6 +14,27 @@ double sc_time_stamp() {
 // Pełna rozdzielczość ramki z blankingiem
 const int SCREEN_WIDTH = 1344;
 const int SCREEN_HEIGHT = 806;
+
+static const char* gameModeName(uint16_t switches) {
+    switch ((switches >> 13) & 0x3) {
+        case 0: return "TIME ATTACK";
+        case 1: return "POINT RACE";
+        case 2: return "SPEED UP";
+        default: return "BEST OF";
+    }
+}
+
+static void updateWindowTitle(SDL_Window* window, uint16_t switches) {
+    const unsigned target = (switches & 0xff) == 0
+                          ? 1
+                          : switches & 0xff;
+    const char* player = (switches & 0x8000) ? "MULTIPLAYER" : "SINGLE";
+    char title[160];
+    std::snprintf(title, sizeof(title),
+                  "FPGA VGA Simulator - Pit Stop | %s | %s | target %u",
+                  player, gameModeName(switches), target);
+    SDL_SetWindowTitle(window, title);
+}
 
 int main(int argc, char** argv) {
     Verilated::commandArgs(argc, argv);
@@ -25,12 +48,15 @@ int main(int argc, char** argv) {
     uint32_t* pixels = new uint32_t[SCREEN_WIDTH * SCREEN_HEIGHT];
     bool quit = false;
     SDL_Event e;
+    uint16_t virtual_switches = 60;
 
     top->mouse_x = 0;
     top->mouse_y = 0;
     top->mouse_btn_left = 0;
     top->mouse_scroll = 0;
     top->mouse_new_event = 0;
+    top->switches = virtual_switches;
+    updateWindowTitle(window, virtual_switches);
 
     top->rst = 1; top->clk = 0; top->eval();
     top->rst = 0; top->eval();
@@ -57,6 +83,80 @@ int main(int argc, char** argv) {
                     wheel_delta = -wheel_delta;
                 }
                 pending_scroll += wheel_delta;
+            }
+            if (e.type == SDL_KEYDOWN) {
+                bool switches_changed = true;
+
+                switch (e.key.keysym.sym) {
+                    case SDLK_p:
+                        if (e.key.repeat == 0)
+                            virtual_switches ^= 0x8000;
+                        else
+                            switches_changed = false;
+                        break;
+
+                    case SDLK_1:
+                    case SDLK_2:
+                    case SDLK_3:
+                    case SDLK_4: {
+                        if (e.key.repeat == 0) {
+                            const uint16_t mode =
+                                static_cast<uint16_t>(e.key.keysym.sym - SDLK_1);
+                            virtual_switches =
+                                (virtual_switches & ~0x6000) | (mode << 13);
+                        } else {
+                            switches_changed = false;
+                        }
+                        break;
+                    }
+
+                    case SDLK_UP:
+                    case SDLK_RIGHT:
+                    case SDLK_EQUALS:
+                    case SDLK_KP_PLUS: {
+                        uint16_t target = virtual_switches & 0x00ff;
+                        if (target < 255) ++target;
+                        virtual_switches =
+                            (virtual_switches & 0xff00) | target;
+                        break;
+                    }
+
+                    case SDLK_DOWN:
+                    case SDLK_LEFT:
+                    case SDLK_MINUS:
+                    case SDLK_KP_MINUS: {
+                        uint16_t target = virtual_switches & 0x00ff;
+                        if (target > 1) --target;
+                        virtual_switches =
+                            (virtual_switches & 0xff00) | target;
+                        break;
+                    }
+
+                    case SDLK_PAGEUP: {
+                        uint16_t target = virtual_switches & 0x00ff;
+                        target = (target > 245) ? 255 : target + 10;
+                        virtual_switches =
+                            (virtual_switches & 0xff00) | target;
+                        break;
+                    }
+
+                    case SDLK_PAGEDOWN: {
+                        uint16_t target = virtual_switches & 0x00ff;
+                        target = (target <= 11) ? 1 : target - 10;
+                        virtual_switches =
+                            (virtual_switches & 0xff00) | target;
+                        break;
+                    }
+
+                    default:
+                        switches_changed = false;
+                        break;
+                }
+
+                if (switches_changed) {
+                    top->switches = virtual_switches;
+                    updateWindowTitle(window, virtual_switches);
+                }
             }
         }
 

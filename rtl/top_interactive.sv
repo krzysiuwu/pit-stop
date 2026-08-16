@@ -7,6 +7,7 @@ module top_interactive (
     input  logic        mouse_btn_left,
     input  logic signed [3:0] mouse_scroll,
     input  logic              mouse_new_event,
+    input  logic [15:0]       switches,
 
     output logic vs,
     output logic hs,
@@ -43,7 +44,11 @@ module top_interactive (
         .mouse_btn_left(mouse_btn_left),
         .mouse_scroll(mouse_scroll),
         .mouse_new_event(mouse_new_event),
+        .switches(switches),
         .r(r), .g(g), .b(b), .hs(hs), .vs(vs),
+        .option_multiplayer(),
+        .option_game_mode(),
+        .option_target_value(),
         .vga_x(vga_x), .vga_y(vga_y)
     );
 

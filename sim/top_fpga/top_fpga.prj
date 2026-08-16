@@ -22,14 +22,17 @@ sv work ../../rtl/Graphics/Draw_modules/draw_BolidF1Default.sv
 sv work ../../rtl/Graphics/Draw_modules/draw_BolidF1NoWheels.sv
 sv work ../../rtl/Graphics/Draw_modules/draw_Wheel.sv
 sv work ../../rtl/Graphics/Draw_modules/draw_WheelRack.sv
+sv work ../../rtl/Graphics/Draw_modules/draw_options_panel.sv
 sv work ../../rtl/Graphics/Draw_modules/draw_button_with_text.sv
 sv work ../../rtl/Graphics/Draw_modules/draw_mouse_cursor.sv
 
+sv work ../../rtl/Game_logic/game_options.sv
 sv work ../../rtl/Game_logic/Sprite_control/bolid_anim_ctl.sv
 sv work ../../rtl/Game_logic/Sprite_control/mouse_hitbox.sv
 sv work ../../rtl/Game_logic/Sprite_control/wheel_physics.sv
 sv work ../../rtl/Game_logic/Sprite_control/wheel_service_fsm.sv
 sv work ../../rtl/Game_logic/system_fsm.sv
+sv work ../../rtl/Hardware/seven_segment_display.sv
 sv work ../../rtl/pit_stop_core.sv
 sv work ../../rtl/top_fsm.sv
 sv work ../../clock/clk_wiz_0.v
