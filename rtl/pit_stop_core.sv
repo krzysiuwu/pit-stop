@@ -228,6 +228,8 @@ module pit_stop_core (
     logic rear_anchor_at_rack;
     logic front_anchor_at_rear;
     logic rear_anchor_at_rear;
+    logic front_mounted_at_rear;
+    logic rear_mounted_at_rear;
     logic front_visible;
     logic rear_visible;
     logic front_locked;
@@ -312,13 +314,13 @@ module pit_stop_core (
 
     assign front_mount_occupied =
         (!front_old_removed && !front_detached) ||
-        (front_new_mounted && !front_anchor_at_rear) ||
-        (rear_new_mounted  && !rear_anchor_at_rear);
+        (front_new_mounted && !front_mounted_at_rear) ||
+        (rear_new_mounted  && !rear_mounted_at_rear);
 
     assign rear_mount_occupied =
         (!rear_old_removed && !rear_detached) ||
-        (front_new_mounted && front_anchor_at_rear) ||
-        (rear_new_mounted  && rear_anchor_at_rear);
+        (front_new_mounted && front_mounted_at_rear) ||
+        (rear_new_mounted  && rear_mounted_at_rear);
 
     assign front_mount_available = !front_mount_occupied;
     assign rear_mount_available  = !rear_mount_occupied;
@@ -405,7 +407,8 @@ module pit_stop_core (
         .rear_mount_available(rear_mount_available),
         .grab_enable(front_grab_enable), .attach_to_anchor(front_attach),
         .anchor_at_rack(front_anchor_at_rack),
-        .anchor_at_rear(front_anchor_at_rear), .wheel_visible(front_visible),
+        .anchor_at_rear(front_anchor_at_rear),
+        .mounted_at_rear(front_mounted_at_rear), .wheel_visible(front_visible),
         .wheel_locked(front_locked), .old_wheel_removed(front_old_removed),
         .needs_new_wheel(front_needs_new), .new_wheel_active(front_new_active),
         .service_done(front_service_done), .wheel_anim_step(front_wheel_anim_step),
@@ -427,7 +430,8 @@ module pit_stop_core (
         .rear_mount_available(rear_mount_available),
         .grab_enable(rear_grab_enable), .attach_to_anchor(rear_attach),
         .anchor_at_rack(rear_anchor_at_rack),
-        .anchor_at_rear(rear_anchor_at_rear), .wheel_visible(rear_visible),
+        .anchor_at_rear(rear_anchor_at_rear),
+        .mounted_at_rear(rear_mounted_at_rear), .wheel_visible(rear_visible),
         .wheel_locked(rear_locked), .old_wheel_removed(rear_old_removed),
         .needs_new_wheel(rear_needs_new), .new_wheel_active(rear_new_active),
         .service_done(rear_service_done), .wheel_anim_step(rear_wheel_anim_step),

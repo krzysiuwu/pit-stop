@@ -25,6 +25,7 @@ module wheel_service_fsm #(
     output logic attach_to_anchor,
     output logic anchor_at_rack,
     output logic anchor_at_rear,
+    output logic mounted_at_rear,
     output logic wheel_visible,
     output logic wheel_locked,
     output logic old_wheel_removed,
@@ -78,6 +79,11 @@ module wheel_service_fsm #(
     assign snap_to_rear  = wheel_dragging && !mouse_btn &&
                            wheel_near_rear_mount && rear_mount_available;
     assign snap_to_mount = snap_to_front || snap_to_rear;
+
+    // Polozenie zamontowanego kola musi zalezec wylacznie od rejestru.
+    // anchor_at_rear moze chwilowo wskazywac cel zatrzasniecia w MOVING_NEW,
+    // dlatego nie wolno uzywac go do wyznaczania zajetosci piast.
+    assign mounted_at_rear = target_rear;
 
     function automatic logic [1:0] rotate_forward(input logic [1:0] step);
         if (step == 2'd2)
