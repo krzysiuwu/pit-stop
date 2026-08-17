@@ -10,6 +10,7 @@ sv work ../../rtl/Graphics/VGA/LUT2RGB_converter.sv
 
 sv work ../../rtl/Graphics/Rom_modules/Cloud_Rom.sv
 sv work ../../rtl/Graphics/Rom_modules/Grandstand_Rom.sv
+sv work ../../rtl/Graphics/Rom_modules/PitstopLogo_Rom.sv
 sv work ../../rtl/Graphics/Rom_modules/BasicButton8chars_Rom.sv
 sv work ../../rtl/Graphics/Rom_modules/Font_Rom.sv
 sv work ../../rtl/Graphics/Rom_modules/BolidF1Default_Rom.sv
@@ -18,15 +19,18 @@ sv work ../../rtl/Graphics/Rom_modules/Wheel_Rom.sv
 sv work ../../rtl/Graphics/Rom_modules/WheelRack_Rom.sv
 
 sv work ../../rtl/Graphics/Draw_modules/draw_bg.sv
+sv work ../../rtl/Graphics/Draw_modules/draw_PitstopLogo.sv
 sv work ../../rtl/Graphics/Draw_modules/draw_BolidF1Default.sv
 sv work ../../rtl/Graphics/Draw_modules/draw_BolidF1NoWheels.sv
 sv work ../../rtl/Graphics/Draw_modules/draw_Wheel.sv
 sv work ../../rtl/Graphics/Draw_modules/draw_WheelRack.sv
 sv work ../../rtl/Graphics/Draw_modules/draw_options_panel.sv
+sv work ../../rtl/Graphics/Draw_modules/draw_summary_panel.sv
 sv work ../../rtl/Graphics/Draw_modules/draw_button_with_text.sv
 sv work ../../rtl/Graphics/Draw_modules/draw_mouse_cursor.sv
 
 sv work ../../rtl/Game_logic/game_options.sv
+sv work ../../rtl/Game_logic/singleplayer_game_controller.sv
 sv work ../../rtl/Game_logic/Sprite_control/bolid_anim_ctl.sv
 sv work ../../rtl/Game_logic/Sprite_control/mouse_hitbox.sv
 sv work ../../rtl/Game_logic/Sprite_control/wheel_physics.sv

@@ -48,12 +48,15 @@ set sv_files {
     ../rtl/Graphics/Rom_modules/WheelRack_Rom.sv
     ../rtl/Graphics/Draw_modules/draw_button_with_text.sv
     ../rtl/Graphics/Draw_modules/draw_bg.sv
+    ../rtl/Graphics/Draw_modules/draw_PitstopLogo.sv
     ../rtl/Graphics/Draw_modules/draw_BolidF1Default.sv
     ../rtl/Graphics/Draw_modules/draw_BolidF1NoWheels.sv
     ../rtl/Graphics/Draw_modules/draw_Wheel.sv
     ../rtl/Graphics/Draw_modules/draw_WheelRack.sv
     ../rtl/Graphics/Draw_modules/draw_options_panel.sv
+    ../rtl/Graphics/Draw_modules/draw_summary_panel.sv
     ../rtl/Game_logic/game_options.sv
+    ../rtl/Game_logic/singleplayer_game_controller.sv
     ../rtl/Game_logic/Sprite_control/bolid_anim_ctl.sv
     ../rtl/Game_logic/Sprite_control/mouse_hitbox.sv
     ../rtl/Game_logic/Sprite_control/wheel_physics.sv
@@ -93,4 +96,5 @@ set mem_files {
     ../rtl/Graphics/Sprites_and_textures/BolidF1NoWheels_sprite.mem
     ../rtl/Graphics/Sprites_and_textures/Wheel_sprite.mem
     ../rtl/Graphics/Sprites_and_textures/WheelRack_sprite.mem
+    ../rtl/Graphics/Sprites_and_textures/PitstopLogo.mem
 }

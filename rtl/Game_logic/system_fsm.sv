@@ -9,6 +9,7 @@ module system_fsm (
 
     input  logic front_wheel_done,
     input  logic rear_wheel_done,
+    input  logic game_finished,
 
     output logic [2:0] state_out,
 
@@ -103,17 +104,17 @@ module system_fsm (
             end
 
             GAME_ARRIVING: begin
-                if (click_back)
+                if (game_finished)
                     next_state = SUMMARY;
                 else if (arrive_done)
                     next_state = GAME_SERVICE;
             end
 
             GAME_SERVICE: begin
-                if (click_back)
-                    next_state = SUMMARY;
-                else if (front_wheel_done && rear_wheel_done)
+                if (front_wheel_done && rear_wheel_done)
                     next_state = GAME_DEPART_START;
+                else if (game_finished)
+                    next_state = SUMMARY;
             end
 
             GAME_DEPART_START: begin
@@ -121,10 +122,12 @@ module system_fsm (
             end
 
             GAME_DEPARTING: begin
-                if (click_back)
-                    next_state = SUMMARY;
-                else if (depart_done)
-                    next_state = GAME_ARRIVE_START;
+                if (depart_done) begin
+                    if (game_finished)
+                        next_state = SUMMARY;
+                    else
+                        next_state = GAME_ARRIVE_START;
+                end
             end
 
             SUMMARY: begin
@@ -183,34 +186,29 @@ module system_fsm (
 
             GAME_ARRIVE_START: begin
                 state_out            = SCREEN_GAMEPLAY;
-                enable_button_back   = 1'b1;
                 trigger_arrive       = 1'b1;
             end
 
             GAME_ARRIVING: begin
                 state_out            = SCREEN_GAMEPLAY;
                 enable_bolid_default = anim_car_enable;
-                enable_button_back   = 1'b1;
             end
 
             GAME_SERVICE: begin
                 state_out              = SCREEN_GAMEPLAY;
                 enable_bolid_no_wheels = 1'b1;
-                enable_button_back     = 1'b1;
                 enable_wheel_rack      = 1'b1;
                 enable_wheel_service   = 1'b1;
             end
 
             GAME_DEPART_START: begin
                 state_out            = SCREEN_GAMEPLAY;
-                enable_button_back   = 1'b1;
                 trigger_depart       = 1'b1;
             end
 
             GAME_DEPARTING: begin
                 state_out            = SCREEN_GAMEPLAY;
                 enable_bolid_default = anim_car_enable;
-                enable_button_back   = 1'b1;
             end
 
             SUMMARY: begin

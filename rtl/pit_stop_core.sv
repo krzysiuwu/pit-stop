@@ -18,6 +18,7 @@ module pit_stop_core (
     output logic       option_multiplayer,
     output logic [1:0] option_game_mode,
     output logic [7:0] option_target_value,
+    output logic [7:0] seven_segment_value,
 
     output logic [11:0] vga_x,
     output logic [11:0] vga_y
@@ -26,12 +27,16 @@ module pit_stop_core (
     timeunit 1ns;
     timeprecision 1ps;
 
-    localparam logic [11:0] BTN_PLAY_X = 12'd108;
-    localparam logic [11:0] BTN_PLAY_Y = 12'd60;
-    localparam logic [11:0] BTN_OPTS_X = 12'd108;
-    localparam logic [11:0] BTN_OPTS_Y = 12'd90;
-    localparam logic [11:0] BTN_BACK_X = 12'd140;
-    localparam logic [11:0] BTN_BACK_Y = 12'd5;
+    localparam logic [11:0] LOGO_X = 12'd64;
+    localparam logic [11:0] LOGO_Y = 12'd14;
+    localparam logic [11:0] BTN_PLAY_X = 12'd89;
+    localparam logic [11:0] BTN_PLAY_Y = 12'd68;
+    localparam logic [11:0] BTN_OPTS_X = 12'd89;
+    localparam logic [11:0] BTN_OPTS_Y = 12'd102;
+    localparam logic [11:0] BTN_BACK_OPTIONS_X = 12'd140;
+    localparam logic [11:0] BTN_BACK_OPTIONS_Y = 12'd5;
+    localparam logic [11:0] BTN_BACK_SUMMARY_X = 12'd89;
+    localparam logic [11:0] BTN_BACK_SUMMARY_Y = 12'd158;
     localparam logic [11:0] BTN_WIDTH  = 12'd78;
     localparam logic [11:0] BTN_HEIGHT = 12'd28;
 
@@ -54,10 +59,12 @@ module pit_stop_core (
     low_res_if low_res_pipe();
     vga_if vga_timing_if();
     vga_if vga_bg();
+    vga_if vga_logo();
     vga_if vga_bolid_default();
     vga_if vga_bolid_no_wheels();
     vga_if vga_rack();
     vga_if vga_options_panel();
+    vga_if vga_summary_panel();
     vga_if vga_btn_play();
     vga_if vga_btn_opts();
     vga_if vga_btn_back();
@@ -67,10 +74,12 @@ module pit_stop_core (
     vga_if vga_upscale();
 
     logic [3:0] lut_bg;
+    logic [3:0] lut_logo;
     logic [3:0] lut_bolid_default;
     logic [3:0] lut_bolid_no_wheels;
     logic [3:0] lut_rack;
     logic [3:0] lut_options_panel;
+    logic [3:0] lut_summary_panel;
     logic [3:0] lut_btn_play;
     logic [3:0] lut_btn_opts;
     logic [3:0] lut_btn_back;
@@ -138,6 +147,39 @@ module pit_stop_core (
     logic back_clicked;
     logic front_service_done;
     logic rear_service_done;
+    logic game_running;
+    logic game_finished;
+    logic player_won;
+    logic [1:0] active_game_mode;
+    logic [7:0] active_target_value;
+    logic [7:0] game_score;
+    logic [7:0] game_display_value;
+    logic [7:0] game_remaining_seconds;
+    logic [15:0] game_elapsed_seconds;
+    logic [7:0] last_stop_seconds;
+    logic [7:0] best_stop_seconds;
+
+    singleplayer_game_controller u_singleplayer_game_controller (
+        .clk(clk),
+        .rst(rst),
+        .frame_tick(frame_tick),
+        .start_game(play_clicked),
+        .service_active(enable_wheel_service),
+        .round_complete(front_service_done && rear_service_done),
+        .selected_game_mode(option_game_mode),
+        .selected_target_value(option_target_value),
+        .game_running(game_running),
+        .game_finished(game_finished),
+        .player_won(player_won),
+        .active_game_mode(active_game_mode),
+        .active_target_value(active_target_value),
+        .score(game_score),
+        .display_value(game_display_value),
+        .remaining_seconds(game_remaining_seconds),
+        .elapsed_seconds(game_elapsed_seconds),
+        .last_stop_seconds(last_stop_seconds),
+        .best_stop_seconds(best_stop_seconds)
+    );
 
     system_fsm u_system_fsm (
         .clk(clk),
@@ -148,6 +190,7 @@ module pit_stop_core (
         .frame_tick(frame_tick),
         .front_wheel_done(front_service_done),
         .rear_wheel_done(rear_service_done),
+        .game_finished(game_finished),
         .state_out(system_screen),
         .enable_bolid_default(enable_bolid_default),
         .enable_bolid_no_wheels(enable_bolid_no_wheels),
@@ -161,6 +204,15 @@ module pit_stop_core (
         .sequence_debug(sequence_debug)
     );
 
+    always_comb begin
+        if (system_screen == 3'b011)
+            seven_segment_value = game_score;
+        else if (system_screen == 3'b010)
+            seven_segment_value = game_display_value;
+        else
+            seven_segment_value = option_target_value;
+    end
+
     // -------------------------------------------------------------------------
     // Przyciski i rack
     // -------------------------------------------------------------------------
@@ -169,6 +221,18 @@ module pit_stop_core (
     logic back_hover;
     logic rack_hover;
     logic rack_clicked;
+    logic [11:0] back_button_x;
+    logic [11:0] back_button_y;
+
+    always_comb begin
+        if (system_screen == 3'b011) begin
+            back_button_x = BTN_BACK_SUMMARY_X;
+            back_button_y = BTN_BACK_SUMMARY_Y;
+        end else begin
+            back_button_x = BTN_BACK_OPTIONS_X;
+            back_button_y = BTN_BACK_OPTIONS_Y;
+        end
+    end
 
     mouse_hitbox #(
         .CLICK_ON_RELEASE(1'b1)
@@ -195,8 +259,8 @@ module pit_stop_core (
     ) u_hitbox_back (
         .clk(clk), .rst(rst),
         .mouse_x(mouse_x), .mouse_y(mouse_y), .mouse_btn(mouse_btn_left),
-        .obj_x(enable_button_back ? BTN_BACK_X : 12'hfff),
-        .obj_y(BTN_BACK_Y), .obj_w(BTN_WIDTH), .obj_h(BTN_HEIGHT),
+        .obj_x(enable_button_back ? back_button_x : 12'hfff),
+        .obj_y(back_button_y), .obj_w(BTN_WIDTH), .obj_h(BTN_HEIGHT),
         .is_hovered(back_hover), .is_clicked(back_clicked)
     );
 
@@ -446,10 +510,17 @@ module pit_stop_core (
         .vga_in(vga_timing_if), .lut_out(lut_bg), .vga_out(vga_bg)
     );
 
+    draw_PitstopLogo u_draw_pitstop_logo (
+        .clk(clk), .rst(rst), .enable(system_screen == 3'b000),
+        .x_pos(LOGO_X), .y_pos(LOGO_Y),
+        .low_res_in(low_res_pipe), .lut_in(lut_bg), .vga_in(vga_bg),
+        .lut_out(lut_logo), .vga_out(vga_logo)
+    );
+
     draw_BolidF1Default u_draw_bolid_default (
         .clk(clk), .rst(rst), .enable(enable_bolid_default),
         .wheel_anim_step(bolid_wheel_anim_step), .x_pos(bolid_x),
-        .low_res_in(low_res_pipe), .lut_in(lut_bg), .vga_in(vga_bg),
+        .low_res_in(low_res_pipe), .lut_in(lut_logo), .vga_in(vga_logo),
         .lut_out(lut_bolid_default), .vga_out(vga_bolid_default)
     );
 
@@ -480,12 +551,27 @@ module pit_stop_core (
         .vga_out(vga_options_panel)
     );
 
+    draw_summary_panel u_draw_summary_panel (
+        .clk(clk), .rst(rst),
+        .enable(system_screen == 3'b011),
+        .player_won(player_won),
+        .game_mode(active_game_mode),
+        .target_value(active_target_value),
+        .score(game_score),
+        .elapsed_seconds(game_elapsed_seconds),
+        .last_stop_seconds(last_stop_seconds),
+        .best_stop_seconds(best_stop_seconds),
+        .low_res_in(low_res_pipe), .lut_in(lut_options_panel),
+        .vga_in(vga_options_panel), .lut_out(lut_summary_panel),
+        .vga_out(vga_summary_panel)
+    );
+
     draw_button_with_text #(.STR_LEN(4)) u_draw_btn_play (
         .clk(clk), .rst(rst), .enable(enable_button_play),
         .is_hovered(play_hover), .is_pressed(play_hover && mouse_btn_left),
         .x_pos(BTN_PLAY_X), .y_pos(BTN_PLAY_Y), .text_string("PLAY"),
-        .low_res_in(low_res_pipe), .lut_in(lut_options_panel),
-        .vga_in(vga_options_panel), .lut_out(lut_btn_play),
+        .low_res_in(low_res_pipe), .lut_in(lut_summary_panel),
+        .vga_in(vga_summary_panel), .lut_out(lut_btn_play),
         .vga_out(vga_btn_play)
     );
 
@@ -501,7 +587,7 @@ module pit_stop_core (
     draw_button_with_text #(.STR_LEN(4)) u_draw_btn_back (
         .clk(clk), .rst(rst), .enable(enable_button_back),
         .is_hovered(back_hover), .is_pressed(back_hover && mouse_btn_left),
-        .x_pos(BTN_BACK_X), .y_pos(BTN_BACK_Y), .text_string("BACK"),
+        .x_pos(back_button_x), .y_pos(back_button_y), .text_string("BACK"),
         .low_res_in(low_res_pipe), .lut_in(lut_btn_opts),
         .vga_in(vga_btn_opts), .lut_out(lut_btn_back),
         .vga_out(vga_btn_back)

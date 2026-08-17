@@ -1,12 +1,27 @@
 #!/bin/bash
 set -e
 
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
+cd "${PROJECT_ROOT}"
+
+source "${SCRIPT_DIR}/verilator_msys2_compat.sh"
+
 # Budowanie interaktywnego symulatora SDL z tym samym rdzeniem co FPGA.
 SDL_CFLAGS="$(sdl2-config --cflags 2>/dev/null || true)"
 SDL_LIBS="$(sdl2-config --libs 2>/dev/null || echo -lSDL2)"
+BUILD_DIR="obj_dir/interactive_sdl"
+USER_CFLAGS="-O3 ${SDL_CFLAGS}"
+
+if ABI_FLAG="$(verilator_msys2_cxx_abi_flag)"; then
+    BUILD_DIR="obj_dir/interactive_sdl_msys2_abi0"
+    USER_CFLAGS="${USER_CFLAGS} ${ABI_FLAG}"
+    echo "MSYS2 + GCC 16: uzywam zgodnego ABI C++ (${ABI_FLAG})."
+fi
 
 verilator -Wno-fatal --cc --exe --build -j 0 -O3 \
-    -CFLAGS "-O3 ${SDL_CFLAGS}" \
+    --Mdir "${BUILD_DIR}" \
+    -CFLAGS "${USER_CFLAGS}" \
     -LDFLAGS "${SDL_LIBS}" \
     --top-module top_interactive \
     rtl/Graphics/VGA/Target_res/vga_pkg.sv \
@@ -21,17 +36,21 @@ verilator -Wno-fatal --cc --exe --build -j 0 -O3 \
     rtl/Graphics/Rom_modules/BolidF1NoWheels_Rom.sv \
     rtl/Graphics/Rom_modules/Cloud_Rom.sv \
     rtl/Graphics/Rom_modules/Grandstand_Rom.sv \
+    rtl/Graphics/Rom_modules/PitstopLogo_Rom.sv \
     rtl/Graphics/Rom_modules/Wheel_Rom.sv \
     rtl/Graphics/Rom_modules/WheelRack_Rom.sv \
     rtl/Graphics/Draw_modules/draw_bg.sv \
+    rtl/Graphics/Draw_modules/draw_PitstopLogo.sv \
     rtl/Graphics/Draw_modules/draw_BolidF1Default.sv \
     rtl/Graphics/Draw_modules/draw_BolidF1NoWheels.sv \
     rtl/Graphics/Draw_modules/draw_Wheel.sv \
     rtl/Graphics/Draw_modules/draw_WheelRack.sv \
     rtl/Graphics/Draw_modules/draw_options_panel.sv \
+    rtl/Graphics/Draw_modules/draw_summary_panel.sv \
     rtl/Graphics/Draw_modules/draw_button_with_text.sv \
     rtl/Graphics/Draw_modules/draw_mouse_cursor.sv \
     rtl/Game_logic/game_options.sv \
+    rtl/Game_logic/singleplayer_game_controller.sv \
     rtl/Game_logic/Sprite_control/bolid_anim_ctl.sv \
     rtl/Game_logic/Sprite_control/mouse_hitbox.sv \
     rtl/Game_logic/Sprite_control/wheel_physics.sv \
@@ -41,4 +60,4 @@ verilator -Wno-fatal --cc --exe --build -j 0 -O3 \
     rtl/top_interactive.sv \
     main.cpp
 
-echo "Gotowe: obj_dir/Vtop_interactive.exe (Windows/MSYS) lub obj_dir/Vtop_interactive (Linux)."
+echo "Gotowe: ${BUILD_DIR}/Vtop_interactive.exe (Windows/MSYS) lub ${BUILD_DIR}/Vtop_interactive (Linux)."

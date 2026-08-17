@@ -52,5 +52,15 @@ Mapowanie opcji na Basys 3:
     SW7:0      - binarna wartosc celu 1..255 (wartosc 0 jest zamieniana na 1)
     SW12:8     - zarezerwowane na przyszle opcje
 
-Wybrany cel jest pokazywany na wyswietlaczu 7-segmentowym. UART nie jest
-jeszcze zaimplementowany; multiplayer na ekranie opcji pokazuje UART OFFLINE.
+Poza rozgrywka wyswietlacz 7-segmentowy pokazuje wybrany cel. Podczas gry
+pokazuje pozostaly czas dla TIME ATTACK i SPEED UP albo wynik dla POINT RACE
+i BEST OF. Na ekranie koncowym pokazuje koncowy wynik.
+
+Reguly single-player:
+    TIME ATTACK - punkty przez zadany czas, minimum 1 punkt oznacza wygrana
+    POINT RACE  - wygrana po osiagnieciu ustawionego wyniku
+    SPEED UP    - 5 pit-stopow, limit startowy maleje o 1 sekunde na runde
+    BEST OF     - ustawiona liczba pit-stopow i statystyki czasowe
+
+UART nie jest jeszcze zaimplementowany; multiplayer na ekranie opcji pokazuje
+UART OFFLINE.

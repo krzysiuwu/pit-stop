@@ -23,6 +23,9 @@ module draw_PitstopLogo (
     vga_if.out         vga_out
 );
 
+    timeunit 1ns;
+    timeprecision 1ps;
+
     localparam int WIDTH  = 128;
     localparam int HEIGHT = 32;
 
@@ -39,9 +42,9 @@ module draw_PitstopLogo (
     assign in_hitbox =
         enable &&
         (cur_x >= x_pos) &&
-        (cur_x <  x_pos + SPRITE_WIDTH) &&
+        (cur_x <  x_pos + WIDTH) &&
         (cur_y >= y_pos) &&
-        (cur_y <  y_pos + SPRITE_HEIGHT);
+        (cur_y <  y_pos + HEIGHT);
 
     assign local_x = cur_x - x_pos;
     assign local_y = cur_y - y_pos;
@@ -115,5 +118,8 @@ module draw_PitstopLogo (
             lut_out = lut_in_d;
         end
     end
+
+    logic unused_low_res;
+    assign unused_low_res = ^{low_res_in.hcount, low_res_in.vcount};
 
 endmodule

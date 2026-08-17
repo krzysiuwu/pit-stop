@@ -45,6 +45,7 @@ module top_vga_basys3 (
     wire option_multiplayer;
     wire [1:0] option_game_mode;
     wire [7:0] option_target_value;
+    wire [7:0] seven_segment_value;
 
     (* KEEP = "TRUE" *)
     (* ASYNC_REG = "TRUE" *)
@@ -98,6 +99,7 @@ module top_vga_basys3 (
         .option_multiplayer(option_multiplayer),
         .option_game_mode(option_game_mode),
         .option_target_value(option_target_value),
+        .seven_segment_value(seven_segment_value),
         .ps2_data(PS2Data),             
         .ps2_clk(PS2Clk)
     );
@@ -105,7 +107,7 @@ module top_vga_basys3 (
     seven_segment_display u_seven_segment_display (
         .clk(clk_65M),
         .rst(core_rst),
-        .value(option_target_value),
+        .value(seven_segment_value),
         .seg(seg),
         .an(an),
         .dp(dp)

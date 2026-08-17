@@ -24,15 +24,16 @@ static const char* gameModeName(uint16_t switches) {
     }
 }
 
-static void updateWindowTitle(SDL_Window* window, uint16_t switches) {
+static void updateWindowTitle(SDL_Window* window, uint16_t switches,
+                              unsigned displayValue) {
     const unsigned target = (switches & 0xff) == 0
                           ? 1
                           : switches & 0xff;
     const char* player = (switches & 0x8000) ? "MULTIPLAYER" : "SINGLE";
-    char title[160];
+    char title[192];
     std::snprintf(title, sizeof(title),
-                  "FPGA VGA Simulator - Pit Stop | %s | %s | target %u",
-                  player, gameModeName(switches), target);
+                  "FPGA VGA Simulator - Pit Stop | %s | %s | target %u | 7SEG %u",
+                  player, gameModeName(switches), target, displayValue);
     SDL_SetWindowTitle(window, title);
 }
 
@@ -56,7 +57,7 @@ int main(int argc, char** argv) {
     top->mouse_scroll = 0;
     top->mouse_new_event = 0;
     top->switches = virtual_switches;
-    updateWindowTitle(window, virtual_switches);
+    updateWindowTitle(window, virtual_switches, virtual_switches & 0x00ff);
 
     top->rst = 1; top->clk = 0; top->eval();
     top->rst = 0; top->eval();
@@ -155,7 +156,8 @@ int main(int argc, char** argv) {
 
                 if (switches_changed) {
                     top->switches = virtual_switches;
-                    updateWindowTitle(window, virtual_switches);
+                    updateWindowTitle(window, virtual_switches,
+                                      top->seven_segment_value);
                 }
             }
         }
@@ -204,6 +206,8 @@ int main(int argc, char** argv) {
         SDL_RenderClear(renderer);
         SDL_RenderCopy(renderer, texture, NULL, NULL);
         SDL_RenderPresent(renderer);
+        updateWindowTitle(window, virtual_switches,
+                          top->seven_segment_value);
     }
 
     delete[] pixels;

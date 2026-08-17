@@ -15,6 +15,8 @@ module top_interactive (
     output logic [3:0] g,
     output logic [3:0] b,
 
+    output logic [7:0] seven_segment_value,
+
     output logic [11:0] vga_x,
     output logic [11:0] vga_y
 );
@@ -49,6 +51,7 @@ module top_interactive (
         .option_multiplayer(),
         .option_game_mode(),
         .option_target_value(),
+        .seven_segment_value(seven_segment_value),
         .vga_x(vga_x), .vga_y(vga_y)
     );
 

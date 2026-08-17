@@ -1,13 +1,17 @@
 import vga_pkg::*;
 import low_res_pkg::*;
 
-module draw_options_panel (
-    input  logic       clk,
-    input  logic       rst,
-    input  logic       enable,
-    input  logic       multiplayer,
-    input  logic [1:0] game_mode,
-    input  logic [7:0] target_value,
+module draw_summary_panel (
+    input  logic        clk,
+    input  logic        rst,
+    input  logic        enable,
+    input  logic        player_won,
+    input  logic [1:0]  game_mode,
+    input  logic [7:0]  target_value,
+    input  logic [7:0]  score,
+    input  logic [15:0] elapsed_seconds,
+    input  logic [7:0]  last_stop_seconds,
+    input  logic [7:0]  best_stop_seconds,
 
     input  logic [3:0] lut_in,
     vga_if.in          vga_in,
@@ -21,9 +25,9 @@ module draw_options_panel (
     timeprecision 1ps;
 
     localparam int PANEL_X = 6;
-    localparam int PANEL_Y = 25;
+    localparam int PANEL_Y = 12;
     localparam int PANEL_W = 244;
-    localparam int PANEL_H = 153;
+    localparam int PANEL_H = 140;
     localparam int TEXT_X = 16;
     localparam int LINE_CHARS = 28;
     localparam int LINE_BITS = LINE_CHARS * 8;
@@ -40,7 +44,6 @@ module draw_options_panel (
                       (cur_x >= PANEL_X) && (cur_x < PANEL_X + PANEL_W) &&
                       (cur_y >= PANEL_Y) && (cur_y < PANEL_Y + PANEL_H);
 
-    // Dark, high-contrast panel using only the game's existing fixed palette.
     always_comb begin
         panel_color = 4'h1;
 
@@ -51,14 +54,12 @@ module draw_options_panel (
                      (cur_x == PANEL_X + PANEL_W - 2) ||
                      (cur_y == PANEL_Y + 1) ||
                      (cur_y == PANEL_Y + PANEL_H - 2)) begin
-            panel_color = 4'h5;
-        end else if ((cur_y == 12'd42) || (cur_y == 12'd76) ||
-                     (cur_y == 12'd113)) begin
+            panel_color = player_won ? 4'h7 : 4'h5;
+        end else if ((cur_y == 12'd45) || (cur_y == 12'd61)) begin
             panel_color = 4'h6;
         end
     end
 
-    // Select one of eight 8-pixel-high text rows.
     logic       in_text;
     logic [2:0] text_row;
     logic [2:0] text_local_y;
@@ -66,44 +67,44 @@ module draw_options_panel (
     logic [4:0] char_index;
 
     always_comb begin
-        in_text     = 1'b0;
-        text_row    = 3'd0;
+        in_text      = 1'b0;
+        text_row     = 3'd0;
         text_local_y = 3'd0;
 
         if (enable && (cur_x >= TEXT_X) &&
             (cur_x < TEXT_X + LINE_CHARS * 8)) begin
-            if ((cur_y >= 12'd31) && (cur_y < 12'd39)) begin
+            if ((cur_y >= 12'd18) && (cur_y < 12'd26)) begin
                 in_text = 1'b1;
                 text_row = 3'd0;
-                text_local_y = cur_y - 12'd31;
-            end else if ((cur_y >= 12'd49) && (cur_y < 12'd57)) begin
+                text_local_y = cur_y - 12'd18;
+            end else if ((cur_y >= 12'd34) && (cur_y < 12'd42)) begin
                 in_text = 1'b1;
                 text_row = 3'd1;
-                text_local_y = cur_y - 12'd49;
-            end else if ((cur_y >= 12'd65) && (cur_y < 12'd73)) begin
+                text_local_y = cur_y - 12'd34;
+            end else if ((cur_y >= 12'd50) && (cur_y < 12'd58)) begin
                 in_text = 1'b1;
                 text_row = 3'd2;
-                text_local_y = cur_y - 12'd65;
-            end else if ((cur_y >= 12'd83) && (cur_y < 12'd91)) begin
+                text_local_y = cur_y - 12'd50;
+            end else if ((cur_y >= 12'd66) && (cur_y < 12'd74)) begin
                 in_text = 1'b1;
                 text_row = 3'd3;
-                text_local_y = cur_y - 12'd83;
-            end else if ((cur_y >= 12'd99) && (cur_y < 12'd107)) begin
+                text_local_y = cur_y - 12'd66;
+            end else if ((cur_y >= 12'd82) && (cur_y < 12'd90)) begin
                 in_text = 1'b1;
                 text_row = 3'd4;
-                text_local_y = cur_y - 12'd99;
-            end else if ((cur_y >= 12'd120) && (cur_y < 12'd128)) begin
+                text_local_y = cur_y - 12'd82;
+            end else if ((cur_y >= 12'd98) && (cur_y < 12'd106)) begin
                 in_text = 1'b1;
                 text_row = 3'd5;
-                text_local_y = cur_y - 12'd120;
-            end else if ((cur_y >= 12'd136) && (cur_y < 12'd144)) begin
+                text_local_y = cur_y - 12'd98;
+            end else if ((cur_y >= 12'd114) && (cur_y < 12'd122)) begin
                 in_text = 1'b1;
                 text_row = 3'd6;
-                text_local_y = cur_y - 12'd136;
-            end else if ((cur_y >= 12'd152) && (cur_y < 12'd160)) begin
+                text_local_y = cur_y - 12'd114;
+            end else if ((cur_y >= 12'd130) && (cur_y < 12'd138)) begin
                 in_text = 1'b1;
                 text_row = 3'd7;
-                text_local_y = cur_y - 12'd152;
+                text_local_y = cur_y - 12'd130;
             end
         end
     end
@@ -111,15 +112,34 @@ module draw_options_panel (
     assign text_local_x = cur_x[7:0] - TEXT_X;
     assign char_index = text_local_x[7:3];
 
-    logic [7:0] target_hundreds;
-    logic [7:0] target_tens;
-    logic [7:0] target_ones;
+    function automatic logic [23:0] decimal_ascii3(input logic [9:0] value);
+        logic [9:0] capped_value;
+        logic [7:0] hundreds;
+        logic [7:0] tens;
+        logic [7:0] ones;
+        begin
+            capped_value = (value > 10'd999) ? 10'd999 : value;
+            hundreds = 8'h30 + (capped_value / 10'd100);
+            tens     = 8'h30 + ((capped_value % 10'd100) / 10'd10);
+            ones     = 8'h30 + (capped_value % 10'd10);
+            decimal_ascii3 = {hundreds, tens, ones};
+        end
+    endfunction
 
-    always_comb begin
-        target_hundreds = 8'h30 + (target_value / 8'd100);
-        target_tens     = 8'h30 + ((target_value % 8'd100) / 8'd10);
-        target_ones     = 8'h30 + (target_value % 8'd10);
-    end
+    logic [9:0] elapsed_display;
+    logic [23:0] score_ascii;
+    logic [23:0] target_ascii;
+    logic [23:0] elapsed_ascii;
+    logic [23:0] last_ascii;
+    logic [23:0] best_ascii;
+
+    assign elapsed_display = (elapsed_seconds > 16'd999)
+                           ? 10'd999 : elapsed_seconds[9:0];
+    assign score_ascii   = decimal_ascii3({2'b0, score});
+    assign target_ascii  = decimal_ascii3({2'b0, target_value});
+    assign elapsed_ascii = decimal_ascii3(elapsed_display);
+    assign last_ascii    = decimal_ascii3({2'b0, last_stop_seconds});
+    assign best_ascii    = decimal_ascii3({2'b0, best_stop_seconds});
 
     logic [LINE_BITS-1:0] line_text;
 
@@ -127,23 +147,17 @@ module draw_options_panel (
         line_text = {LINE_CHARS{8'h20}};
 
         case (text_row)
-            3'd0: line_text = {"OPTIONS", {21{8'h20}}};
+            3'd0:
+                line_text = {"PIT STOP RESULT", {13{8'h20}}};
 
             3'd1: begin
-                if (multiplayer)
-                    line_text = {"PLAYER   MULTIPLAYER", {8{8'h20}}};
+                if (player_won)
+                    line_text = {"RESULT   YOU WIN", {12{8'h20}}};
                 else
-                    line_text = {"PLAYER   SINGLE", {13{8'h20}}};
+                    line_text = {"RESULT   YOU LOSE", {11{8'h20}}};
             end
 
             3'd2: begin
-                if (multiplayer)
-                    line_text = {"UART     OFFLINE", {12{8'h20}}};
-                else
-                    line_text = {"UART     NOT USED", {11{8'h20}}};
-            end
-
-            3'd3: begin
                 case (game_mode)
                     2'b00: line_text = {"MODE     TIME ATTACK", {8{8'h20}}};
                     2'b01: line_text = {"MODE     POINT RACE", {9{8'h20}}};
@@ -152,39 +166,29 @@ module draw_options_panel (
                 endcase
             end
 
+            3'd3:
+                line_text = {"SCORE    ", score_ascii, " PTS", {12{8'h20}}};
+
             3'd4: begin
                 case (game_mode)
                     2'b00, 2'b10:
-                        line_text = {"TARGET   ", target_hundreds,
-                                     target_tens, target_ones,
+                        line_text = {"TARGET   ", target_ascii,
                                      " SEC", {12{8'h20}}};
                     2'b01:
-                        line_text = {"TARGET   ", target_hundreds,
-                                     target_tens, target_ones,
+                        line_text = {"TARGET   ", target_ascii,
                                      " PTS", {12{8'h20}}};
                     default:
-                        line_text = {"TARGET   ", target_hundreds,
-                                     target_tens, target_ones,
+                        line_text = {"TARGET   ", target_ascii,
                                      " RUNS", {11{8'h20}}};
                 endcase
             end
 
-            3'd5: begin
-                case (game_mode)
-                    2'b00:
-                        line_text = {"GOAL     SCORE AT LEAST 1", {3{8'h20}}};
-                    2'b01:
-                        line_text = {"GOAL     REACH TARGET", {7{8'h20}}};
-                    2'b10:
-                        line_text = {"GOAL     SURVIVE 5 RUNS", {5{8'h20}}};
-                    default:
-                        line_text = {"GOAL     FINISH ALL RUNS", {4{8'h20}}};
-                endcase
-            end
+            3'd5:
+                line_text = {"TIME     ", elapsed_ascii, " SEC", {12{8'h20}}};
             3'd6:
-                line_text = {"SW15 PLAYER  SW14-13 MODE", {3{8'h20}}};
+                line_text = {"LAST     ", last_ascii, " SEC", {12{8'h20}}};
             default:
-                line_text = {"SW7-0 TARGET  SIM 1-4 +/-", {3{8'h20}}};
+                line_text = {"BEST     ", best_ascii, " SEC", {12{8'h20}}};
         endcase
     end
 
@@ -193,21 +197,17 @@ module draw_options_panel (
 
     always_comb begin
         current_char_code = 8'h20;
-        if (in_text && (char_index < LINE_CHARS))
+        if (in_text && (char_index < LINE_CHARS)) begin
             current_char_code =
                 line_text[((LINE_CHARS - 1 - char_index) * 8) +: 8];
+        end
 
         text_color = 4'h3;
         if (text_row == 3'd0)
             text_color = 4'h4;
-        else if ((text_row == 3'd1) && (char_index >= 5'd9))
-            text_color = 4'h7;
-        else if ((text_row == 3'd2) && (char_index >= 5'd9))
-            text_color = multiplayer ? 4'h5 : 4'h3;
-        else if (((text_row == 3'd3) || (text_row == 3'd4)) &&
-                 (char_index >= 5'd9))
-            text_color = 4'h7;
-        else if ((text_row == 3'd5) && (char_index >= 5'd9))
+        else if (text_row == 3'd1)
+            text_color = player_won ? 4'h7 : 4'h5;
+        else if ((text_row >= 3'd3) && (char_index >= 5'd9))
             text_color = 4'h7;
     end
 
@@ -273,8 +273,6 @@ module draw_options_panel (
             lut_out = lut_in_d;
     end
 
-    // The interface is kept for consistency with the other low-resolution
-    // layers; coordinates are taken from the pipelined VGA interface.
     logic unused_low_res;
     assign unused_low_res = ^{low_res_in.hcount, low_res_in.vcount};
 

@@ -88,9 +88,13 @@ Opcje gry:
         - ustawianie celu przez SW7:0
         - panel opcji VGA i wyswietlanie celu na 7-segmentach
         - emulacja ustawien klawiatura w Verilatorze
+        - zapis ustawien aktywnej rozgrywki po nacisnieciu PLAY
+        - logika punktow, czasu i warunkow konca dla wszystkich trybow single-player
+        - animowane logo w wycentrowanym menu glownym
+        - wynik/czas gry na wyswietlaczu 7-segmentowym
+        - ekran koncowy z wynikiem i statystykami
+        - automatyczny test kontrolera rozgrywki
 
     Do zrobienia:
-        - logika punktow i czasu dla poszczegolnych trybow
-        - zapis ustawien aktywnej rozgrywki po nacisnieciu PLAY
         - UART i synchronizacja dwoch Basysow dla multiplayera
-        - ekran wyniku oraz porownanie graczy w trybie BEST OF
+        - porownanie graczy i rozstrzyganie zwyciezcy w multiplayer BEST OF

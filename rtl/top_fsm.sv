@@ -12,6 +12,7 @@ module top_fsm (
     output logic       option_multiplayer,
     output logic [1:0] option_game_mode,
     output logic [7:0] option_target_value,
+    output logic [7:0] seven_segment_value,
 
     inout  logic ps2_data,
     inout  logic ps2_clk
@@ -77,6 +78,7 @@ module top_fsm (
         .option_multiplayer(option_multiplayer),
         .option_game_mode(option_game_mode),
         .option_target_value(option_target_value),
+        .seven_segment_value(seven_segment_value),
         .vga_x(), .vga_y()
     );
 
