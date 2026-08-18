@@ -16,10 +16,14 @@ reg [3:0] rom [0:519];
  * Memory initialization from a file
  */
 
-/* Relative path from the simulation or synthesis working directory */
-initial $readmemh("Cloud_sprite.mem", rom);
-
-
+`ifdef VERILATOR
+    initial $readmemh("rtl/Graphics/Sprites_and_textures/Cloud_sprite.mem", rom);
+`elsif SYNTHESIS
+    initial $readmemh("Cloud_sprite.mem", rom);
+`else
+    initial $readmemh("../../rtl/Graphics/Sprites_and_textures/Cloud_sprite.mem", rom);
+`endif
+    
 /**
  * Internal logic
  */

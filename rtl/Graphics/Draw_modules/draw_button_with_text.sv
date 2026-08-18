@@ -35,8 +35,9 @@ module draw_button_with_text #(
     localparam int TEXT_OFFSET_Y = 6; // Podniesione wyżej (wcześniej było 10)
 
     logic [11:0] cur_x, cur_y;
-    assign cur_x = low_res_in.hcount;
-    assign cur_y = low_res_in.vcount;
+    
+    assign cur_x = {1'b0, vga_in.hcount} >> 2;
+    assign cur_y = {1'b0, vga_in.vcount} >> 2;
 
     logic [11:0] dyn_y_pos;
     assign dyn_y_pos = is_pressed ? (y_pos + 12'd2) : y_pos;

@@ -8,7 +8,13 @@ module Font_Rom (
     logic [7:0] font_array [0:1023]; 
 
     initial begin
-        $readmemh("font_zx.mem", font_array);
+        `ifdef VERILATOR
+            $readmemh("rtl/Graphics/Sprites_and_textures/font_zx.mem", font_array);
+        `elsif SYNTHESIS
+            $readmemh("font_zx.mem", font_array);
+        `else
+            $readmemh("../../rtl/Graphics/Sprites_and_textures/font_zx.mem", font_array);
+        `endif
     end
 
     always_ff @(posedge clk) begin

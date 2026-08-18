@@ -1,4 +1,13 @@
 /**
+ * San Jose State University
+ * EE178 Lab #4
+ * Author: prof. Eric Crabilla
+ *
+ * Modified by:
+ * 2025  AGH University of Science and Technology
+ * MTM UEC2
+ * Piotr Kaczmarczyk
+ *
  * Description:
  * The project top module.
  */
@@ -26,18 +35,12 @@ module top_vga (
     wire [11:0] x_pos;
     wire [11:0] y_pos;
     wire [3:0] lut_pipe;
-    wire [3:0] lut_game;
     wire [11:0] rgb_pipe;
     wire [11:0] rgb_out;
     wire [11:0] mouse_value_pipe;
     wire setmax_x_pipe;
     wire setmax_y_pipe;
-    wire left_pipe;
-    wire [2:0] state_pipe;
-    wire play_pipe;
 
-    // Pipes for low resolution h and v counts
-    low_res_if low_res_bg();
     low_res_if low_res_pipe();
 
     // VGA signals from timing
@@ -48,15 +51,13 @@ module top_vga (
     vga_if vga_upscale();
     // VGA signals from mouse
     vga_if vga_mouse();
-    // VGA signals from game drawing
-    vga_if vga_game();
 
     /**
      * Signals assignments
      */
 
-    assign vs = ~vga_game.vsync;
-    assign hs = ~vga_game.hsync;
+    assign vs = ~vga_mouse.vsync;
+    assign hs = ~vga_mouse.hsync;
     assign {r,g,b} = rgb_out;
 
     /**
@@ -68,8 +69,8 @@ module top_vga (
             vga_mouse.vsync  <= '0;
             vga_mouse.hsync  <= '0;
         end else begin
-            vga_mouse.vsync  <= vga_game.vsync;
-            vga_mouse.hsync  <= vga_game.hsync;
+            vga_mouse.vsync  <= vga_bg.vsync;
+            vga_mouse.hsync  <= vga_bg.hsync;
         end
     end
 
@@ -97,33 +98,16 @@ module top_vga (
         .rst,
         .lut_out(lut_pipe),
         .low_res_in(low_res_pipe),
-        .low_res_out(low_res_bg),
         .vga_in (vga_timing),
         .vga_out (vga_bg)
-    );
-
-    draw_game u_draw_game (
-        .clk,
-        .rst,
-        .current_state(state_pipe),
-        .bolid_x(50),
-        .mouse_x(x_pos),
-        .mouse_y(y_pos),
-        .left_click(left_pipe),
-        .click_play(play_pipe),
-        .lut_in(lut_pipe),
-        .vga_in(vga_bg),
-        .low_res_in(low_res_bg),
-        .lut_out(lut_game),
-        .vga_out(vga_game)
     );
 
     LUT2RGB_converter u_LUT2RGB_converter (
         .clk,
         .rst_n(rst),
-        .lut_value(lut_game),
+        .lut_value(lut_pipe),
         .rgb_out(rgb_pipe),
-        .vga_in (vga_game),
+        .vga_in (vga_bg),
         .vga_out (vga_upscale)
     );
 
@@ -135,7 +119,7 @@ module top_vga (
         .xpos(x_pos),
         .ypos(y_pos),
         .zpos(),
-        .left(left_pipe),
+        .left(),
         .middle(),
         .right(),
         .new_event(),
@@ -156,14 +140,6 @@ module top_vga (
         .rgb_out(rgb_out),
         .pixel_clk(clk),
         .enable_mouse_display_out()
-    );
-
-    game_fsm u_game_fsm (
-        .clk(clk),
-        .rst(!rst),             // Zmiana polaryzacji resetu (zależnie od projektu)
-        .click_play(play_pipe),
-        .wheels_attached(1'b0),
-        .state_out(state_pipe)
     );
 
 endmodule

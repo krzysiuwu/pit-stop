@@ -25,12 +25,21 @@ module draw_WheelRack (
     logic [11:0] local_x;
     logic [11:0] local_y;
 
-    assign in_hitbox = enable && 
-                       (low_res_in.hcount >= x_pos) && (low_res_in.hcount < x_pos + SPRITE_WIDTH) && 
-                       (low_res_in.vcount >= y_pos) && (low_res_in.vcount < y_pos + SPRITE_HEIGHT);
+    logic [11:0] cur_x;
+    logic [11:0] cur_y;
 
-    assign local_x = low_res_in.hcount - x_pos;
-    assign local_y = low_res_in.vcount - y_pos;
+    assign cur_x = {1'b0, vga_in.hcount} >> 2;
+    assign cur_y = {1'b0, vga_in.vcount} >> 2;
+
+    assign in_hitbox =
+        enable &&
+        (cur_x >= x_pos) &&
+        (cur_x <  x_pos + SPRITE_WIDTH) &&
+        (cur_y >= y_pos) &&
+        (cur_y <  y_pos + SPRITE_HEIGHT);
+
+    assign local_x = cur_x - x_pos;
+    assign local_y = cur_y - y_pos;
 
     // 2. Adres i Pamięć ROM
     logic [11:0] rom_addr;
@@ -72,21 +81,15 @@ module draw_WheelRack (
         end
     end
 
-    // 4. Inteligentne nakładanie warstw
+    // 4. Nakładanie warstw. Kolory wheelracka są indeksami tej samej,
+    // globalnej palety co pozostałe sprite'y.
+    logic rack_pixel_active;
+    assign rack_pixel_active = in_hitbox_d && (rom_data != 4'hF);
+
     always_comb begin
-        if (in_hitbox_d) begin
-            if (rom_data === 4'hx || rom_data === 4'hz) begin
-                // BŁĄD ODCZYTU PAMIĘCI (X): Rysuj czerwony prostokąt
-                lut_out = 4'h5; 
-            end else if (rom_data != 4'hF) begin
-                // POPRAWNY ODCZYT: Rysuj normalny piksel z ROM
-                lut_out = rom_data; 
-            end else begin
-                // KOLOR PRZEZROCZYSTY: Przepuść tło
-                lut_out = lut_in_d; 
-            end
+        if (rack_pixel_active) begin
+            lut_out = rom_data;
         end else begin
-            // POZA HITBOXEM: Przepuść tło
             lut_out = lut_in_d;
         end
     end

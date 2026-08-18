@@ -43,3 +43,20 @@ results/*
 .vscode/
 
 build_log.txt
+
+# Verilator obj_dir i binarki
+obj_dir/
+*.exe
+
+# Pliki generowane przez symulator
+sim/anim_test/*.vcd
+sim/drawing_test/*.vcd
+sim/top_fpga/*.vcd
+sim/top_vga/*.vcd
+
+# Pliki z Vivado (jeśli budujecie lokalnie)
+*.jou
+*.log
+*.pb
+*.wdb
+.Xil/

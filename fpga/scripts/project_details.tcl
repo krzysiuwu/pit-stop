@@ -32,8 +32,10 @@ set xdc_files {
 # Specify SystemVerilog design files location   -- EDIT
 set sv_files {
     ../rtl/Graphics/VGA/Target_res/vga_pkg.sv
+    ../rtl/Graphics/VGA/Low_res/low_res_pkg.sv
+    ../rtl/Graphics/VGA/Target_res/vga_if.sv
+    ../rtl/Graphics/VGA/Low_res/low_res_if.sv
     ../rtl/Graphics/VGA/Target_res/vga_timing.sv
-    ../rtl/Graphics/VGA/Low_res/low_res_pkg.sv 
     ../rtl/Graphics/VGA/LUT2RGB_converter.sv
     ../rtl/Graphics/Rom_modules/Cloud_Rom.sv
     ../rtl/Graphics/Rom_modules/Grandstand_Rom.sv
@@ -46,16 +48,26 @@ set sv_files {
     ../rtl/Graphics/Rom_modules/WheelRack_Rom.sv
     ../rtl/Graphics/Draw_modules/draw_button_with_text.sv
     ../rtl/Graphics/Draw_modules/draw_bg.sv
+    ../rtl/Graphics/Draw_modules/draw_PitstopLogo.sv
     ../rtl/Graphics/Draw_modules/draw_BolidF1Default.sv
     ../rtl/Graphics/Draw_modules/draw_BolidF1NoWheels.sv
     ../rtl/Graphics/Draw_modules/draw_Wheel.sv
-    ../rtl/Graphics/Draw_modules/draw_game.sv
-    ../rtl/Graphics/Draw_modules/draw_PitstopLogo.sv
-    ../rtl/Game_logic/game_fsm.sv
+    ../rtl/Graphics/Draw_modules/draw_WheelRack.sv
+    ../rtl/Graphics/Draw_modules/draw_options_panel.sv
+    ../rtl/Graphics/Draw_modules/draw_summary_panel.sv
+    ../rtl/Game_logic/game_options.sv
+    ../rtl/Game_logic/singleplayer_game_controller.sv
+    ../rtl/Game_logic/Sprite_control/bolid_anim_ctl.sv
+    ../rtl/Game_logic/Sprite_control/mouse_hitbox.sv
+    ../rtl/Game_logic/Sprite_control/wheel_physics.sv
+    ../rtl/Game_logic/Sprite_control/wheel_service_fsm.sv
+    ../rtl/Game_logic/system_fsm.sv
+    ../rtl/Hardware/seven_segment_display.sv
+    ../rtl/Graphics/Draw_modules/draw_mouse_cursor.sv
     ../rtl/mouse_limits.sv
     ../rtl/top_vga.sv
-    ../rtl/Graphics/VGA/Target_res/vga_if.sv
-    ../rtl/Graphics/VGA/Low_res/low_res_if.sv
+    ../rtl/pit_stop_core.sv
+    ../rtl/top_fsm.sv
     ../clock/clk_wiz_0.v
     ../clock/clk_wiz_0_clk_wiz.v
     rtl/top_vga_basys3.sv
@@ -75,6 +87,7 @@ set vhdl_files {
 
 # Specify files for a memory initialization     -- EDIT
 set mem_files {
+    ../rtl/Graphics/Sprites_and_textures/Default_LUT.mem
     ../rtl/Graphics/Sprites_and_textures/Cloud_sprite.mem
     ../rtl/Graphics/Sprites_and_textures/Grandstand_sprite.mem
     ../rtl/Graphics/Sprites_and_textures/BasicButton8chars_sprite.mem
@@ -82,5 +95,6 @@ set mem_files {
     ../rtl/Graphics/Sprites_and_textures/BolidF1Default_sprite.mem
     ../rtl/Graphics/Sprites_and_textures/BolidF1NoWheels_sprite.mem
     ../rtl/Graphics/Sprites_and_textures/Wheel_sprite.mem
+    ../rtl/Graphics/Sprites_and_textures/WheelRack_sprite.mem
     ../rtl/Graphics/Sprites_and_textures/PitstopLogo.mem
 }

@@ -16,9 +16,13 @@ reg [3:0] rom [0:3079];
  * Memory initialization from a file
  */
 
-/* Relative path from the simulation or synthesis working directory */
-initial $readmemh("Grandstand_sprite.mem", rom);
-
+`ifdef VERILATOR
+    initial $readmemh("rtl/Graphics/Sprites_and_textures/Grandstand_sprite.mem", rom);
+`elsif SYNTHESIS
+    initial $readmemh("Grandstand_sprite.mem", rom);
+`else
+    initial $readmemh("../../rtl/Graphics/Sprites_and_textures/Grandstand_sprite.mem", rom);
+`endif
 
 /**
  * Internal logic

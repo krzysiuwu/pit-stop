@@ -15,12 +15,16 @@
 module top_vga_basys3 (
         input  wire clk,
         input  wire btnC,
+        input  wire [15:0] sw,
         output wire Vsync,
         output wire Hsync,
         output wire [3:0] vgaRed,
         output wire [3:0] vgaGreen,
         output wire [3:0] vgaBlue,
         output wire JA1,
+        output wire [6:0] seg,
+        output wire [3:0] an,
+        output wire dp,
 
         inout wire PS2Data,
         inout wire PS2Clk
@@ -37,6 +41,11 @@ module top_vga_basys3 (
     wire pclk_mirror;
 
     wire clk_65M;
+    wire core_rst;
+    wire option_multiplayer;
+    wire [1:0] option_game_mode;
+    wire [7:0] option_target_value;
+    wire [7:0] seven_segment_value;
 
     (* KEEP = "TRUE" *)
     (* ASYNC_REG = "TRUE" *)
@@ -49,6 +58,7 @@ module top_vga_basys3 (
      */
 
     assign JA1 = pclk_mirror;
+    assign core_rst = !btnC && locked;
 
 
     /**
@@ -56,9 +66,9 @@ module top_vga_basys3 (
      */
 
     clk_wiz_0 CLK0(
-        .clk_in(clk),
+        .clk_in(clk),       // Zmieniono na clk_in1 (domyślna nazwa Vivado)
         .clk_out1(clk_65M),
-        .locked
+        .locked(locked)
     );
 
 
@@ -77,16 +87,30 @@ module top_vga_basys3 (
      *  Project functional top module
      */
 
-    top_vga u_top_vga (
+    top_fsm u_top_fsm (
         .clk(clk_65M),
-        .rst(!btnC),
+        .rst(core_rst), // Bezpieczny reset Active Low (!btnC to 1, gdy nie wciśnięty)
+        .switches(sw),
         .r(vgaRed),
         .g(vgaGreen),
         .b(vgaBlue),
         .hs(Hsync),
         .vs(Vsync),
-        .ps2_data(PS2Data),             //do ogarnięcia
+        .option_multiplayer(option_multiplayer),
+        .option_game_mode(option_game_mode),
+        .option_target_value(option_target_value),
+        .seven_segment_value(seven_segment_value),
+        .ps2_data(PS2Data),             
         .ps2_clk(PS2Clk)
+    );
+
+    seven_segment_display u_seven_segment_display (
+        .clk(clk_65M),
+        .rst(core_rst),
+        .value(seven_segment_value),
+        .seg(seg),
+        .an(an),
+        .dp(dp)
     );
 
 endmodule

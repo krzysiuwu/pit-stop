@@ -1,0 +1,34 @@
+Options configuration:
+
+- added synchronized Basys 3 switch decoding
+- added single-player/multiplayer and four game-mode selections
+- added a framed VGA options panel with live values and UART OFFLINE status
+- added a multiplexed 7-segment target display
+- added keyboard-controlled virtual switches to the Verilator SDL frontend
+- updated FPGA constraints, source lists, testbench and documentation
+
+UART communication and game-mode scoring rules are intentionally left for the
+next implementation stages.
+
+
+Single-player game completion:
+
+- Added the animated Pit Stop logo to the centered main menu.
+- Centered and moved the PLAY and OPTS buttons below the logo.
+- Added latched game settings, scoring, timers and end conditions.
+- Implemented TIME ATTACK, POINT RACE, SPEED UP and BEST OF rules.
+- Added a final result panel with score and timing statistics.
+- Removed the BACK button from active gameplay.
+- Connected live score/time to the Basys 3 seven-segment display.
+- Exposed the seven-segment value in the Verilator window title.
+- Added an automated controller test covering wins and losses.
+- Isolated the interactive Verilator build from stale files in the old obj_dir.
+
+
+MSYS2 Verilator compatibility:
+
+- Added automatic detection of the MSYS2 GCC 16 toolchain.
+- Forced the compatible libstdc++ string ABI for Verilator-generated C++.
+- Used separate ABI-specific build directories to avoid stale object files.
+- Applied the workaround to both the controller test and SDL simulator build.
+- Made both build scripts independent of the current working directory.

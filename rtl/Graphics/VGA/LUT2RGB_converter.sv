@@ -18,7 +18,7 @@ module LUT2RGB_converter (
 
     logic  [11:0] rgb_next;
 
-    always_comb begin                                           //convervsion to 12-bit colors from lut values
+    always_comb begin
         case (lut_value)
             4'h0: rgb_next = 12'h000; // Black
             4'h1: rgb_next = 12'h333; // Dark Gray
@@ -36,7 +36,7 @@ module LUT2RGB_converter (
             4'hD: rgb_next = 12'h631; // Brown
             4'hE: rgb_next = 12'hF0A; // Hot Pink
             4'hF: rgb_next = 12'hF0F; // Magenta
-            default: rgb_next = 12'h000; // Default to Black
+            default: rgb_next = 12'h000;
         endcase
     end
 

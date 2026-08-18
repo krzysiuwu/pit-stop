@@ -25,6 +25,12 @@ module draw_char (
     logic [3:0]  sprite_pixel;
     logic        sprite_active;
 
+    logic [11:0] cur_x;
+    logic [11:0] cur_y;
+
+    assign cur_x = {1'b0, vga_in.hcount} >> 2;
+    assign cur_y = {1'b0, vga_in.vcount} >> 2;
+
     Font_Rom u_font_rom (
         .clk(clk),
         .address(rom_addr),
@@ -39,8 +45,8 @@ module draw_char (
         .x_pos(x_pos),
         .y_pos(y_pos),
 
-        .hcount(low_res_in.hcount),
-        .vcount(low_res_in.vcount),
+        .hcount(cur_x),
+        .vcount(cur_y),
         
         .char_code(char_code),
         .char_color(char_color),

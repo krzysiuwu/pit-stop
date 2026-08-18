@@ -39,9 +39,13 @@ module top_fpga_tb;
      */
 
     logic clk, rst;
+    logic [15:0] sw;
     wire pclk;
     wire vs, hs;
     wire [3:0] r, g, b;
+    wire [6:0] seg;
+    wire [3:0] an;
+    wire dp;
 
 
     /**
@@ -61,12 +65,16 @@ module top_fpga_tb;
     top_vga_basys3 dut (
         .clk(clk),
         .btnC(rst),
+        .sw(sw),
         .Vsync(vs),
         .Hsync(hs),
         .vgaRed(r),
         .vgaGreen(g),
         .vgaBlue(b),
-        .JA1(pclk)
+        .JA1(pclk),
+        .seg(seg),
+        .an(an),
+        .dp(dp)
     );
 
     tiff_writer #(
@@ -87,6 +95,7 @@ module top_fpga_tb;
      */
 
     initial begin
+        sw = 16'd60;
         rst = 1'b1;
         #(RST_START_TIME) rst = 1'b0;
         #(RST_ACTIVE_TIME) rst = 1'b1;
