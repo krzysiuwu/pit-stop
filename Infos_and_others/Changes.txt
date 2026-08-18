@@ -7,10 +7,6 @@ Options configuration:
 - added keyboard-controlled virtual switches to the Verilator SDL frontend
 - updated FPGA constraints, source lists, testbench and documentation
 
-UART communication and game-mode scoring rules are intentionally left for the
-next implementation stages.
-
-
 Single-player game completion:
 
 - Added the animated Pit Stop logo to the centered main menu.
@@ -32,3 +28,19 @@ MSYS2 Verilator compatibility:
 - Used separate ABI-specific build directories to avoid stale object files.
 - Applied the workaround to both the controller test and SDL simulator build.
 - Made both build scripts independent of the current working directory.
+
+
+Symmetric two-board UART multiplayer:
+
+- Added 115200 baud 8N1 transmitter and receiver modules.
+- Added framed packets with magic bytes, checksum, session ID, game settings,
+  current score and finish state.
+- Both Basys boards use the same bitstream; PLAY on either board starts both.
+- Added connection waiting, heartbeat timeout and final score exchange.
+- Added multiplayer WIN/LOSE/DRAW comparison and rival score on the summary.
+- Added SW12 hardware diagnostics using switches, LEDs and seven-segment output.
+- Added a BTNU simulated-rival finish path for full testing with one monitor.
+- Assigned UART TX/RX to JB1/JB2 and enabled all diagnostic LEDs.
+- Added a two-instance automated UART/session/result test.
+- Added synchronized reset release and fixed out-of-range text indexing.
+- Made bitstream generation stop safely instead of copying a stale .bit file.

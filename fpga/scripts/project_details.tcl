@@ -31,6 +31,7 @@ set xdc_files {
 
 # Specify SystemVerilog design files location   -- EDIT
 set sv_files {
+    ../rtl/Game_logic/game_pkg.sv
     ../rtl/Graphics/VGA/Target_res/vga_pkg.sv
     ../rtl/Graphics/VGA/Low_res/low_res_pkg.sv
     ../rtl/Graphics/VGA/Target_res/vga_if.sv
@@ -57,12 +58,17 @@ set sv_files {
     ../rtl/Graphics/Draw_modules/draw_summary_panel.sv
     ../rtl/Game_logic/game_options.sv
     ../rtl/Game_logic/singleplayer_game_controller.sv
+    ../rtl/Game_logic/multiplayer_result.sv
     ../rtl/Game_logic/Sprite_control/bolid_anim_ctl.sv
     ../rtl/Game_logic/Sprite_control/mouse_hitbox.sv
     ../rtl/Game_logic/Sprite_control/wheel_physics.sv
     ../rtl/Game_logic/Sprite_control/wheel_service_fsm.sv
     ../rtl/Game_logic/system_fsm.sv
+    ../rtl/Uart/uart_tx.sv
+    ../rtl/Uart/uart_rx.sv
+    ../rtl/Uart/uart_game_link.sv
     ../rtl/Hardware/seven_segment_display.sv
+    ../rtl/Hardware/reset_sync.sv
     ../rtl/Graphics/Draw_modules/draw_mouse_cursor.sv
     ../rtl/mouse_limits.sv
     ../rtl/top_vga.sv

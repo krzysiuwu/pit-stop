@@ -1,3 +1,5 @@
+import game_pkg::*;
+
 module singleplayer_game_controller #(
     parameter int FRAMES_PER_SECOND = 60,
     parameter int SPEED_UP_ROUNDS   = 5
@@ -26,11 +28,6 @@ module singleplayer_game_controller #(
 
     timeunit 1ns;
     timeprecision 1ps;
-
-    localparam logic [1:0] MODE_TIME_ATTACK = 2'b00;
-    localparam logic [1:0] MODE_POINT_RACE  = 2'b01;
-    localparam logic [1:0] MODE_SPEED_UP    = 2'b10;
-    localparam logic [1:0] MODE_BEST_OF     = 2'b11;
 
     localparam int FRAME_COUNTER_WIDTH =
         (FRAMES_PER_SECOND <= 1) ? 1 : $clog2(FRAMES_PER_SECOND);

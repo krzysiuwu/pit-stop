@@ -95,7 +95,11 @@ module draw_button_with_text #(
     endgenerate
 
     logic [7:0] current_char_code;
-    assign current_char_code = char_array[char_index];
+    always_comb begin
+        current_char_code = 8'h20;
+        if (in_txt && (char_index < STR_LEN))
+            current_char_code = char_array[char_index];
+    end
 
     logic [10:0] txt_rom_addr;
     assign txt_rom_addr = in_txt ? {current_char_code[6:0], local_txt_y[2:0]} : 11'b0;

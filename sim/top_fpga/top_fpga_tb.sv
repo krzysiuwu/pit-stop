@@ -46,6 +46,10 @@ module top_fpga_tb;
     wire [6:0] seg;
     wire [3:0] an;
     wire dp;
+    wire [15:0] led;
+    logic uart_rx;
+    logic btnU;
+    wire uart_tx;
 
 
     /**
@@ -65,6 +69,7 @@ module top_fpga_tb;
     top_vga_basys3 dut (
         .clk(clk),
         .btnC(rst),
+        .btnU(btnU),
         .sw(sw),
         .Vsync(vs),
         .Hsync(hs),
@@ -74,7 +79,10 @@ module top_fpga_tb;
         .JA1(pclk),
         .seg(seg),
         .an(an),
-        .dp(dp)
+        .dp(dp),
+        .led(led),
+        .uart_rx(uart_rx),
+        .uart_tx(uart_tx)
     );
 
     tiff_writer #(
@@ -96,9 +104,10 @@ module top_fpga_tb;
 
     initial begin
         sw = 16'd60;
+        uart_rx = 1'b1;
+        btnU = 1'b0;
         rst = 1'b1;
-        #(RST_START_TIME) rst = 1'b0;
-        #(RST_ACTIVE_TIME) rst = 1'b1;
+        #(RST_START_TIME + RST_ACTIVE_TIME) rst = 1'b0;
 
         /*
 

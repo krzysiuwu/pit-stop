@@ -1,3 +1,5 @@
+import game_pkg::*;
+
 module pit_stop_core (
     input  logic clk,
     input  logic rst,
@@ -8,6 +10,15 @@ module pit_stop_core (
     input  logic signed [3:0] mouse_scroll,
     input  logic              mouse_new_event,
     input  logic [15:0]       switches,
+    input  logic              uart_rx_i,
+    input  logic              uart_debug_finish,
+
+    output logic              uart_tx_o,
+    output logic              uart_link_connected,
+    output logic              uart_rx_activity,
+    output logic              uart_error,
+    output logic              uart_remote_debug,
+    output logic [7:0]        uart_remote_score,
 
     output logic [3:0] r,
     output logic [3:0] g,
@@ -132,12 +143,14 @@ module pit_stop_core (
     logic enable_wheel_service;
     logic signed [11:0] bolid_x;
     logic [1:0] bolid_wheel_anim_step;
+    logic option_uart_test_mode;
 
     game_options u_game_options (
         .clk(clk),
         .rst(rst),
         .switches(switches),
         .multiplayer(option_multiplayer),
+        .uart_test_mode(option_uart_test_mode),
         .game_mode(option_game_mode),
         .target_value(option_target_value)
     );
@@ -149,6 +162,7 @@ module pit_stop_core (
     logic rear_service_done;
     logic game_running;
     logic game_finished;
+    logic game_finished_for_fsm;
     logic player_won;
     logic [1:0] active_game_mode;
     logic [7:0] active_target_value;
@@ -158,16 +172,170 @@ module pit_stop_core (
     logic [15:0] game_elapsed_seconds;
     logic [7:0] last_stop_seconds;
     logic [7:0] best_stop_seconds;
+    logic game_start_pulse;
+
+    logic       active_multiplayer;
+    logic       pending_multiplayer;
+    logic       pending_start_remote;
+    logic [1:0] pending_game_mode;
+    logic [7:0] pending_target_value;
+
+    logic       remote_multiplayer_selected;
+    logic       remote_start_pulse;
+    logic       remote_game_finished;
+    logic [1:0] remote_game_mode;
+    logic [7:0] remote_target_value;
+
+    logic       local_publish_finished;
+    logic       multiplayer_match_complete;
+    logic       freeze_local_game;
+    logic [1:0] multiplayer_match_result;
+    logic [1:0] summary_match_result;
+    logic       multiplayer_ready;
+    logic       local_session_start;
+    logic       local_session_reset;
+    logic       controller_frame_tick;
+    logic       controller_service_active;
+    logic       controller_round_complete;
+    (* ASYNC_REG = "TRUE" *) logic debug_finish_meta;
+    (* ASYNC_REG = "TRUE" *) logic debug_finish_sync;
+    logic       debug_finish_latched;
+    logic       multiplayer_local_game_finished;
+    logic [7:0] multiplayer_local_score;
+    logic [7:0] summary_local_score;
+
+    assign multiplayer_ready = uart_link_connected &&
+                               remote_multiplayer_selected;
+    assign local_session_start = game_start_pulse &&
+                                 pending_multiplayer &&
+                                 !pending_start_remote;
+    assign local_session_reset = back_clicked &&
+                                 (system_screen == SCREEN_SUMMARY);
+    assign multiplayer_local_game_finished = option_uart_test_mode
+                                           ? debug_finish_latched
+                                           : game_finished;
+    assign multiplayer_local_score = option_uart_test_mode
+                                   ? option_target_value
+                                   : game_score;
+    assign summary_local_score = active_multiplayer
+                               ? multiplayer_local_score
+                               : game_score;
+
+    // BTNU is used only by the hardware UART test. It is synchronized and
+    // latched so the finish flag remains present in periodic packets.
+    always_ff @(posedge clk or negedge rst) begin
+        if (!rst) begin
+            debug_finish_meta <= 1'b0;
+            debug_finish_sync <= 1'b0;
+        end else begin
+            debug_finish_meta <= uart_debug_finish;
+            debug_finish_sync <= debug_finish_meta;
+        end
+    end
+
+    always_ff @(posedge clk or negedge rst) begin
+        if (!rst)
+            debug_finish_latched <= 1'b0;
+        else if (game_start_pulse || local_session_reset)
+            debug_finish_latched <= 1'b0;
+        else if (option_uart_test_mode && debug_finish_sync)
+            debug_finish_latched <= 1'b1;
+    end
+
+    always_ff @(posedge clk or negedge rst) begin
+        if (!rst) begin
+            active_multiplayer  <= 1'b0;
+            pending_multiplayer <= 1'b0;
+            pending_start_remote <= 1'b0;
+            pending_game_mode   <= MODE_TIME_ATTACK;
+            pending_target_value <= 8'd1;
+        end else begin
+            if (play_clicked) begin
+                pending_multiplayer  <= option_multiplayer;
+                pending_start_remote <= 1'b0;
+                pending_game_mode    <= option_game_mode;
+                pending_target_value <= option_target_value;
+            end
+
+            // A remote request has priority if both players press PLAY in the
+            // same clock window. Both boards still run the same bitstream.
+            if (remote_start_pulse) begin
+                pending_multiplayer  <= 1'b1;
+                pending_start_remote <= 1'b1;
+                pending_game_mode    <= remote_game_mode;
+                pending_target_value <= remote_target_value;
+            end
+
+            if (game_start_pulse)
+                active_multiplayer <= pending_multiplayer;
+
+            if (local_session_reset)
+                active_multiplayer <= 1'b0;
+        end
+    end
+
+    uart_game_link u_uart_game_link (
+        .clk(clk),
+        .rst(rst),
+        .uart_rx_i(uart_rx_i),
+        .uart_tx_o(uart_tx_o),
+        .local_session_start(local_session_start),
+        .local_session_reset(local_session_reset),
+        .local_multiplayer_selected(option_multiplayer),
+        .local_debug_mode(option_uart_test_mode),
+        .local_game_finished(active_multiplayer && local_publish_finished),
+        .local_game_mode(active_multiplayer ? active_game_mode
+                                            : pending_game_mode),
+        .local_target_value(active_multiplayer ? active_target_value
+                                               : pending_target_value),
+        .local_score(option_uart_test_mode
+                   ? option_target_value : game_score),
+        .link_connected(uart_link_connected),
+        .remote_multiplayer_selected(remote_multiplayer_selected),
+        .remote_debug_mode(uart_remote_debug),
+        .remote_start_pulse(remote_start_pulse),
+        .remote_game_finished(remote_game_finished),
+        .remote_game_mode(remote_game_mode),
+        .remote_target_value(remote_target_value),
+        .remote_score(uart_remote_score),
+        .rx_activity(uart_rx_activity),
+        .rx_error_sticky(uart_error)
+    );
+
+    multiplayer_result u_multiplayer_result (
+        .active(active_multiplayer),
+        .local_game_finished(multiplayer_local_game_finished),
+        .remote_game_finished(remote_game_finished),
+        .local_score(multiplayer_local_score),
+        .remote_score(uart_remote_score),
+        .publish_finished(local_publish_finished),
+        .match_complete(multiplayer_match_complete),
+        .freeze_local_game(freeze_local_game),
+        .result(multiplayer_match_result)
+    );
+
+    assign controller_frame_tick = frame_tick && !freeze_local_game;
+    assign controller_service_active = enable_wheel_service &&
+                                       !freeze_local_game;
+    assign controller_round_complete = front_service_done &&
+                                       rear_service_done &&
+                                       !freeze_local_game;
+    assign game_finished_for_fsm = active_multiplayer
+                                 ? multiplayer_match_complete
+                                 : game_finished;
+    assign summary_match_result = active_multiplayer
+                                ? multiplayer_match_result
+                                : (player_won ? RESULT_WIN : RESULT_LOSE);
 
     singleplayer_game_controller u_singleplayer_game_controller (
         .clk(clk),
         .rst(rst),
-        .frame_tick(frame_tick),
-        .start_game(play_clicked),
-        .service_active(enable_wheel_service),
-        .round_complete(front_service_done && rear_service_done),
-        .selected_game_mode(option_game_mode),
-        .selected_target_value(option_target_value),
+        .frame_tick(controller_frame_tick),
+        .start_game(game_start_pulse),
+        .service_active(controller_service_active),
+        .round_complete(controller_round_complete),
+        .selected_game_mode(pending_game_mode),
+        .selected_target_value(pending_target_value),
         .game_running(game_running),
         .game_finished(game_finished),
         .player_won(player_won),
@@ -188,9 +356,13 @@ module pit_stop_core (
         .click_setup(options_clicked),
         .click_back(back_clicked),
         .frame_tick(frame_tick),
+        .multiplayer_selected(option_multiplayer),
+        .multiplayer_ready(multiplayer_ready),
+        .remote_start(remote_start_pulse),
         .front_wheel_done(front_service_done),
         .rear_wheel_done(rear_service_done),
-        .game_finished(game_finished),
+        .game_finishing(active_multiplayer && local_publish_finished),
+        .game_finished(game_finished_for_fsm),
         .state_out(system_screen),
         .enable_bolid_default(enable_bolid_default),
         .enable_bolid_no_wheels(enable_bolid_no_wheels),
@@ -199,15 +371,20 @@ module pit_stop_core (
         .enable_button_back(enable_button_back),
         .enable_wheel_rack(enable_wheel_rack),
         .enable_wheel_service(enable_wheel_service),
+        .game_start_pulse(game_start_pulse),
         .bolid_x(bolid_x),
         .bolid_wheel_anim_step(bolid_wheel_anim_step),
         .sequence_debug(sequence_debug)
     );
 
     always_comb begin
-        if (system_screen == 3'b011)
-            seven_segment_value = game_score;
-        else if (system_screen == 3'b010)
+        if (option_uart_test_mode &&
+            (system_screen != SCREEN_GAMEPLAY) &&
+            (system_screen != SCREEN_SUMMARY))
+            seven_segment_value = uart_remote_score;
+        else if (system_screen == SCREEN_SUMMARY)
+            seven_segment_value = summary_local_score;
+        else if (system_screen == SCREEN_GAMEPLAY)
             seven_segment_value = game_display_value;
         else
             seven_segment_value = option_target_value;
@@ -225,7 +402,7 @@ module pit_stop_core (
     logic [11:0] back_button_y;
 
     always_comb begin
-        if (system_screen == 3'b011) begin
+        if (system_screen == SCREEN_SUMMARY) begin
             back_button_x = BTN_BACK_SUMMARY_X;
             back_button_y = BTN_BACK_SUMMARY_Y;
         end else begin
@@ -511,7 +688,7 @@ module pit_stop_core (
     );
 
     draw_PitstopLogo u_draw_pitstop_logo (
-        .clk(clk), .rst(rst), .enable(system_screen == 3'b000),
+        .clk(clk), .rst(rst), .enable(system_screen == SCREEN_MAIN_MENU),
         .x_pos(LOGO_X), .y_pos(LOGO_Y),
         .low_res_in(low_res_pipe), .lut_in(lut_bg), .vga_in(vga_bg),
         .lut_out(lut_logo), .vga_out(vga_logo)
@@ -542,10 +719,16 @@ module pit_stop_core (
 
     draw_options_panel u_draw_options_panel (
         .clk(clk), .rst(rst),
-        .enable(system_screen == 3'b001),
+        .enable((system_screen == SCREEN_OPTIONS) ||
+                (system_screen == SCREEN_WAIT_UART)),
         .multiplayer(option_multiplayer),
+        .uart_connected(uart_link_connected),
+        .uart_peer_ready(multiplayer_ready),
+        .uart_test_mode(option_uart_test_mode),
+        .waiting_for_uart(system_screen == SCREEN_WAIT_UART),
         .game_mode(option_game_mode),
         .target_value(option_target_value),
+        .remote_score(uart_remote_score),
         .low_res_in(low_res_pipe), .lut_in(lut_rack),
         .vga_in(vga_rack), .lut_out(lut_options_panel),
         .vga_out(vga_options_panel)
@@ -553,11 +736,13 @@ module pit_stop_core (
 
     draw_summary_panel u_draw_summary_panel (
         .clk(clk), .rst(rst),
-        .enable(system_screen == 3'b011),
-        .player_won(player_won),
+        .enable(system_screen == SCREEN_SUMMARY),
+        .multiplayer(active_multiplayer),
+        .match_result(summary_match_result),
         .game_mode(active_game_mode),
         .target_value(active_target_value),
-        .score(game_score),
+        .score(summary_local_score),
+        .remote_score(uart_remote_score),
         .elapsed_seconds(game_elapsed_seconds),
         .last_stop_seconds(last_stop_seconds),
         .best_stop_seconds(best_stop_seconds),

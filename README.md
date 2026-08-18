@@ -10,8 +10,9 @@ Ekran `OPTS` pokazuje ustawienia odczytywane na zywo ze switchy Basys 3:
 | --- | --- |
 | `SW15` | `0` single-player, `1` multiplayer |
 | `SW14:13` | `00` time attack, `01` point race, `10` speed up, `11` best of |
+| `SW12` | sprzetowy tryb testowy UART |
 | `SW7:0` | binarna wartosc celu od 1 do 255; `0` jest wyswietlane jako `1` |
-| `SW12:8` | wolne na kolejne ustawienia |
+| `SW11:8` | wolne na kolejne ustawienia |
 
 `TIME ATTACK` zlicza ukonczone pit-stopy przez zadana liczbe sekund. Gracz
 wygrywa, jezeli zdobedzie przynajmniej jeden punkt. `POINT RACE` konczy sie po
@@ -20,11 +21,60 @@ sekund, zmniejsza go o sekunde po kazdej wymianie i wymaga pieciu udanych rund.
 `BEST OF` konczy sie po zadanej liczbie pit-stopow i pokazuje laczny, ostatni
 oraz najlepszy czas.
 
-Poza rozgrywka wyswietlacz 7-segmentowy pokazuje ustawiony cel. Podczas gry
+Poza rozgrywka wyswietlacz 7-segmentowy pokazuje ustawiony cel. W trybie
+testowym UART pokazuje wartosc odebrana z drugiego Basysa. Podczas gry
 pokazuje pozostaly czas w `TIME ATTACK` i `SPEED UP` albo aktualny wynik w
 `POINT RACE` i `BEST OF`. Na ekranie koncowym pokazuje wynik.
-Tryb multiplayer pokazuje obecnie `UART OFFLINE`: wybor opcji jest gotowy,
-ale lacznosc UART i reguly punktowania beda dodane jako osobny etap.
+
+## Multiplayer UART
+
+Oba Basysy uzywaja dokladnie tego samego bitstreamu. Lacze pracuje jako
+`115200 8N1`. Plytki okresowo wysylaja ramki z suma kontrolna, identyfikatorem
+sesji, wybranym trybem, celem, aktualnym wynikiem i flaga zakonczenia.
+
+Po nacisnieciu `PLAY` na jednej plytce druga automatycznie rozpoczyna te sama
+konfiguracje. Jezeli polaczenie nie jest jeszcze gotowe, gra pokazuje ekran
+`WAITING FOR UART LINK`. Po zakonczeniu obie strony wymieniaja koncowe wyniki,
+zatrzymuja lokalna gre i pokazuja `YOU WIN`, `YOU LOSE` albo `DRAW` wraz z
+wynikiem przeciwnika.
+
+Polaczenie Pmod JB:
+
+| Funkcja | Zlacze | Pin FPGA |
+| --- | --- | --- |
+| UART TX | `JB1` | `A14` |
+| UART RX | `JB2` | `A16` |
+
+Nalezy polaczyc `JB1` plytki A z `JB2` plytki B, `JB1` plytki B z `JB2`
+plytki A oraz `GND` z `GND`. Nie wolno laczyc pinow `VCC`.
+
+Diody diagnostyczne:
+
+| Diody | Znaczenie |
+| --- | --- |
+| `LED7:0` | ostatni wynik odebrany z drugiego Basysa |
+| `LED12` | druga plytka ma wlaczony test UART |
+| `LED13` | zapamietany blad ramki lub sumy kontrolnej |
+| `LED14` | zmienia stan po kazdej poprawnej ramce |
+| `LED15` | aktywne polaczenie UART |
+
+Do testu bez drugiego monitora ustaw `SW12=1` na obu plytkach. `SW7:0` jest
+wtedy wartoscia wysylana, a wyswietlacz 7-segmentowy pokazuje wartosc odebrana.
+Zmiana switchy na kazdej plytce i odczyt wyswietlacza na drugiej sprawdza oba
+kierunki transmisji.
+
+Pelna sciezke zakonczenia gry mozna sprawdzic jednym monitorem:
+
+1. Basys A: `SW15=1`, `SW12=0`, monitor i mysz podlaczone normalnie.
+2. Basys B: `SW15=1`, `SW12=1`, a na `SW7:0` ustaw testowy wynik rywala.
+3. Nacisnij `PLAY` na Basysie A i rozegraj dowolny fragment pit-stopu.
+4. Nacisnij `BTNU` na Basysie B. Jego wynik zostanie wyslany jako koncowy.
+5. Basys A powinien pokazac ekran `YOU WIN`, `YOU LOSE` albo `DRAW` z oboma
+   wynikami.
+
+W ten sposob jeden monitor wystarcza do sprawdzenia transmisji, synchronizacji
+sesji, zatrzymania gry, porownania i ekranu koncowego. Do normalnej,
+jednoczesnej gry dwoch osob nadal potrzebne sa dwa ekrany VGA.
 
 ## Przebieg gry
 
@@ -47,6 +97,10 @@ podnosic. Nowe kola sa wymienne i nie sa przypisane do konkretnej piasty.
 - `rtl/Game_logic/system_fsm.sv` steruje ekranami i sekwencja rundy.
 - `rtl/Game_logic/singleplayer_game_controller.sv` przechowuje ustawienia
   aktywnej gry, liczy czas, punkty i warunki zwyciestwa.
+- `rtl/Uart/uart_game_link.sv` opakowuje nadajnik i odbiornik w symetryczny
+  protokol sesji gry.
+- `rtl/Game_logic/multiplayer_result.sv` zamyka mecz po wymianie wynikow i
+  wyznacza `WIN/LOSE/DRAW`.
 - `rtl/Game_logic/Sprite_control/bolid_anim_ctl.sv` odpowiada za ruch bolidu.
 - `wheel_service_fsm.sv` realizuje cykl stare/nowe kolo, a
   `wheel_physics.sv` odpowiada tylko za przeciaganie i rzut.
@@ -70,6 +124,7 @@ W symulatorze fizyczne switche maja wygodne odpowiedniki na klawiaturze:
 | Klawisz | Dzialanie |
 | --- | --- |
 | `P` | przelacza single-player / multiplayer (`SW15`) |
+| `T` | przelacza sprzetowy tryb diagnostyczny (`SW12`) |
 | `1`...`4` | wybiera tryb gry (`SW14:13`) |
 | `+`, `-` lub strzalki | zmienia cel o 1 (`SW7:0`) |
 | `Page Up`, `Page Down` | zmienia cel o 10 |
@@ -77,10 +132,11 @@ W symulatorze fizyczne switche maja wygodne odpowiedniki na klawiaturze:
 Symulator startuje z ustawieniem single-player, time attack i celem `60`.
 Aktualna wartosc wyswietlacza 7-segmentowego jest widoczna w tytule okna.
 
-Test logiki trybow gry:
+Test logiki trybow gry oraz dwoch polaczonych instancji UART:
 
 ```bash
 ./tools/test_game_controller.sh
+./tools/test_uart.sh
 ```
 
 Skrypty automatycznie wykrywaja MSYS2 UCRT64/MINGW z GCC 16 i wlaczaja zgodne
@@ -96,4 +152,5 @@ source env.sh
 ```
 
 Plik `results/top_vga_basys3.bit` dolaczony do repozytorium pochodzi z
-poprzedniego buildu. Po zmianach logiki trzeba wygenerowac go ponownie.
+poprzedniego buildu i nie zawiera UART-u. Przed wgraniem na plytki trzeba
+wygenerowac go ponownie i wgrac ten sam nowy plik na oba Basysy.

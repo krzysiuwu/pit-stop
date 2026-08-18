@@ -12,16 +12,28 @@
 # To work properly, a git repository in the project directory is required.
 # Run from the project root directory.
 
-# Remove untracked files
+set -euo pipefail
+
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
+cd "${PROJECT_ROOT}"
+
+mkdir -p results
+
+# Remove only ignored Vivado products and build a fresh design.
 git clean -fXd fpga
+(
+    cd fpga
+    vivado -mode tcl -source scripts/generate_bitstream.tcl
+)
 
-# Run Vivado and generate bitstream
-cd fpga
-vivado -mode tcl -source scripts/generate_bitstream.tcl
-cd ${ROOT_DIR}
+bitstream_file="$(find fpga/build -type f -name "*.bit" -print -quit)"
+if [[ -z "${bitstream_file}" ]]; then
+    echo "Blad: Vivado nie utworzylo pliku .bit." >&2
+    exit 1
+fi
 
-# Copy bitstream to results
-find fpga/build -name "*.bit" -exec cp {} results/ \;
+cp "${bitstream_file}" results/top_vga_basys3.bit
 
 # Copy warnings and errors to a single log file in results
-./tools/warning_summary.sh
+"${SCRIPT_DIR}/warning_summary.sh"

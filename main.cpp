@@ -57,6 +57,8 @@ int main(int argc, char** argv) {
     top->mouse_scroll = 0;
     top->mouse_new_event = 0;
     top->switches = virtual_switches;
+    top->uart_rx = 1;
+    top->uart_debug_finish = 0;
     updateWindowTitle(window, virtual_switches, virtual_switches & 0x00ff);
 
     top->rst = 1; top->clk = 0; top->eval();
@@ -92,6 +94,13 @@ int main(int argc, char** argv) {
                     case SDLK_p:
                         if (e.key.repeat == 0)
                             virtual_switches ^= 0x8000;
+                        else
+                            switches_changed = false;
+                        break;
+
+                    case SDLK_t:
+                        if (e.key.repeat == 0)
+                            virtual_switches ^= 0x1000;
                         else
                             switches_changed = false;
                         break;

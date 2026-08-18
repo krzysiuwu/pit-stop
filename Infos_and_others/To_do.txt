@@ -58,7 +58,7 @@ Podział na foldery:
 
         - Uart:
 
-            - Napisać wszystko, do ogarnięcia na końcu. Trzeba wyspecyfikować na czym będzie polegać transmisja
+            - Gotowe: UART 115200 8N1, protokol sesji, wyniki i diagnostyka
 
     sim:
 
@@ -94,7 +94,12 @@ Opcje gry:
         - wynik/czas gry na wyswietlaczu 7-segmentowym
         - ekran koncowy z wynikiem i statystykami
         - automatyczny test kontrolera rozgrywki
+        - UART miedzy dwoma identycznymi Basysami
+        - automatyczny start drugiej plytki i synchronizacja konfiguracji
+        - wymiana wynikow oraz WIN/LOSE/DRAW
+        - test UART bez drugiego monitora przez SW12, LED-y i 7-segmenty
+        - automatyczny test dwoch instancji UART
 
     Do zrobienia:
-        - UART i synchronizacja dwoch Basysow dla multiplayera
-        - porownanie graczy i rozstrzyganie zwyciezcy w multiplayer BEST OF
+        - uruchomic testy oraz synteze Vivado na docelowym komputerze
+        - przetestowac oba kierunki UART na dwoch fizycznych Basysach

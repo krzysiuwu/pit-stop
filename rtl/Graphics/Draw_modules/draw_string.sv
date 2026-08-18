@@ -62,7 +62,11 @@ module draw_string #(
     endgenerate
 
     logic [7:0] current_char_code;
-    assign current_char_code = char_array[char_index];
+    always_comb begin
+        current_char_code = 8'h20;
+        if (in_hitbox && (char_index < MAX_CHARS))
+            current_char_code = char_array[char_index];
+    end
 
     // Zmiana rozmiarów pod Twój moduł Font_Rom
     logic [10:0] rom_addr; 

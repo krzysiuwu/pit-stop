@@ -1,14 +1,17 @@
 import vga_pkg::*;
 import low_res_pkg::*;
+import game_pkg::*;
 
 module draw_summary_panel (
     input  logic        clk,
     input  logic        rst,
     input  logic        enable,
-    input  logic        player_won,
+    input  logic        multiplayer,
+    input  logic [1:0]  match_result,
     input  logic [1:0]  game_mode,
     input  logic [7:0]  target_value,
     input  logic [7:0]  score,
+    input  logic [7:0]  remote_score,
     input  logic [15:0] elapsed_seconds,
     input  logic [7:0]  last_stop_seconds,
     input  logic [7:0]  best_stop_seconds,
@@ -54,7 +57,11 @@ module draw_summary_panel (
                      (cur_x == PANEL_X + PANEL_W - 2) ||
                      (cur_y == PANEL_Y + 1) ||
                      (cur_y == PANEL_Y + PANEL_H - 2)) begin
-            panel_color = player_won ? 4'h7 : 4'h5;
+            case (match_result)
+                RESULT_WIN:  panel_color = 4'h7;
+                RESULT_DRAW: panel_color = 4'h4;
+                default:     panel_color = 4'h5;
+            endcase
         end else if ((cur_y == 12'd45) || (cur_y == 12'd61)) begin
             panel_color = 4'h6;
         end
@@ -128,6 +135,7 @@ module draw_summary_panel (
 
     logic [9:0] elapsed_display;
     logic [23:0] score_ascii;
+    logic [23:0] remote_score_ascii;
     logic [23:0] target_ascii;
     logic [23:0] elapsed_ascii;
     logic [23:0] last_ascii;
@@ -136,6 +144,7 @@ module draw_summary_panel (
     assign elapsed_display = (elapsed_seconds > 16'd999)
                            ? 10'd999 : elapsed_seconds[9:0];
     assign score_ascii   = decimal_ascii3({2'b0, score});
+    assign remote_score_ascii = decimal_ascii3({2'b0, remote_score});
     assign target_ascii  = decimal_ascii3({2'b0, target_value});
     assign elapsed_ascii = decimal_ascii3(elapsed_display);
     assign last_ascii    = decimal_ascii3({2'b0, last_stop_seconds});
@@ -147,14 +156,22 @@ module draw_summary_panel (
         line_text = {LINE_CHARS{8'h20}};
 
         case (text_row)
-            3'd0:
-                line_text = {"PIT STOP RESULT", {13{8'h20}}};
+            3'd0: begin
+                if (multiplayer)
+                    line_text = {"MULTIPLAYER RESULT", {10{8'h20}}};
+                else
+                    line_text = {"PIT STOP RESULT", {13{8'h20}}};
+            end
 
             3'd1: begin
-                if (player_won)
-                    line_text = {"RESULT   YOU WIN", {12{8'h20}}};
-                else
-                    line_text = {"RESULT   YOU LOSE", {11{8'h20}}};
+                case (match_result)
+                    RESULT_WIN:
+                        line_text = {"RESULT   YOU WIN", {12{8'h20}}};
+                    RESULT_DRAW:
+                        line_text = {"RESULT   DRAW", {15{8'h20}}};
+                    default:
+                        line_text = {"RESULT   YOU LOSE", {11{8'h20}}};
+                endcase
             end
 
             3'd2: begin
@@ -166,21 +183,32 @@ module draw_summary_panel (
                 endcase
             end
 
-            3'd3:
-                line_text = {"SCORE    ", score_ascii, " PTS", {12{8'h20}}};
+            3'd3: begin
+                if (multiplayer)
+                    line_text = {"YOU      ", score_ascii,
+                                 " PTS", {12{8'h20}}};
+                else
+                    line_text = {"SCORE    ", score_ascii,
+                                 " PTS", {12{8'h20}}};
+            end
 
             3'd4: begin
-                case (game_mode)
-                    2'b00, 2'b10:
-                        line_text = {"TARGET   ", target_ascii,
-                                     " SEC", {12{8'h20}}};
-                    2'b01:
-                        line_text = {"TARGET   ", target_ascii,
-                                     " PTS", {12{8'h20}}};
-                    default:
-                        line_text = {"TARGET   ", target_ascii,
-                                     " RUNS", {11{8'h20}}};
-                endcase
+                if (multiplayer) begin
+                    line_text = {"RIVAL    ", remote_score_ascii,
+                                 " PTS", {12{8'h20}}};
+                end else begin
+                    case (game_mode)
+                        2'b00, 2'b10:
+                            line_text = {"TARGET   ", target_ascii,
+                                         " SEC", {12{8'h20}}};
+                        2'b01:
+                            line_text = {"TARGET   ", target_ascii,
+                                         " PTS", {12{8'h20}}};
+                        default:
+                            line_text = {"TARGET   ", target_ascii,
+                                         " RUNS", {11{8'h20}}};
+                    endcase
+                end
             end
 
             3'd5:
@@ -206,7 +234,11 @@ module draw_summary_panel (
         if (text_row == 3'd0)
             text_color = 4'h4;
         else if (text_row == 3'd1)
-            text_color = player_won ? 4'h7 : 4'h5;
+            case (match_result)
+                RESULT_WIN:  text_color = 4'h7;
+                RESULT_DRAW: text_color = 4'h4;
+                default:     text_color = 4'h5;
+            endcase
         else if ((text_row >= 3'd3) && (char_index >= 5'd9))
             text_color = 4'h7;
     end

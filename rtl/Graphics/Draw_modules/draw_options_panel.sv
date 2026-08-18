@@ -6,8 +6,13 @@ module draw_options_panel (
     input  logic       rst,
     input  logic       enable,
     input  logic       multiplayer,
+    input  logic       uart_connected,
+    input  logic       uart_peer_ready,
+    input  logic       uart_test_mode,
+    input  logic       waiting_for_uart,
     input  logic [1:0] game_mode,
     input  logic [7:0] target_value,
+    input  logic [7:0] remote_score,
 
     input  logic [3:0] lut_in,
     vga_if.in          vga_in,
@@ -114,11 +119,17 @@ module draw_options_panel (
     logic [7:0] target_hundreds;
     logic [7:0] target_tens;
     logic [7:0] target_ones;
+    logic [7:0] remote_hundreds;
+    logic [7:0] remote_tens;
+    logic [7:0] remote_ones;
 
     always_comb begin
         target_hundreds = 8'h30 + (target_value / 8'd100);
         target_tens     = 8'h30 + ((target_value % 8'd100) / 8'd10);
         target_ones     = 8'h30 + (target_value % 8'd10);
+        remote_hundreds = 8'h30 + (remote_score / 8'd100);
+        remote_tens     = 8'h30 + ((remote_score % 8'd100) / 8'd10);
+        remote_ones     = 8'h30 + (remote_score % 8'd10);
     end
 
     logic [LINE_BITS-1:0] line_text;
@@ -127,7 +138,12 @@ module draw_options_panel (
         line_text = {LINE_CHARS{8'h20}};
 
         case (text_row)
-            3'd0: line_text = {"OPTIONS", {21{8'h20}}};
+            3'd0: begin
+                if (waiting_for_uart)
+                    line_text = {"WAITING FOR UART LINK", {7{8'h20}}};
+                else
+                    line_text = {"OPTIONS", {21{8'h20}}};
+            end
 
             3'd1: begin
                 if (multiplayer)
@@ -137,8 +153,19 @@ module draw_options_panel (
             end
 
             3'd2: begin
-                if (multiplayer)
-                    line_text = {"UART     OFFLINE", {12{8'h20}}};
+                if (multiplayer) begin
+                    if (uart_peer_ready)
+                        line_text = {"UART     CONNECTED", {10{8'h20}}};
+                    else if (uart_connected)
+                        line_text = {"UART     PEER NOT READY", {5{8'h20}}};
+                    else
+                        line_text = {"UART     OFFLINE", {12{8'h20}}};
+                end else if (uart_test_mode) begin
+                    if (uart_connected)
+                        line_text = {"UART     CONNECTED", {10{8'h20}}};
+                    else
+                        line_text = {"UART     OFFLINE", {12{8'h20}}};
+                end
                 else
                     line_text = {"UART     NOT USED", {11{8'h20}}};
             end
@@ -181,10 +208,22 @@ module draw_options_panel (
                         line_text = {"GOAL     FINISH ALL RUNS", {4{8'h20}}};
                 endcase
             end
-            3'd6:
-                line_text = {"SW15 PLAYER  SW14-13 MODE", {3{8'h20}}};
-            default:
-                line_text = {"SW7-0 TARGET  SIM 1-4 +/-", {3{8'h20}}};
+            3'd6: begin
+                if (uart_test_mode)
+                    line_text = {"BTNU FINISHES TEST", {10{8'h20}}};
+                else
+                    line_text = {"UART 115200 8N1", {13{8'h20}}};
+            end
+
+            default: begin
+                if (uart_test_mode)
+                    line_text = {"TX ", target_hundreds, target_tens,
+                                 target_ones, "  RX ", remote_hundreds,
+                                 remote_tens, remote_ones,
+                                 "  7SEG RX", {5{8'h20}}};
+                else
+                    line_text = {"SW12 ENABLES UART TEST", {6{8'h20}}};
+            end
         endcase
     end
 
@@ -203,12 +242,16 @@ module draw_options_panel (
         else if ((text_row == 3'd1) && (char_index >= 5'd9))
             text_color = 4'h7;
         else if ((text_row == 3'd2) && (char_index >= 5'd9))
-            text_color = multiplayer ? 4'h5 : 4'h3;
+            text_color = ((multiplayer && uart_peer_ready) ||
+                          (uart_test_mode && uart_connected))
+                       ? 4'h7 : ((multiplayer || uart_test_mode) ? 4'h5 : 4'h3);
         else if (((text_row == 3'd3) || (text_row == 3'd4)) &&
                  (char_index >= 5'd9))
             text_color = 4'h7;
         else if ((text_row == 3'd5) && (char_index >= 5'd9))
             text_color = 4'h7;
+        else if (text_row >= 3'd6)
+            text_color = uart_test_mode ? 4'h7 : 4'h3;
     end
 
     logic [10:0] font_addr;

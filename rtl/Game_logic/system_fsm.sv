@@ -1,3 +1,5 @@
+import game_pkg::*;
+
 module system_fsm (
     input  logic clk,
     input  logic rst,
@@ -6,9 +8,13 @@ module system_fsm (
     input  logic click_setup,
     input  logic click_back,
     input  logic frame_tick,
+    input  logic multiplayer_selected,
+    input  logic multiplayer_ready,
+    input  logic remote_start,
 
     input  logic front_wheel_done,
     input  logic rear_wheel_done,
+    input  logic game_finishing,
     input  logic game_finished,
 
     output logic [2:0] state_out,
@@ -20,6 +26,7 @@ module system_fsm (
     output logic enable_button_back,
     output logic enable_wheel_rack,
     output logic enable_wheel_service,
+    output logic game_start_pulse,
 
     output logic signed [11:0] bolid_x,
     output logic [1:0]         bolid_wheel_anim_step,
@@ -29,11 +36,6 @@ module system_fsm (
     timeunit 1ns;
     timeprecision 1ps;
 
-    localparam logic [2:0] SCREEN_MAIN_MENU = 3'b000;
-    localparam logic [2:0] SCREEN_OPTIONS   = 3'b001;
-    localparam logic [2:0] SCREEN_GAMEPLAY  = 3'b010;
-    localparam logic [2:0] SCREEN_SUMMARY   = 3'b011;
-
     // Stany sekwencji sa oddzielone od numeru ekranu. Pozwala to zachowac
     // prosty interfejs renderera, a jednoczesnie trzymac caly przebieg rundy
     // poza modulem top.
@@ -41,11 +43,14 @@ module system_fsm (
         MENU_BOOT,
         MAIN_MENU,
         OPTIONS,
+        WAITING_UART,
+        GAME_SESSION_START,
         GAME_ARRIVE_START,
         GAME_ARRIVING,
         GAME_SERVICE,
         GAME_DEPART_START,
         GAME_DEPARTING,
+        WAITING_RESULT,
         SUMMARY
     } system_state_t;
 
@@ -88,15 +93,34 @@ module system_fsm (
             end
 
             MAIN_MENU: begin
-                if (click_play)
-                    next_state = GAME_ARRIVE_START;
+                if (remote_start)
+                    next_state = GAME_SESSION_START;
+                else if (click_play) begin
+                    if (multiplayer_selected && !multiplayer_ready)
+                        next_state = WAITING_UART;
+                    else
+                        next_state = GAME_SESSION_START;
+                end
                 else if (click_setup)
                     next_state = OPTIONS;
             end
 
             OPTIONS: begin
-                if (click_back)
+                if (remote_start)
+                    next_state = GAME_SESSION_START;
+                else if (click_back)
                     next_state = MAIN_MENU;
+            end
+
+            WAITING_UART: begin
+                if (remote_start || multiplayer_ready)
+                    next_state = GAME_SESSION_START;
+                else if (click_back || !multiplayer_selected)
+                    next_state = MAIN_MENU;
+            end
+
+            GAME_SESSION_START: begin
+                next_state = GAME_ARRIVE_START;
             end
 
             GAME_ARRIVE_START: begin
@@ -106,15 +130,19 @@ module system_fsm (
             GAME_ARRIVING: begin
                 if (game_finished)
                     next_state = SUMMARY;
+                else if (game_finishing)
+                    next_state = WAITING_RESULT;
                 else if (arrive_done)
                     next_state = GAME_SERVICE;
             end
 
             GAME_SERVICE: begin
-                if (front_wheel_done && rear_wheel_done)
-                    next_state = GAME_DEPART_START;
-                else if (game_finished)
+                if (game_finished)
                     next_state = SUMMARY;
+                else if (game_finishing)
+                    next_state = WAITING_RESULT;
+                else if (front_wheel_done && rear_wheel_done)
+                    next_state = GAME_DEPART_START;
             end
 
             GAME_DEPART_START: begin
@@ -125,13 +153,22 @@ module system_fsm (
                 if (depart_done) begin
                     if (game_finished)
                         next_state = SUMMARY;
+                    else if (game_finishing)
+                        next_state = WAITING_RESULT;
                     else
                         next_state = GAME_ARRIVE_START;
                 end
             end
 
+            WAITING_RESULT: begin
+                if (game_finished)
+                    next_state = SUMMARY;
+            end
+
             SUMMARY: begin
-                if (click_back)
+                if (remote_start)
+                    next_state = GAME_SESSION_START;
+                else if (click_back)
                     next_state = MENU_BOOT;
             end
 
@@ -154,6 +191,7 @@ module system_fsm (
         enable_button_back      = 1'b0;
         enable_wheel_rack       = 1'b0;
         enable_wheel_service    = 1'b0;
+        game_start_pulse        = 1'b0;
 
         case (state)
             MENU_BOOT: begin
@@ -184,6 +222,16 @@ module system_fsm (
                     trigger_drive_through = 1'b1;
             end
 
+            WAITING_UART: begin
+                state_out          = SCREEN_WAIT_UART;
+                enable_button_back = 1'b1;
+            end
+
+            GAME_SESSION_START: begin
+                state_out            = SCREEN_GAMEPLAY;
+                game_start_pulse     = 1'b1;
+            end
+
             GAME_ARRIVE_START: begin
                 state_out            = SCREEN_GAMEPLAY;
                 trigger_arrive       = 1'b1;
@@ -209,6 +257,10 @@ module system_fsm (
             GAME_DEPARTING: begin
                 state_out            = SCREEN_GAMEPLAY;
                 enable_bolid_default = anim_car_enable;
+            end
+
+            WAITING_RESULT: begin
+                state_out = SCREEN_GAMEPLAY;
             end
 
             SUMMARY: begin

@@ -49,8 +49,9 @@ Mapowanie opcji na Basys 3:
 
     SW15       - tryb gracza: single-player / multiplayer
     SW14:13    - tryb gry: time attack / point race / speed up / best of
+    SW12       - sprzetowy test UART; 7-segmenty pokazuja odebrana wartosc
     SW7:0      - binarna wartosc celu 1..255 (wartosc 0 jest zamieniana na 1)
-    SW12:8     - zarezerwowane na przyszle opcje
+    SW11:8     - zarezerwowane na przyszle opcje
 
 Poza rozgrywka wyswietlacz 7-segmentowy pokazuje wybrany cel. Podczas gry
 pokazuje pozostaly czas dla TIME ATTACK i SPEED UP albo wynik dla POINT RACE
@@ -62,5 +63,11 @@ Reguly single-player:
     SPEED UP    - 5 pit-stopow, limit startowy maleje o 1 sekunde na runde
     BEST OF     - ustawiona liczba pit-stopow i statystyki czasowe
 
-UART nie jest jeszcze zaimplementowany; multiplayer na ekranie opcji pokazuje
-UART OFFLINE.
+UART miedzy Basysami:
+    115200 baud, 8N1, ramka z suma kontrolna i identyfikatorem sesji
+    JB1 / A14 - TX
+    JB2 / A16 - RX
+    TX jednej plytki laczymy z RX drugiej, TX drugiej z RX pierwszej i GND z GND
+    Na oba Basysy wgrywany jest dokladnie ten sam bitstream.
+    W tescie UART przycisk BTNU zatrzaskuje flage konca i wysyla SW7:0 jako
+    koncowy wynik sztucznego rywala.

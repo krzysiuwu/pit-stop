@@ -4,6 +4,7 @@ module game_options (
     input  logic [15:0] switches,
 
     output logic        multiplayer,
+    output logic        uart_test_mode,
     output logic [1:0]  game_mode,
     output logic [7:0]  target_value
 );
@@ -13,8 +14,8 @@ module game_options (
 
     // Mechanical slide switches are asynchronous to the video clock. Two
     // flip-flops prevent a metastable signal from entering the game logic.
-    logic [15:0] switches_meta;
-    logic [15:0] switches_sync;
+    (* ASYNC_REG = "TRUE" *) logic [15:0] switches_meta;
+    (* ASYNC_REG = "TRUE" *) logic [15:0] switches_sync;
 
     always_ff @(posedge clk or negedge rst) begin
         if (!rst) begin
@@ -27,6 +28,7 @@ module game_options (
     end
 
     assign multiplayer = switches_sync[15];
+    assign uart_test_mode = switches_sync[12];
     assign game_mode   = switches_sync[14:13];
 
     // A target of zero would make every planned mode end immediately. Keeping

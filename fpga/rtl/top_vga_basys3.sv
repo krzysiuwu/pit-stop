@@ -15,6 +15,7 @@
 module top_vga_basys3 (
         input  wire clk,
         input  wire btnC,
+        input  wire btnU,
         input  wire [15:0] sw,
         output wire Vsync,
         output wire Hsync,
@@ -25,6 +26,10 @@ module top_vga_basys3 (
         output wire [6:0] seg,
         output wire [3:0] an,
         output wire dp,
+        output wire [15:0] led,
+
+        input  wire uart_rx,
+        output wire uart_tx,
 
         inout wire PS2Data,
         inout wire PS2Clk
@@ -46,11 +51,12 @@ module top_vga_basys3 (
     wire [1:0] option_game_mode;
     wire [7:0] option_target_value;
     wire [7:0] seven_segment_value;
-
-    (* KEEP = "TRUE" *)
-    (* ASYNC_REG = "TRUE" *)
-    // For details on synthesis attributes used above, see AMD Xilinx UG 901:
-    // https://docs.xilinx.com/r/en-US/ug901-vivado-synthesis/Synthesis-Attributes
+    wire async_core_rst_n;
+    wire uart_link_connected;
+    wire uart_rx_activity;
+    wire uart_error;
+    wire uart_remote_debug;
+    wire [7:0] uart_remote_score;
 
 
     /**
@@ -58,7 +64,13 @@ module top_vga_basys3 (
      */
 
     assign JA1 = pclk_mirror;
-    assign core_rst = !btnC && locked;
+    assign async_core_rst_n = !btnC && locked;
+    assign led[7:0] = uart_remote_score;
+    assign led[11:8] = 4'b0000;
+    assign led[12] = uart_remote_debug;
+    assign led[13] = uart_error;
+    assign led[14] = uart_rx_activity;
+    assign led[15] = uart_link_connected;
 
 
     /**
@@ -69,6 +81,12 @@ module top_vga_basys3 (
         .clk_in(clk),       // Zmieniono na clk_in1 (domyślna nazwa Vivado)
         .clk_out1(clk_65M),
         .locked(locked)
+    );
+
+    reset_sync u_reset_sync (
+        .clk(clk_65M),
+        .async_rst_n(async_core_rst_n),
+        .rst_n(core_rst)
     );
 
 
@@ -91,6 +109,14 @@ module top_vga_basys3 (
         .clk(clk_65M),
         .rst(core_rst), // Bezpieczny reset Active Low (!btnC to 1, gdy nie wciśnięty)
         .switches(sw),
+        .uart_rx_i(uart_rx),
+        .uart_debug_finish(btnU),
+        .uart_tx_o(uart_tx),
+        .uart_link_connected(uart_link_connected),
+        .uart_rx_activity(uart_rx_activity),
+        .uart_error(uart_error),
+        .uart_remote_debug(uart_remote_debug),
+        .uart_remote_score(uart_remote_score),
         .r(vgaRed),
         .g(vgaGreen),
         .b(vgaBlue),

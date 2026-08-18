@@ -48,6 +48,11 @@ build_log.txt
 obj_dir/
 *.exe
 
+# Python bytecode and cache directories
+tools/__pycache__/
+__pycache__/
+*.py[cod]
+
 # Pliki generowane przez symulator
 sim/anim_test/*.vcd
 sim/drawing_test/*.vcd
