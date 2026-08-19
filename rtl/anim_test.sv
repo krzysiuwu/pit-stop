@@ -59,9 +59,11 @@ module anim_test (
     vga_timing u_vga_timing (
         .clk(clk),
         .rst(rst),
-        .vga_out(vga_timing_if),
-        .low_res_out(low_res_pipe)
+        .vga_out(vga_timing_if)
     );
+
+    assign low_res_pipe.hcount = vga_timing_if.hcount >> 2;
+    assign low_res_pipe.vcount = vga_timing_if.vcount >> 2;
 
     // -------------------------------------------------------------------------
     // ETAP 1: Tło
@@ -69,7 +71,6 @@ module anim_test (
     draw_bg u_draw_bg (
         .clk(clk),
         .rst(rst),
-        .low_res_in(low_res_pipe),
         .vga_in(vga_timing_if),
         .lut_out(lut_step1_bg),
         .vga_out(vga_step1_bg)
@@ -176,8 +177,6 @@ module anim_test (
         .enable(car_enable),               // Włączony tylko podczas ruchu!
         .wheel_anim_step(wheel_anim_step), // Klatka animacji wyliczona przez sprzęt
         .x_pos(car_x_pos),                 // Pozycja z kontrolera animacji
-        .low_res_in(low_res_pipe),
-        
         .lut_in(lut_step4_btn3),
         .vga_in(vga_step4_btn3),
         .lut_out(lut_step5_bolid_def),
@@ -193,8 +192,6 @@ module anim_test (
         .enable(arrive_done), // Włączony TYLKO gdy główny bolid stoi w pit stopie!
         .x_pos(12'd60),       // Stała pozycja odpowiadająca POS_STOP z kontrolera animacji
         .y_pos(12'd120),
-        .low_res_in(low_res_pipe),
-        
         .lut_in(lut_step5_bolid_def),
         .vga_in(vga_step5_bolid_def),
         .lut_out(lut_step6_bolid_nw),
@@ -211,8 +208,6 @@ module anim_test (
         .wheel_anim_step(2'b00),
         .x_pos(12'd85),       // Dopasowane pozycje względem środka bolidu
         .y_pos(12'd137),
-        .low_res_in(low_res_pipe),
-        
         .lut_in(lut_step6_bolid_nw),
         .vga_in(vga_step6_bolid_nw),
         .lut_out(lut_step7_wheel),

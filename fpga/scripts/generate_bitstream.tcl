@@ -27,17 +27,36 @@ proc create_new_project {project_name target top_module} {
     update_compile_order -fileset sources_1
 }
 
+proc assert_run_complete {run_name} {
+    set run_status [get_property STATUS [get_runs ${run_name}]]
+    if {![string match "*Complete*" ${run_status}]} {
+        error "Run ${run_name} failed or did not complete: ${run_status}"
+    }
+}
+
 
 # Generate bitstream
 proc generate_bitstream {} {
+    file mkdir ../results
+
     # Run synthesis
     reset_run synth_1
     launch_runs synth_1 -jobs 8
     wait_on_run synth_1
+    assert_run_complete synth_1
+    open_run synth_1
+    report_utilization -file ../results/synthesis_utilization.rpt
 
-    # Run implemenatation up to bitstream generation
+    # Run implementation up to bitstream generation
     launch_runs impl_1 -to_step write_bitstream -jobs 8
     wait_on_run impl_1
+    assert_run_complete impl_1
+    open_run impl_1
+    report_utilization -file ../results/implementation_utilization.rpt
+    report_timing_summary -delay_type max -max_paths 10 \
+        -file ../results/timing_summary.rpt
+    report_clock_utilization -file ../results/clock_utilization.rpt
+    report_methodology -file ../results/methodology.rpt
 }
 
 

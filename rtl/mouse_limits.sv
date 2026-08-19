@@ -2,7 +2,7 @@
  * Module: mouse_limits
  * Description:
  * Module configures the maximum X and Y limits for the MouseCtl module
- * to HOR_PIXELS and VER_PIXELS parameters from vga_pkg.
+ * to the last visible VGA pixel from vga_pkg.
  */
 
 module mouse_limits (
@@ -51,14 +51,14 @@ module mouse_limits (
 
             SET_X: begin
                 // Send the MAX_X value and pulse setmax_x
-                value      = HOR_PIXELS[11:0];
+                value      = HOR_PIXELS - 1;
                 setmax_x   = 1'b1;
                 next_state = SET_Y;
             end
 
             SET_Y: begin
                 // Send the MAX_Y value and pulse setmax_y
-                value      = VER_PIXELS[11:0];
+                value      = VER_PIXELS - 1;
                 setmax_y   = 1'b1;
                 next_state = DONE;
             end

@@ -157,6 +157,13 @@ set_property PACKAGE_PIN A14 [get_ports uart_tx]
 set_property PACKAGE_PIN A16 [get_ports uart_rx]
 	set_property IOSTANDARD LVCMOS33 [get_ports uart_rx]
 	set_property PULLUP true [get_ports uart_rx]
+
+## Asynchronous board inputs end at explicit two-stage synchronizers.
+## Cut only the input-to-first-register timing path; timing after the first
+## register remains fully analyzed.
+set_false_path -from [get_ports uart_rx]
+set_false_path -from [get_ports btnU]
+set_false_path -from [get_ports {sw[*]}]
 ##Sch name = JB3
 #set_property PACKAGE_PIN B15 [get_ports {JB[2]}]
 	#set_property IOSTANDARD LVCMOS33 [get_ports {JB[2]}]

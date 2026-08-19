@@ -243,12 +243,12 @@ module draw_summary_panel (
             text_color = 4'h7;
     end
 
-    logic [10:0] font_addr;
+    logic [9:0] font_addr;
     logic [7:0]  font_data;
 
     assign font_addr = in_text
                      ? {current_char_code[6:0], text_local_y}
-                     : 11'b0;
+                     : 10'b0;
 
     Font_Rom u_font_rom (
         .clk(clk),

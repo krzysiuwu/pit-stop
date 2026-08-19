@@ -35,6 +35,14 @@ module vga_timing_tb;
     wire [10:0] vcount, hcount;
     wire        vsync,  hsync;
     wire        vblnk,  hblnk;
+    vga_if vga_out();
+
+    assign vcount = vga_out.vcount;
+    assign vsync  = vga_out.vsync;
+    assign vblnk  = vga_out.vblnk;
+    assign hcount = vga_out.hcount;
+    assign hsync  = vga_out.hsync;
+    assign hblnk  = vga_out.hblnk;
 
 
     /**
@@ -66,12 +74,7 @@ module vga_timing_tb;
     vga_timing dut(
         .clk,
         .rst,
-        .vcount,
-        .vsync,
-        .vblnk,
-        .hcount,
-        .hsync,
-        .hblnk
+        .vga_out(vga_out)
     );
 
     /**

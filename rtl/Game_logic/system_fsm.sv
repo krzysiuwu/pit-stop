@@ -29,8 +29,7 @@ module system_fsm (
     output logic game_start_pulse,
 
     output logic signed [11:0] bolid_x,
-    output logic [1:0]         bolid_wheel_anim_step,
-    output logic [3:0]         sequence_debug
+    output logic [1:0]         bolid_wheel_anim_step
 );
 
     timeunit 1ns;
@@ -273,7 +272,5 @@ module system_fsm (
             end
         endcase
     end
-
-    assign sequence_debug = state;
 
 endmodule

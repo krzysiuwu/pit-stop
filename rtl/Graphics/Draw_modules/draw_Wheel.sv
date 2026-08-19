@@ -1,5 +1,4 @@
 import vga_pkg::*;
-import low_res_pkg::*;
 
 module draw_Wheel (
     input  logic clk,
@@ -12,7 +11,6 @@ module draw_Wheel (
     
     input  logic [3:0] lut_in,
     vga_if.in          vga_in,
-    low_res_if.in      low_res_in,
     
     output logic [3:0] lut_out,
     vga_if.out         vga_out

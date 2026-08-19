@@ -9,7 +9,6 @@
 # all the steps to generate bitstream. When finished, the bitsream is copied to
 # the result directory. Additionally, all the warnings and errors logged during
 # synthesis and implementation are also copied to results/warning_summary.log
-# To work properly, a git repository in the project directory is required.
 # Run from the project root directory.
 
 set -euo pipefail
@@ -20,8 +19,12 @@ cd "${PROJECT_ROOT}"
 
 mkdir -p results
 
-# Remove only ignored Vivado products and build a fresh design.
-git clean -fXd fpga
+# When available, Git removes only ignored Vivado products. A clean source ZIP
+# has no .git directory; create_project -force and reset_run still provide a
+# reproducible build there.
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    git clean -fXd fpga
+fi
 (
     cd fpga
     vivado -mode tcl -source scripts/generate_bitstream.tcl

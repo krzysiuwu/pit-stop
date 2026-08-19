@@ -1,6 +1,6 @@
 module Font_Rom (
     input  logic clk,
-    input  logic [10:0] address,
+    input  logic [9:0] address,
     output logic [7:0] data_out
 );
 

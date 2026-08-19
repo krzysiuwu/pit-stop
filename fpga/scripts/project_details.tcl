@@ -33,9 +33,7 @@ set xdc_files {
 set sv_files {
     ../rtl/Game_logic/game_pkg.sv
     ../rtl/Graphics/VGA/Target_res/vga_pkg.sv
-    ../rtl/Graphics/VGA/Low_res/low_res_pkg.sv
     ../rtl/Graphics/VGA/Target_res/vga_if.sv
-    ../rtl/Graphics/VGA/Low_res/low_res_if.sv
     ../rtl/Graphics/VGA/Target_res/vga_timing.sv
     ../rtl/Graphics/VGA/LUT2RGB_converter.sv
     ../rtl/Graphics/Rom_modules/Cloud_Rom.sv
@@ -47,20 +45,21 @@ set sv_files {
     ../rtl/Graphics/Rom_modules/PitstopLogo_Rom.sv
     ../rtl/Graphics/Rom_modules/Wheel_Rom.sv
     ../rtl/Graphics/Rom_modules/WheelRack_Rom.sv
-    ../rtl/Graphics/Draw_modules/draw_button_with_text.sv
+    ../rtl/Hardware/bin_to_bcd3.sv
+    ../rtl/Graphics/Draw_modules/draw_buttons.sv
     ../rtl/Graphics/Draw_modules/draw_bg.sv
     ../rtl/Graphics/Draw_modules/draw_PitstopLogo.sv
     ../rtl/Graphics/Draw_modules/draw_BolidF1Default.sv
     ../rtl/Graphics/Draw_modules/draw_BolidF1NoWheels.sv
     ../rtl/Graphics/Draw_modules/draw_Wheel.sv
     ../rtl/Graphics/Draw_modules/draw_WheelRack.sv
-    ../rtl/Graphics/Draw_modules/draw_options_panel.sv
-    ../rtl/Graphics/Draw_modules/draw_summary_panel.sv
+    ../rtl/Graphics/Draw_modules/draw_game_panel.sv
     ../rtl/Game_logic/game_options.sv
     ../rtl/Game_logic/singleplayer_game_controller.sv
     ../rtl/Game_logic/multiplayer_result.sv
     ../rtl/Game_logic/Sprite_control/bolid_anim_ctl.sv
     ../rtl/Game_logic/Sprite_control/mouse_hitbox.sv
+    ../rtl/Game_logic/Sprite_control/mouse_hover.sv
     ../rtl/Game_logic/Sprite_control/wheel_physics.sv
     ../rtl/Game_logic/Sprite_control/wheel_service_fsm.sv
     ../rtl/Game_logic/system_fsm.sv
@@ -71,7 +70,6 @@ set sv_files {
     ../rtl/Hardware/reset_sync.sv
     ../rtl/Graphics/Draw_modules/draw_mouse_cursor.sv
     ../rtl/mouse_limits.sv
-    ../rtl/top_vga.sv
     ../rtl/pit_stop_core.sv
     ../rtl/top_fsm.sv
     ../clock/clk_wiz_0.v
@@ -87,7 +85,6 @@ set sv_files {
 #Specify VHDL design files location            
 set vhdl_files {
     ../vhd/MouseCtl.vhd
-    ../vhd/MouseDisplay.vhd
     ../vhd/Ps2Interface.vhd
 }
 

@@ -254,12 +254,12 @@ module draw_options_panel (
             text_color = uart_test_mode ? 4'h7 : 4'h3;
     end
 
-    logic [10:0] font_addr;
+    logic [9:0] font_addr;
     logic [7:0]  font_data;
 
     assign font_addr = in_text
                      ? {current_char_code[6:0], text_local_y}
-                     : 11'b0;
+                     : 10'b0;
 
     Font_Rom u_font_rom (
         .clk(clk),

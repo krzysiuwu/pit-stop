@@ -47,9 +47,6 @@ module top_vga_basys3 (
 
     wire clk_65M;
     wire core_rst;
-    wire option_multiplayer;
-    wire [1:0] option_game_mode;
-    wire [7:0] option_target_value;
     wire [7:0] seven_segment_value;
     wire async_core_rst_n;
     wire uart_link_connected;
@@ -122,9 +119,6 @@ module top_vga_basys3 (
         .b(vgaBlue),
         .hs(Hsync),
         .vs(Vsync),
-        .option_multiplayer(option_multiplayer),
-        .option_game_mode(option_game_mode),
-        .option_target_value(option_target_value),
         .seven_segment_value(seven_segment_value),
         .ps2_data(PS2Data),             
         .ps2_clk(PS2Clk)

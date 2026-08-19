@@ -19,46 +19,37 @@ module draw_char (
     vga_if.out         vga_out
 );
 
-    logic [12:0] rom_addr;
-    logic        rom_data;
+    logic [9:0] rom_addr;
+    logic [7:0] rom_data;
     
     logic [3:0]  sprite_pixel;
     logic        sprite_active;
 
     logic [11:0] cur_x;
     logic [11:0] cur_y;
+    logic        in_hitbox;
+    logic [2:0]  local_x;
+    logic [2:0]  local_y;
 
     assign cur_x = {1'b0, vga_in.hcount} >> 2;
     assign cur_y = {1'b0, vga_in.vcount} >> 2;
+    assign in_hitbox = enable &&
+                       (cur_x >= x_pos) && (cur_x < x_pos + 12'd8) &&
+                       (cur_y >= y_pos) && (cur_y < y_pos + 12'd8);
+    assign local_x = cur_x - x_pos;
+    assign local_y = cur_y - y_pos;
+    assign rom_addr = in_hitbox ? {char_code, local_y} : 10'd0;
 
     Font_Rom u_font_rom (
         .clk(clk),
         .address(rom_addr),
-        .LUT_value(rom_data)
-    );
-
-    char_renderer u_renderer (
-        .clk(clk),
-        .rst(rst),
-        .enable(enable),
-        
-        .x_pos(x_pos),
-        .y_pos(y_pos),
-
-        .hcount(cur_x),
-        .vcount(cur_y),
-        
-        .char_code(char_code),
-        .char_color(char_color),
-        
-        .rom_data(rom_data),
-        .rom_addr(rom_addr),
-        
-        .pixel_out(sprite_pixel),
-        .is_active(sprite_active)
+        .data_out(rom_data)
     );
 
     logic [3:0] lut_in_d;
+    logic       in_hitbox_d;
+    logic [2:0] pixel_x_d;
+    logic [3:0] char_color_d;
 
     always_ff @(posedge clk or negedge rst) begin
         if (!rst) begin
@@ -69,6 +60,9 @@ module draw_char (
             vga_out.vblnk  <= '0;
             vga_out.hblnk  <= '0;
             lut_in_d       <= '0;
+            in_hitbox_d    <= 1'b0;
+            pixel_x_d      <= 3'd0;
+            char_color_d   <= 4'd0;
         end else begin
             vga_out.vcount <= vga_in.vcount;
             vga_out.vsync  <= vga_in.vsync;
@@ -77,8 +71,14 @@ module draw_char (
             vga_out.vblnk  <= vga_in.vblnk;
             vga_out.hblnk  <= vga_in.hblnk;
             lut_in_d       <= lut_in;
+            in_hitbox_d    <= in_hitbox;
+            pixel_x_d      <= local_x;
+            char_color_d   <= char_color;
         end
     end
+
+    assign sprite_active = in_hitbox_d && rom_data[7 - pixel_x_d];
+    assign sprite_pixel = char_color_d;
 
     always_comb begin
         if (sprite_active) begin

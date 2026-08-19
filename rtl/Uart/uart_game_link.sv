@@ -49,7 +49,6 @@ module uart_game_link #(
     logic       local_session_valid;
     logic       accepted_session_valid;
 
-    logic [7:0] tx_packet [0:PACKET_BYTES-1];
     logic [2:0] tx_byte_index;
     logic       tx_packet_active;
     logic [TX_INTERVAL_WIDTH-1:0] tx_interval_counter;
@@ -59,6 +58,12 @@ module uart_game_link #(
 
     logic [7:0] tx_flags;
     logic [7:0] tx_checksum;
+    logic [7:0] tx_session_snapshot;
+    logic [7:0] tx_flags_snapshot;
+    logic [7:0] tx_mode_snapshot;
+    logic [7:0] tx_target_snapshot;
+    logic [7:0] tx_score_snapshot;
+    logic [7:0] tx_checksum_snapshot;
 
     assign tx_flags = {
         4'b0000,
@@ -73,7 +78,19 @@ module uart_game_link #(
                          local_target_value ^ local_score;
 
     assign tx_byte_valid = tx_packet_active;
-    assign tx_byte_data  = tx_packet[tx_byte_index];
+
+    always_comb begin
+        case (tx_byte_index)
+            3'd0: tx_byte_data = MAGIC_0;
+            3'd1: tx_byte_data = MAGIC_1;
+            3'd2: tx_byte_data = tx_session_snapshot;
+            3'd3: tx_byte_data = tx_flags_snapshot;
+            3'd4: tx_byte_data = tx_mode_snapshot;
+            3'd5: tx_byte_data = tx_target_snapshot;
+            3'd6: tx_byte_data = tx_score_snapshot;
+            default: tx_byte_data = tx_checksum_snapshot;
+        endcase
+    end
 
     uart_tx #(
         .CLOCK_HZ(CLOCK_HZ),
@@ -92,14 +109,12 @@ module uart_game_link #(
             tx_byte_index      <= 3'd0;
             tx_packet_active   <= 1'b0;
             tx_interval_counter <= '0;
-            tx_packet[0]       <= MAGIC_0;
-            tx_packet[1]       <= MAGIC_1;
-            tx_packet[2]       <= 8'd0;
-            tx_packet[3]       <= 8'd0;
-            tx_packet[4]       <= 8'd0;
-            tx_packet[5]       <= 8'd0;
-            tx_packet[6]       <= 8'd0;
-            tx_packet[7]       <= 8'd0;
+            tx_session_snapshot <= 8'd0;
+            tx_flags_snapshot   <= 8'd0;
+            tx_mode_snapshot    <= 8'd0;
+            tx_target_snapshot  <= 8'd0;
+            tx_score_snapshot   <= 8'd0;
+            tx_checksum_snapshot <= 8'd0;
         end else begin
             if (tx_packet_active) begin
                 if (tx_byte_ready) begin
@@ -114,14 +129,12 @@ module uart_game_link #(
                 tx_interval_counter <= '0;
                 tx_byte_index       <= 3'd0;
                 tx_packet_active    <= 1'b1;
-                tx_packet[0]        <= MAGIC_0;
-                tx_packet[1]        <= MAGIC_1;
-                tx_packet[2]        <= current_session_id;
-                tx_packet[3]        <= tx_flags;
-                tx_packet[4]        <= {6'b0, local_game_mode};
-                tx_packet[5]        <= local_target_value;
-                tx_packet[6]        <= local_score;
-                tx_packet[7]        <= tx_checksum;
+                tx_session_snapshot <= current_session_id;
+                tx_flags_snapshot   <= tx_flags;
+                tx_mode_snapshot    <= {6'b0, local_game_mode};
+                tx_target_snapshot  <= local_target_value;
+                tx_score_snapshot   <= local_score;
+                tx_checksum_snapshot <= tx_checksum;
             end else begin
                 tx_interval_counter <= tx_interval_counter + 1'b1;
             end
@@ -144,7 +157,11 @@ module uart_game_link #(
         .framing_error(rx_framing_error)
     );
 
-    logic [7:0] rx_packet [0:6];
+    logic [7:0] rx_session;
+    logic [7:0] rx_flags;
+    logic [7:0] rx_mode;
+    logic [7:0] rx_target;
+    logic [7:0] rx_score_value;
     logic [2:0] rx_byte_index;
     logic [7:0] rx_checksum;
     logic       valid_packet_pulse;
@@ -156,13 +173,11 @@ module uart_game_link #(
             rx_checksum            <= 8'd0;
             valid_packet_pulse     <= 1'b0;
             checksum_error_pulse   <= 1'b0;
-            rx_packet[0]           <= 8'd0;
-            rx_packet[1]           <= 8'd0;
-            rx_packet[2]           <= 8'd0;
-            rx_packet[3]           <= 8'd0;
-            rx_packet[4]           <= 8'd0;
-            rx_packet[5]           <= 8'd0;
-            rx_packet[6]           <= 8'd0;
+            rx_session             <= 8'd0;
+            rx_flags               <= 8'd0;
+            rx_mode                <= 8'd0;
+            rx_target              <= 8'd0;
+            rx_score_value         <= 8'd0;
         end else begin
             valid_packet_pulse   <= 1'b0;
             checksum_error_pulse <= 1'b0;
@@ -171,7 +186,6 @@ module uart_game_link #(
                 case (rx_byte_index)
                     3'd0: begin
                         if (rx_byte_data == MAGIC_0) begin
-                            rx_packet[0] <= rx_byte_data;
                             rx_checksum  <= rx_byte_data;
                             rx_byte_index <= 3'd1;
                         end
@@ -179,11 +193,9 @@ module uart_game_link #(
 
                     3'd1: begin
                         if (rx_byte_data == MAGIC_1) begin
-                            rx_packet[1] <= rx_byte_data;
                             rx_checksum  <= rx_checksum ^ rx_byte_data;
                             rx_byte_index <= 3'd2;
                         end else if (rx_byte_data == MAGIC_0) begin
-                            rx_packet[0] <= rx_byte_data;
                             rx_checksum  <= rx_byte_data;
                             rx_byte_index <= 3'd1;
                         end else begin
@@ -192,31 +204,31 @@ module uart_game_link #(
                     end
 
                     3'd2: begin
-                        rx_packet[2] <= rx_byte_data;
+                        rx_session <= rx_byte_data;
                         rx_checksum <= rx_checksum ^ rx_byte_data;
                         rx_byte_index <= 3'd3;
                     end
 
                     3'd3: begin
-                        rx_packet[3] <= rx_byte_data;
+                        rx_flags <= rx_byte_data;
                         rx_checksum <= rx_checksum ^ rx_byte_data;
                         rx_byte_index <= 3'd4;
                     end
 
                     3'd4: begin
-                        rx_packet[4] <= rx_byte_data;
+                        rx_mode <= rx_byte_data;
                         rx_checksum <= rx_checksum ^ rx_byte_data;
                         rx_byte_index <= 3'd5;
                     end
 
                     3'd5: begin
-                        rx_packet[5] <= rx_byte_data;
+                        rx_target <= rx_byte_data;
                         rx_checksum <= rx_checksum ^ rx_byte_data;
                         rx_byte_index <= 3'd6;
                     end
 
                     3'd6: begin
-                        rx_packet[6] <= rx_byte_data;
+                        rx_score_value <= rx_byte_data;
                         rx_checksum <= rx_checksum ^ rx_byte_data;
                         rx_byte_index <= 3'd7;
                     end
@@ -262,22 +274,22 @@ module uart_game_link #(
                 link_timeout_counter <= '0;
                 rx_activity          <= !rx_activity;
 
-                remote_multiplayer_selected <= rx_packet[3][0];
-                remote_debug_mode           <= rx_packet[3][3];
-                remote_game_mode            <= rx_packet[4][1:0];
-                remote_target_value         <= rx_packet[5];
-                remote_score                <= rx_packet[6];
+                remote_multiplayer_selected <= rx_flags[0];
+                remote_debug_mode           <= rx_flags[3];
+                remote_game_mode            <= rx_mode[1:0];
+                remote_target_value         <= rx_target;
+                remote_score                <= rx_score_value;
 
-                if (rx_packet[3][1]) begin
+                if (rx_flags[1]) begin
                     if (!accepted_session_valid ||
-                        (rx_packet[2] != current_session_id)) begin
-                        current_session_id     <= rx_packet[2];
+                        (rx_session != current_session_id)) begin
+                        current_session_id     <= rx_session;
                         local_session_valid    <= 1'b1;
                         accepted_session_valid <= 1'b1;
                         remote_start_pulse     <= 1'b1;
-                        remote_game_finished   <= rx_packet[3][2];
+                        remote_game_finished   <= rx_flags[2];
                     end else begin
-                        remote_game_finished <= rx_packet[3][2];
+                        remote_game_finished <= rx_flags[2];
                     end
                 end
             end else if (link_connected) begin

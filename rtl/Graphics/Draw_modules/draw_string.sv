@@ -1,7 +1,7 @@
 /**
  * Description:
  * Dynamic string renderer (default 10 characters).
- * Adapted for 11-bit address / 8-bit data Font_Rom.
+ * Adapted for 10-bit row address / 8-bit data Font_Rom.
  * Pipelined version.
  */
 
@@ -69,11 +69,11 @@ module draw_string #(
     end
 
     // Zmiana rozmiarów pod Twój moduł Font_Rom
-    logic [10:0] rom_addr; 
+    logic [9:0] rom_addr;
     logic [7:0]  rom_data; 
 
     // Adresujemy tylko wiersz: 7 bitów znaku + 3 bity wiersza (Y)
-    assign rom_addr = in_hitbox ? {current_char_code[6:0], local_y[2:0]} : 11'b0;
+    assign rom_addr = in_hitbox ? {current_char_code[6:0], local_y[2:0]} : 10'b0;
 
     // Instancja Twojego modułu ROM
     Font_Rom u_font_rom (

@@ -107,6 +107,18 @@ podnosic. Nowe kola sa wymienne i nie sa przypisane do konkretnej piasty.
 - `rtl/pit_stop_core.sv` laczy logike z potokiem renderowania.
 - `top_fsm.sv` jest cienka warstwa sprzetowa dla myszy PS/2.
 
+Renderer przyciskow wspoldzieli jedna pamiec sprite'u i jedna pamiec fontu
+dla `PLAY`, `OPTS` oraz `BACK`. Ekrany opcji i podsumowania korzystaja z
+jednego renderera panelu i wspolnej pamieci fontu. Konwersje wartosci binarnych
+na trzy cyfry BCD realizuje wspolny modul `bin_to_bcd3` zamiast wielu operatorow
+dzielenia i modulo.
+
+Interfejs `low_res_if` nie jest uzywany w aktywnym potoku. Kazdy renderer
+wylicza wspolrzedne 256x192 z wlasnego, opoznionego etapu `vga_if`, dzieki czemu
+kolor i synchronizacja pozostaja wyrownane. `mouse_limits` programuje kontroler
+PS/2 na zakres 0..1023 i 0..767, wiec przy krawedziach ekranu nie wystepuje
+martwy obszar ruchu kursora.
+
 ## Uruchomienie
 
 Interaktywny symulator SDL:
@@ -151,6 +163,21 @@ source env.sh
 ./tools/generate_bitstream.sh
 ```
 
-Plik `results/top_vga_basys3.bit` dolaczony do repozytorium pochodzi z
-poprzedniego buildu i nie zawiera UART-u. Przed wgraniem na plytki trzeba
-wygenerowac go ponownie i wgrac ten sam nowy plik na oba Basysy.
+Skrypt zapisuje w `results/` nowy bitstream oraz raporty:
+
+- `synthesis_utilization.rpt`,
+- `implementation_utilization.rpt`,
+- `timing_summary.rpt`,
+- `clock_utilization.rpt`,
+- `methodology.rpt`.
+
+Bitstream dolaczony do starszych wersji projektu nie zawieral UART-u. Przed
+wgraniem na plytki trzeba wygenerowac nowy `results/top_vga_basys3.bit` i wgrac
+ten sam plik na oba Basysy.
+
+Czyste archiwum zrodlowe bez `.git`, `obj_dir`, wynikow symulacji i starych
+bitstreamow mozna przygotowac poleceniem:
+
+```bash
+./tools/package_source.sh
+```

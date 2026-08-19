@@ -10,7 +10,6 @@
 
     output logic [3:0] lut_out,
 
-    low_res_if.in low_res_in,
     vga_if.in vga_in,
     vga_if.out vga_out
 );
@@ -19,7 +18,6 @@ timeunit 1ns;
 timeprecision 1ps;
 
 import vga_pkg::*;
-import low_res_pkg::*;
 
 /**
  * Local variables and signals
@@ -66,13 +64,18 @@ logic [7:0] local_x;
 logic [7:0] local_y;
 
 logic [9:0] addr_cloud;
-logic [13:0] addr_grandstand; // Zwiększyłem szerokość adresu dla pewności
+logic [11:0] addr_grandstand;
 
 logic [3:0] cloud_lut;
 logic [3:0] grandstand_lut;
 
 logic [3:0] bg_lut;
 logic [3:0] lut_nxt;
+logic [11:0] cur_x;
+logic [11:0] cur_y;
+
+assign cur_x = {1'b0, vga_in.hcount} >> 2;
+assign cur_y = {1'b0, vga_in.vcount} >> 2;
 
 // --- Delayed signals ---
 logic is_cloud_d;
@@ -82,7 +85,7 @@ logic [11:0] hcount_d, vcount_d;
 logic vsync_d, hsync_d, vblnk_d, hblnk_d;
 
 logic is_shadow;
-assign is_shadow = (low_res_in.vcount >= 96 && low_res_in.vcount < 108);
+assign is_shadow = (cur_y >= 96 && cur_y < 108);
 
 /**
  * =========================================================================
@@ -124,69 +127,69 @@ end
  */
 
 // 1. Sprawdzamy hitboxy na podstawie DYNAMICZNYCH pozycji Y chmur
-assign is_c1 = (low_res_in.hcount >= C1_X) && (low_res_in.hcount < C1_X + CLOUD_W) &&
-    (low_res_in.vcount >= dyn_c1_y) && (low_res_in.vcount < dyn_c1_y + CLOUD_H);
+assign is_c1 = (cur_x >= C1_X) && (cur_x < C1_X + CLOUD_W) &&
+    (cur_y >= dyn_c1_y) && (cur_y < dyn_c1_y + CLOUD_H);
 
-assign is_c2 = (low_res_in.hcount >= C2_X) && (low_res_in.hcount < C2_X + CLOUD_W) &&
-    (low_res_in.vcount >= dyn_c2_y) && (low_res_in.vcount < dyn_c2_y + CLOUD_H);
+assign is_c2 = (cur_x >= C2_X) && (cur_x < C2_X + CLOUD_W) &&
+    (cur_y >= dyn_c2_y) && (cur_y < dyn_c2_y + CLOUD_H);
 
-assign is_c3 = (low_res_in.hcount >= C3_X) && (low_res_in.hcount < C3_X + CLOUD_W) &&
-    (low_res_in.vcount >= dyn_c3_y) && (low_res_in.vcount < dyn_c3_y + CLOUD_H);
+assign is_c3 = (cur_x >= C3_X) && (cur_x < C3_X + CLOUD_W) &&
+    (cur_y >= dyn_c3_y) && (cur_y < dyn_c3_y + CLOUD_H);
 
 assign is_cloud = is_c1 | is_c2 | is_c3;
 
 // Grandstands hitboxes (bez zmian)
-assign is_g1 = (low_res_in.hcount >= G1_X) && (low_res_in.hcount < G1_X + Grandstand_W) &&
-    (low_res_in.vcount >= GY) && (low_res_in.vcount < GY + Grandstand_H);
-assign is_g2 = (low_res_in.hcount >= G2_X) && (low_res_in.hcount < G2_X + Grandstand_W) &&
-    (low_res_in.vcount >= GY) && (low_res_in.vcount < GY + Grandstand_H);
-assign is_g3 = (low_res_in.hcount >= G3_X) && (low_res_in.hcount < G3_X + Grandstand_W) &&
-    (low_res_in.vcount >= GY) && (low_res_in.vcount < GY + Grandstand_H);
-assign is_g4 = (low_res_in.hcount >= G4_X) && (low_res_in.hcount < G4_X + Grandstand_W) &&
-    (low_res_in.vcount >= GY) && (low_res_in.vcount < GY + Grandstand_H);
-assign is_g5 = (low_res_in.hcount >= G5_X) && (low_res_in.hcount < G5_X + Grandstand_W) &&
-    (low_res_in.vcount >= GY) && (low_res_in.vcount < GY + Grandstand_H);
-assign is_g6 = (low_res_in.hcount >= G6_X) && (low_res_in.hcount < G6_X + Grandstand_W) &&
-    (low_res_in.vcount >= GY) && (low_res_in.vcount < GY + Grandstand_H);
-assign is_g7 = (low_res_in.hcount >= G7_X) && (low_res_in.hcount < G7_X + Grandstand_W) &&
-    (low_res_in.vcount >= GY) && (low_res_in.vcount < GY + Grandstand_H);
+assign is_g1 = (cur_x >= G1_X) && (cur_x < G1_X + Grandstand_W) &&
+    (cur_y >= GY) && (cur_y < GY + Grandstand_H);
+assign is_g2 = (cur_x >= G2_X) && (cur_x < G2_X + Grandstand_W) &&
+    (cur_y >= GY) && (cur_y < GY + Grandstand_H);
+assign is_g3 = (cur_x >= G3_X) && (cur_x < G3_X + Grandstand_W) &&
+    (cur_y >= GY) && (cur_y < GY + Grandstand_H);
+assign is_g4 = (cur_x >= G4_X) && (cur_x < G4_X + Grandstand_W) &&
+    (cur_y >= GY) && (cur_y < GY + Grandstand_H);
+assign is_g5 = (cur_x >= G5_X) && (cur_x < G5_X + Grandstand_W) &&
+    (cur_y >= GY) && (cur_y < GY + Grandstand_H);
+assign is_g6 = (cur_x >= G6_X) && (cur_x < G6_X + Grandstand_W) &&
+    (cur_y >= GY) && (cur_y < GY + Grandstand_H);
+assign is_g7 = (cur_x >= G7_X) && (cur_x < G7_X + Grandstand_W) &&
+    (cur_y >= GY) && (cur_y < GY + Grandstand_H);
 
 assign is_grandstand = is_g1 | is_g2 | is_g3 | is_g4 | is_g5 | is_g6 | is_g7;
 
 // 2. Obliczanie local_x i local_y dla aktywnego sprite'a
 always_comb begin
     if (is_c1) begin
-        local_x = low_res_in.hcount - C1_X;
-        local_y = low_res_in.vcount - dyn_c1_y;
+        local_x = cur_x - C1_X;
+        local_y = cur_y - dyn_c1_y;
     end else if (is_c2) begin
-        local_x = low_res_in.hcount - C2_X;
-        local_y = low_res_in.vcount - dyn_c2_y;
+        local_x = cur_x - C2_X;
+        local_y = cur_y - dyn_c2_y;
     end else if (is_c3) begin
-        local_x = low_res_in.hcount - C3_X;
-        local_y = low_res_in.vcount - dyn_c3_y;
+        local_x = cur_x - C3_X;
+        local_y = cur_y - dyn_c3_y;
         
     // Kaskada trybun    
     end else if (is_g1) begin
-        local_x = low_res_in.hcount - G1_X;
-        local_y = low_res_in.vcount - GY;
+        local_x = cur_x - G1_X;
+        local_y = cur_y - GY;
     end else if (is_g2) begin
-        local_x = low_res_in.hcount - G2_X;
-        local_y = low_res_in.vcount - GY;
+        local_x = cur_x - G2_X;
+        local_y = cur_y - GY;
     end else if (is_g3) begin
-        local_x = low_res_in.hcount - G3_X;
-        local_y = low_res_in.vcount - GY;
+        local_x = cur_x - G3_X;
+        local_y = cur_y - GY;
     end else if (is_g4) begin
-        local_x = low_res_in.hcount - G4_X;
-        local_y = low_res_in.vcount - GY;
+        local_x = cur_x - G4_X;
+        local_y = cur_y - GY;
     end else if (is_g5) begin
-        local_x = low_res_in.hcount - G5_X;
-        local_y = low_res_in.vcount - GY;
+        local_x = cur_x - G5_X;
+        local_y = cur_y - GY;
     end else if (is_g6) begin
-        local_x = low_res_in.hcount - G6_X;
-        local_y = low_res_in.vcount - GY;
+        local_x = cur_x - G6_X;
+        local_y = cur_y - GY;
     end else if (is_g7) begin
-        local_x = low_res_in.hcount - G7_X;
-        local_y = low_res_in.vcount - GY;
+        local_x = cur_x - G7_X;
+        local_y = cur_y - GY;
         
     end else begin
         local_x = '0;
@@ -196,7 +199,7 @@ end
 
 // 3. Calculate memory address for the ROM module
 assign addr_cloud = is_cloud ? ((local_y * CLOUD_W) + local_x) : 10'b0;
-assign addr_grandstand = is_grandstand ? ((local_y * Grandstand_W) + local_x) : 14'b0;
+assign addr_grandstand = is_grandstand ? ((local_y * Grandstand_W) + local_x) : 12'b0;
 
 /**
  * Internal logic
@@ -251,13 +254,13 @@ end
 always_comb begin : bg_comb_blk
     bg_lut = 4'hB; 
     
-    if (low_res_in.vcount >= 96) begin
-        if (low_res_in.vcount < ROAD_TOP_EDGE || low_res_in.vcount > ROAD_BOTTOM_EDGE) begin
-            if (low_res_in.hcount[4] == 1'b0) bg_lut = 4'h4; 
+    if (cur_y >= 96) begin
+        if (cur_y < ROAD_TOP_EDGE || cur_y > ROAD_BOTTOM_EDGE) begin
+            if (cur_x[4] == 1'b0) bg_lut = 4'h4;
             else                              bg_lut = 4'h5; 
             
-        end else if (low_res_in.vcount >= ROAD_CENTER_Y - 1 && low_res_in.vcount <= ROAD_CENTER_Y + 1) begin
-            if (low_res_in.hcount[5] == 1'b0) bg_lut = 4'h4; 
+        end else if (cur_y >= ROAD_CENTER_Y - 1 && cur_y <= ROAD_CENTER_Y + 1) begin
+            if (cur_x[5] == 1'b0) bg_lut = 4'h4;
             else                              bg_lut = 4'h1; 
             
         end else begin

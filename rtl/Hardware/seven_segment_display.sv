@@ -17,9 +17,6 @@ module seven_segment_display (
     logic [3:0]  hundreds;
     logic [3:0]  tens;
     logic [3:0]  ones;
-    logic [7:0]  hundreds_value;
-    logic [7:0]  tens_value;
-    logic [7:0]  ones_value;
 
     always_ff @(posedge clk or negedge rst) begin
         if (!rst)
@@ -29,15 +26,14 @@ module seven_segment_display (
     end
 
     assign digit_select = refresh_counter[15:14];
-    assign hundreds_value = value / 8'd100;
-    assign tens_value = (value % 8'd100) / 8'd10;
-    assign ones_value = value % 8'd10;
+    bin_to_bcd3 u_value_bcd (
+        .binary({2'b0, value}),
+        .hundreds(hundreds),
+        .tens(tens),
+        .ones(ones)
+    );
 
     always_comb begin
-        hundreds = hundreds_value[3:0];
-        tens     = tens_value[3:0];
-        ones     = ones_value[3:0];
-
         an = 4'b1111;
         digit = 4'hf;
 

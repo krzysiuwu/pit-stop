@@ -41,8 +41,6 @@ module top_vga (
     wire setmax_x_pipe;
     wire setmax_y_pipe;
 
-    low_res_if low_res_pipe();
-
     // VGA signals from timing
     vga_if vga_timing();
     // VGA signals from background
@@ -89,15 +87,13 @@ module top_vga (
     vga_timing u_vga_timing (
         .clk,
         .rst,
-        .vga_out(vga_timing),
-        .low_res_out(low_res_pipe)
+        .vga_out(vga_timing)
     );
 
     draw_bg u_draw_bg (
         .clk,
         .rst,
         .lut_out(lut_pipe),
-        .low_res_in(low_res_pipe),
         .vga_in (vga_timing),
         .vga_out (vga_bg)
     );

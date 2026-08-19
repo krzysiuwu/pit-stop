@@ -26,9 +26,6 @@ module pit_stop_core (
     output logic hs,
     output logic vs,
 
-    output logic       option_multiplayer,
-    output logic [1:0] option_game_mode,
-    output logic [7:0] option_target_value,
     output logic [7:0] seven_segment_value,
 
     output logic [11:0] vga_x,
@@ -67,18 +64,14 @@ module pit_stop_core (
     // -------------------------------------------------------------------------
     // Potok wideo
     // -------------------------------------------------------------------------
-    low_res_if low_res_pipe();
     vga_if vga_timing_if();
     vga_if vga_bg();
     vga_if vga_logo();
     vga_if vga_bolid_default();
     vga_if vga_bolid_no_wheels();
     vga_if vga_rack();
-    vga_if vga_options_panel();
-    vga_if vga_summary_panel();
-    vga_if vga_btn_play();
-    vga_if vga_btn_opts();
-    vga_if vga_btn_back();
+    vga_if vga_panel();
+    vga_if vga_buttons();
     vga_if vga_front_wheel();
     vga_if vga_rear_wheel();
     vga_if vga_cursor();
@@ -89,11 +82,8 @@ module pit_stop_core (
     logic [3:0] lut_bolid_default;
     logic [3:0] lut_bolid_no_wheels;
     logic [3:0] lut_rack;
-    logic [3:0] lut_options_panel;
-    logic [3:0] lut_summary_panel;
-    logic [3:0] lut_btn_play;
-    logic [3:0] lut_btn_opts;
-    logic [3:0] lut_btn_back;
+    logic [3:0] lut_panel;
+    logic [3:0] lut_buttons;
     logic [3:0] lut_front_wheel;
     logic [3:0] lut_rear_wheel;
     logic [3:0] lut_cursor;
@@ -110,8 +100,7 @@ module pit_stop_core (
     vga_timing u_vga_timing (
         .clk(clk),
         .rst(rst),
-        .vga_out(vga_timing_if),
-        .low_res_out(low_res_pipe)
+        .vga_out(vga_timing_if)
     );
 
     // Jedyny zegar logiki animacji jest wyprowadzony ze zbocza synchronizacji
@@ -133,7 +122,6 @@ module pit_stop_core (
     // Systemowa maszyna stanow i animacja bolidu
     // -------------------------------------------------------------------------
     logic [2:0] system_screen;
-    logic [3:0] sequence_debug;
     logic enable_bolid_default;
     logic enable_bolid_no_wheels;
     logic enable_button_play;
@@ -143,6 +131,9 @@ module pit_stop_core (
     logic enable_wheel_service;
     logic signed [11:0] bolid_x;
     logic [1:0] bolid_wheel_anim_step;
+    logic option_multiplayer;
+    logic [1:0] option_game_mode;
+    logic [7:0] option_target_value;
     logic option_uart_test_mode;
 
     game_options u_game_options (
@@ -160,7 +151,6 @@ module pit_stop_core (
     logic back_clicked;
     logic front_service_done;
     logic rear_service_done;
-    logic game_running;
     logic game_finished;
     logic game_finished_for_fsm;
     logic player_won;
@@ -168,7 +158,6 @@ module pit_stop_core (
     logic [7:0] active_target_value;
     logic [7:0] game_score;
     logic [7:0] game_display_value;
-    logic [7:0] game_remaining_seconds;
     logic [15:0] game_elapsed_seconds;
     logic [7:0] last_stop_seconds;
     logic [7:0] best_stop_seconds;
@@ -336,14 +325,14 @@ module pit_stop_core (
         .round_complete(controller_round_complete),
         .selected_game_mode(pending_game_mode),
         .selected_target_value(pending_target_value),
-        .game_running(game_running),
+        .game_running(),
         .game_finished(game_finished),
         .player_won(player_won),
         .active_game_mode(active_game_mode),
         .active_target_value(active_target_value),
         .score(game_score),
         .display_value(game_display_value),
-        .remaining_seconds(game_remaining_seconds),
+        .remaining_seconds(),
         .elapsed_seconds(game_elapsed_seconds),
         .last_stop_seconds(last_stop_seconds),
         .best_stop_seconds(best_stop_seconds)
@@ -373,8 +362,7 @@ module pit_stop_core (
         .enable_wheel_service(enable_wheel_service),
         .game_start_pulse(game_start_pulse),
         .bolid_x(bolid_x),
-        .bolid_wheel_anim_step(bolid_wheel_anim_step),
-        .sequence_debug(sequence_debug)
+        .bolid_wheel_anim_step(bolid_wheel_anim_step)
     );
 
     always_comb begin
@@ -459,8 +447,6 @@ module pit_stop_core (
 
     logic front_hover;
     logic rear_hover;
-    logic front_clicked;
-    logic rear_clicked;
     logic front_grab_enable;
     logic rear_grab_enable;
     logic front_attach;
@@ -504,10 +490,6 @@ module pit_stop_core (
     logic rack_select_rear;
     logic [1:0] front_wheel_anim_step;
     logic [1:0] rear_wheel_anim_step;
-    logic [3:0] front_progress;
-    logic [3:0] rear_progress;
-    logic [3:0] front_state_debug;
-    logic [3:0] rear_state_debug;
     logic wheel_rst;
 
     logic signed [11:0] front_anchor_x;
@@ -595,20 +577,18 @@ module pit_stop_core (
     assign rear_rack_take  = rack_clicked && rear_needs_new &&
                              (!front_needs_new || rack_select_rear);
 
-    mouse_hitbox u_hitbox_front_wheel (
-        .clk(clk), .rst(rst),
-        .mouse_x(mouse_x), .mouse_y(mouse_y), .mouse_btn(mouse_btn_left),
+    mouse_hover u_hover_front_wheel (
+        .mouse_x(mouse_x), .mouse_y(mouse_y),
         .obj_x(front_visible ? $unsigned(front_wheel_x) : 12'hfff),
         .obj_y($unsigned(front_wheel_y)), .obj_w(12'd26), .obj_h(12'd27),
-        .is_hovered(front_hover), .is_clicked(front_clicked)
+        .is_hovered(front_hover)
     );
 
-    mouse_hitbox u_hitbox_rear_wheel (
-        .clk(clk), .rst(rst),
-        .mouse_x(mouse_x), .mouse_y(mouse_y), .mouse_btn(mouse_btn_left),
+    mouse_hover u_hover_rear_wheel (
+        .mouse_x(mouse_x), .mouse_y(mouse_y),
         .obj_x(rear_visible ? $unsigned(rear_wheel_x) : 12'hfff),
         .obj_y($unsigned(rear_wheel_y)), .obj_w(12'd26), .obj_h(12'd27),
-        .is_hovered(rear_hover), .is_clicked(rear_clicked)
+        .is_hovered(rear_hover)
     );
 
     wheel_physics u_front_wheel_physics (
@@ -653,7 +633,7 @@ module pit_stop_core (
         .wheel_locked(front_locked), .old_wheel_removed(front_old_removed),
         .needs_new_wheel(front_needs_new), .new_wheel_active(front_new_active),
         .service_done(front_service_done), .wheel_anim_step(front_wheel_anim_step),
-        .service_progress(front_progress), .state_debug(front_state_debug)
+        .service_progress(), .state_debug()
     );
 
     wheel_service_fsm #(
@@ -676,35 +656,35 @@ module pit_stop_core (
         .wheel_locked(rear_locked), .old_wheel_removed(rear_old_removed),
         .needs_new_wheel(rear_needs_new), .new_wheel_active(rear_new_active),
         .service_done(rear_service_done), .wheel_anim_step(rear_wheel_anim_step),
-        .service_progress(rear_progress), .state_debug(rear_state_debug)
+        .service_progress(), .state_debug()
     );
 
     // -------------------------------------------------------------------------
     // Renderowanie warstw
     // -------------------------------------------------------------------------
     draw_bg u_draw_bg (
-        .clk(clk), .rst(rst), .low_res_in(low_res_pipe),
+        .clk(clk), .rst(rst),
         .vga_in(vga_timing_if), .lut_out(lut_bg), .vga_out(vga_bg)
     );
 
     draw_PitstopLogo u_draw_pitstop_logo (
         .clk(clk), .rst(rst), .enable(system_screen == SCREEN_MAIN_MENU),
         .x_pos(LOGO_X), .y_pos(LOGO_Y),
-        .low_res_in(low_res_pipe), .lut_in(lut_bg), .vga_in(vga_bg),
+        .lut_in(lut_bg), .vga_in(vga_bg),
         .lut_out(lut_logo), .vga_out(vga_logo)
     );
 
     draw_BolidF1Default u_draw_bolid_default (
         .clk(clk), .rst(rst), .enable(enable_bolid_default),
         .wheel_anim_step(bolid_wheel_anim_step), .x_pos(bolid_x),
-        .low_res_in(low_res_pipe), .lut_in(lut_logo), .vga_in(vga_logo),
+        .lut_in(lut_logo), .vga_in(vga_logo),
         .lut_out(lut_bolid_default), .vga_out(vga_bolid_default)
     );
 
     draw_BolidF1NoWheels u_draw_bolid_no_wheels (
         .clk(clk), .rst(rst), .enable(enable_bolid_no_wheels),
         .x_pos(12'd60), .y_pos(12'd120),
-        .low_res_in(low_res_pipe), .lut_in(lut_bolid_default),
+        .lut_in(lut_bolid_default),
         .vga_in(vga_bolid_default), .lut_out(lut_bolid_no_wheels),
         .vga_out(vga_bolid_no_wheels)
     );
@@ -712,70 +692,52 @@ module pit_stop_core (
     draw_WheelRack u_draw_wheel_rack (
         .clk(clk), .rst(rst), .enable(enable_wheel_rack),
         .x_pos(RACK_X), .y_pos(RACK_Y),
-        .low_res_in(low_res_pipe), .lut_in(lut_bolid_no_wheels),
+        .lut_in(lut_bolid_no_wheels),
         .vga_in(vga_bolid_no_wheels), .lut_out(lut_rack),
         .vga_out(vga_rack)
     );
 
-    draw_options_panel u_draw_options_panel (
+    draw_game_panel u_draw_game_panel (
         .clk(clk), .rst(rst),
-        .enable((system_screen == SCREEN_OPTIONS) ||
-                (system_screen == SCREEN_WAIT_UART)),
-        .multiplayer(option_multiplayer),
+        .options_enable((system_screen == SCREEN_OPTIONS) ||
+                        (system_screen == SCREEN_WAIT_UART)),
+        .summary_enable(system_screen == SCREEN_SUMMARY),
+        .options_multiplayer(option_multiplayer),
         .uart_connected(uart_link_connected),
         .uart_peer_ready(multiplayer_ready),
         .uart_test_mode(option_uart_test_mode),
         .waiting_for_uart(system_screen == SCREEN_WAIT_UART),
-        .game_mode(option_game_mode),
-        .target_value(option_target_value),
-        .remote_score(uart_remote_score),
-        .low_res_in(low_res_pipe), .lut_in(lut_rack),
-        .vga_in(vga_rack), .lut_out(lut_options_panel),
-        .vga_out(vga_options_panel)
-    );
-
-    draw_summary_panel u_draw_summary_panel (
-        .clk(clk), .rst(rst),
-        .enable(system_screen == SCREEN_SUMMARY),
-        .multiplayer(active_multiplayer),
+        .options_game_mode(option_game_mode),
+        .options_target_value(option_target_value),
+        .summary_multiplayer(active_multiplayer),
         .match_result(summary_match_result),
-        .game_mode(active_game_mode),
-        .target_value(active_target_value),
+        .summary_game_mode(active_game_mode),
+        .summary_target_value(active_target_value),
         .score(summary_local_score),
         .remote_score(uart_remote_score),
         .elapsed_seconds(game_elapsed_seconds),
         .last_stop_seconds(last_stop_seconds),
         .best_stop_seconds(best_stop_seconds),
-        .low_res_in(low_res_pipe), .lut_in(lut_options_panel),
-        .vga_in(vga_options_panel), .lut_out(lut_summary_panel),
-        .vga_out(vga_summary_panel)
+        .lut_in(lut_rack), .vga_in(vga_rack),
+        .lut_out(lut_panel), .vga_out(vga_panel)
     );
 
-    draw_button_with_text #(.STR_LEN(4)) u_draw_btn_play (
-        .clk(clk), .rst(rst), .enable(enable_button_play),
-        .is_hovered(play_hover), .is_pressed(play_hover && mouse_btn_left),
-        .x_pos(BTN_PLAY_X), .y_pos(BTN_PLAY_Y), .text_string("PLAY"),
-        .low_res_in(low_res_pipe), .lut_in(lut_summary_panel),
-        .vga_in(vga_summary_panel), .lut_out(lut_btn_play),
-        .vga_out(vga_btn_play)
-    );
-
-    draw_button_with_text #(.STR_LEN(4)) u_draw_btn_options (
-        .clk(clk), .rst(rst), .enable(enable_button_options),
-        .is_hovered(options_hover), .is_pressed(options_hover && mouse_btn_left),
-        .x_pos(BTN_OPTS_X), .y_pos(BTN_OPTS_Y), .text_string("OPTS"),
-        .low_res_in(low_res_pipe), .lut_in(lut_btn_play),
-        .vga_in(vga_btn_play), .lut_out(lut_btn_opts),
-        .vga_out(vga_btn_opts)
-    );
-
-    draw_button_with_text #(.STR_LEN(4)) u_draw_btn_back (
-        .clk(clk), .rst(rst), .enable(enable_button_back),
-        .is_hovered(back_hover), .is_pressed(back_hover && mouse_btn_left),
-        .x_pos(back_button_x), .y_pos(back_button_y), .text_string("BACK"),
-        .low_res_in(low_res_pipe), .lut_in(lut_btn_opts),
-        .vga_in(vga_btn_opts), .lut_out(lut_btn_back),
-        .vga_out(vga_btn_back)
+    draw_buttons u_draw_buttons (
+        .clk(clk), .rst(rst),
+        .enable_play(enable_button_play),
+        .enable_options(enable_button_options),
+        .enable_back(enable_button_back),
+        .play_hovered(play_hover),
+        .options_hovered(options_hover),
+        .back_hovered(back_hover),
+        .play_pressed(play_hover && mouse_btn_left),
+        .options_pressed(options_hover && mouse_btn_left),
+        .back_pressed(back_hover && mouse_btn_left),
+        .play_x(BTN_PLAY_X), .play_y(BTN_PLAY_Y),
+        .options_x(BTN_OPTS_X), .options_y(BTN_OPTS_Y),
+        .back_x(back_button_x), .back_y(back_button_y),
+        .lut_in(lut_panel), .vga_in(vga_panel),
+        .lut_out(lut_buttons), .vga_out(vga_buttons)
     );
 
     logic signed [12:0] front_wheel_x_draw;
@@ -792,8 +754,8 @@ module pit_stop_core (
         .clk(clk), .rst(rst), .enable(front_visible),
         .wheel_anim_step(front_wheel_anim_step),
         .x_pos(front_wheel_x_draw), .y_pos(front_wheel_y_draw),
-        .low_res_in(low_res_pipe), .lut_in(lut_btn_back),
-        .vga_in(vga_btn_back), .lut_out(lut_front_wheel),
+        .lut_in(lut_buttons),
+        .vga_in(vga_buttons), .lut_out(lut_front_wheel),
         .vga_out(vga_front_wheel)
     );
 
@@ -801,7 +763,7 @@ module pit_stop_core (
         .clk(clk), .rst(rst), .enable(rear_visible),
         .wheel_anim_step(rear_wheel_anim_step),
         .x_pos(rear_wheel_x_draw), .y_pos(rear_wheel_y_draw),
-        .low_res_in(low_res_pipe), .lut_in(lut_front_wheel),
+        .lut_in(lut_front_wheel),
         .vga_in(vga_front_wheel), .lut_out(lut_rear_wheel),
         .vga_out(vga_rear_wheel)
     );
@@ -824,7 +786,7 @@ module pit_stop_core (
     draw_mouse_cursor u_draw_cursor (
         .clk(clk), .rst(rst), .enable(1'b1),
         .cursor_type(current_cursor), .mouse_x(mouse_x), .mouse_y(mouse_y),
-        .low_res_in(low_res_pipe), .lut_in(lut_rear_wheel),
+        .lut_in(lut_rear_wheel),
         .vga_in(vga_rear_wheel), .lut_out(lut_cursor),
         .vga_out(vga_cursor)
     );

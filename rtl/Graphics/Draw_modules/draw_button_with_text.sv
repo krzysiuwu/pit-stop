@@ -101,8 +101,8 @@ module draw_button_with_text #(
             current_char_code = char_array[char_index];
     end
 
-    logic [10:0] txt_rom_addr;
-    assign txt_rom_addr = in_txt ? {current_char_code[6:0], local_txt_y[2:0]} : 11'b0;
+    logic [9:0] txt_rom_addr;
+    assign txt_rom_addr = in_txt ? {current_char_code[6:0], local_txt_y[2:0]} : 10'b0;
 
     logic [7:0] txt_rom_data;
     Font_Rom u_font_rom (

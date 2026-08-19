@@ -11,8 +11,7 @@ module vga_timing (
         input  logic clk,
         input  logic rst,
 
-        vga_if.out vga_out,
-        low_res_if.out low_res_out
+        vga_if.out vga_out
     );
 
     timeunit 1ns;
@@ -61,8 +60,5 @@ module vga_timing (
         vblnk_nxt = (vcount_nxt >= VER_BLANK_START);
         vsync_nxt = (vcount_nxt >= VER_SYNC_START && vcount_nxt < VER_SYNC_START + VER_SYNC_TIME);
     end
-
-    assign low_res_out.hcount = vga_out.hcount >> 2;
-    assign low_res_out.vcount = vga_out.vcount >> 2;
 
 endmodule
