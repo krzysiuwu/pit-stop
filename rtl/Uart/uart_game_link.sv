@@ -58,6 +58,7 @@ module uart_game_link #(
 
     logic [7:0] tx_flags;
     logic [7:0] tx_checksum;
+
     logic [7:0] tx_session_snapshot;
     logic [7:0] tx_flags_snapshot;
     logic [7:0] tx_mode_snapshot;
@@ -118,7 +119,7 @@ module uart_game_link #(
         end else begin
             if (tx_packet_active) begin
                 if (tx_byte_ready) begin
-                    if (tx_byte_index == PACKET_BYTES - 1) begin
+                    if (tx_byte_index == 3'(PACKET_BYTES - 1)) begin
                         tx_byte_index    <= 3'd0;
                         tx_packet_active <= 1'b0;
                     end else begin
@@ -162,85 +163,63 @@ module uart_game_link #(
     logic [7:0] rx_mode;
     logic [7:0] rx_target;
     logic [7:0] rx_score_value;
-    logic [2:0] rx_byte_index;
+    logic [2:0] rx_byte_count;
     logic [7:0] rx_checksum;
     logic       valid_packet_pulse;
     logic       checksum_error_pulse;
 
+    // Counter-based reception avoiding FSM extraction & pruning
     always_ff @(posedge clk or negedge rst) begin
         if (!rst) begin
-            rx_byte_index          <= 3'd0;
-            rx_checksum            <= 8'd0;
-            valid_packet_pulse     <= 1'b0;
-            checksum_error_pulse   <= 1'b0;
-            rx_session             <= 8'd0;
-            rx_flags               <= 8'd0;
-            rx_mode                <= 8'd0;
-            rx_target              <= 8'd0;
-            rx_score_value         <= 8'd0;
+            rx_byte_count        <= 3'd0;
+            rx_checksum          <= 8'd0;
+            valid_packet_pulse   <= 1'b0;
+            checksum_error_pulse <= 1'b0;
+            rx_session           <= 8'd0;
+            rx_flags             <= 8'd0;
+            rx_mode              <= 8'd0;
+            rx_target            <= 8'd0;
+            rx_score_value       <= 8'd0;
         end else begin
             valid_packet_pulse   <= 1'b0;
             checksum_error_pulse <= 1'b0;
 
             if (rx_byte_valid) begin
-                case (rx_byte_index)
-                    3'd0: begin
-                        if (rx_byte_data == MAGIC_0) begin
-                            rx_checksum  <= rx_byte_data;
-                            rx_byte_index <= 3'd1;
-                        end
+                if (rx_byte_count == 3'd0) begin
+                    if (rx_byte_data == MAGIC_0) begin
+                        rx_checksum   <= rx_byte_data;
+                        rx_byte_count <= 3'd1;
                     end
-
-                    3'd1: begin
-                        if (rx_byte_data == MAGIC_1) begin
-                            rx_checksum  <= rx_checksum ^ rx_byte_data;
-                            rx_byte_index <= 3'd2;
-                        end else if (rx_byte_data == MAGIC_0) begin
-                            rx_checksum  <= rx_byte_data;
-                            rx_byte_index <= 3'd1;
-                        end else begin
-                            rx_byte_index <= 3'd0;
-                        end
+                end else if (rx_byte_count == 3'd1) begin
+                    if (rx_byte_data == MAGIC_1) begin
+                        rx_checksum   <= rx_checksum ^ rx_byte_data;
+                        rx_byte_count <= 3'd2;
+                    end else if (rx_byte_data == MAGIC_0) begin
+                        rx_checksum   <= rx_byte_data;
+                        rx_byte_count <= 3'd1;
+                    end else begin
+                        rx_byte_count <= 3'd0;
                     end
+                end else begin
+                    rx_checksum <= rx_checksum ^ rx_byte_data;
 
-                    3'd2: begin
-                        rx_session <= rx_byte_data;
-                        rx_checksum <= rx_checksum ^ rx_byte_data;
-                        rx_byte_index <= 3'd3;
-                    end
-
-                    3'd3: begin
-                        rx_flags <= rx_byte_data;
-                        rx_checksum <= rx_checksum ^ rx_byte_data;
-                        rx_byte_index <= 3'd4;
-                    end
-
-                    3'd4: begin
-                        rx_mode <= rx_byte_data;
-                        rx_checksum <= rx_checksum ^ rx_byte_data;
-                        rx_byte_index <= 3'd5;
-                    end
-
-                    3'd5: begin
-                        rx_target <= rx_byte_data;
-                        rx_checksum <= rx_checksum ^ rx_byte_data;
-                        rx_byte_index <= 3'd6;
-                    end
-
-                    3'd6: begin
-                        rx_score_value <= rx_byte_data;
-                        rx_checksum <= rx_checksum ^ rx_byte_data;
-                        rx_byte_index <= 3'd7;
-                    end
-
-                    default: begin
-                        rx_byte_index <= 3'd0;
+                    if (rx_byte_count == 3'd2)      rx_session     <= rx_byte_data;
+                    else if (rx_byte_count == 3'd3) rx_flags       <= rx_byte_data;
+                    else if (rx_byte_count == 3'd4) rx_mode        <= rx_byte_data;
+                    else if (rx_byte_count == 3'd5) rx_target      <= rx_byte_data;
+                    else if (rx_byte_count == 3'd6) rx_score_value <= rx_byte_data;
+                    else if (rx_byte_count == 3'd7) begin
                         if (rx_byte_data == rx_checksum)
                             valid_packet_pulse <= 1'b1;
                         else
                             checksum_error_pulse <= 1'b1;
                     end
-                endcase
+
+                    if (rx_byte_count == 3'd7)
+                        rx_byte_count <= 3'd0;
+                    else
+                        rx_byte_count <= rx_byte_count + 1'b1;
+                end
             end
         end
     end

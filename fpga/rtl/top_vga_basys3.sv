@@ -26,7 +26,8 @@ module top_vga_basys3 (
         output wire [6:0] seg,
         output wire [3:0] an,
         output wire dp,
-        output wire [15:0] led,
+        output wire [7:0]  led_low,   // maps to physical LED 0..7
+        output wire [15:12] led_high, // maps to physical LED 12..15
 
         input  wire uart_rx,
         output wire uart_tx,
@@ -62,12 +63,11 @@ module top_vga_basys3 (
 
     assign JA1 = pclk_mirror;
     assign async_core_rst_n = !btnC && locked;
-    assign led[7:0] = uart_remote_score;
-    assign led[11:8] = 4'b0000;
-    assign led[12] = uart_remote_debug;
-    assign led[13] = uart_error;
-    assign led[14] = uart_rx_activity;
-    assign led[15] = uart_link_connected;
+    assign led_low      = uart_remote_score;
+    assign led_high[12] = uart_remote_debug;
+    assign led_high[13] = uart_error;
+    assign led_high[14] = uart_rx_activity;
+    assign led_high[15] = uart_link_connected;
 
 
     /**

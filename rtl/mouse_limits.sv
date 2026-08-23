@@ -1,71 +1,49 @@
 /**
  * Module: mouse_limits
  * Description:
- * Module configures the maximum X and Y limits for the MouseCtl module
- * to the last visible VGA pixel from vga_pkg.
+ * Configures the maximum X and Y limits for the MouseCtl module
+ * on reset using a 2-bit sequence counter.
  */
-
 module mouse_limits (
-        input  logic clk,
-        input  logic rst,
+    input  logic clk,
+    input  logic rst,
 
-        output logic [11:0] value,
-        output logic setmax_x,
-        output logic setmax_y
-    );
+    output logic [11:0] value,
+    output logic setmax_x,
+    output logic setmax_y
+);
 
     //import screen resolution
     import vga_pkg::*;
 
-    typedef enum logic [1:0] {
-        INIT  = 2'b00,
-        SET_X = 2'b01,
-        SET_Y = 2'b10,
-        DONE  = 2'b11
-    } conf_state;
+    logic [1:0] step;
 
-    conf_state state, next_state;
-
-    // State Register
     always_ff @(posedge clk or negedge rst) begin
         if (!rst) begin
-            state <= INIT;
-        end else begin
-            state <= next_state;
+            step <= 2'd0;
+        end else if (step != 2'd3) begin
+            step <= step + 1'b1;
         end
     end
 
-    // Next State & Output Logic
     always_comb begin
-        // Default assignments
-        next_state = state;
-        value      = '0;
-        setmax_x   = 1'b0;
-        setmax_y   = 1'b0;
+        value    = 12'd0;
+        setmax_x = 1'b0;
+        setmax_y = 1'b0;
 
-        case (state)
-            INIT: begin
-                // Wait one cycle after reset before doing anything
-                next_state = SET_X;
+        case (step)
+            2'd1: begin
+                value    = HOR_PIXELS - 1;
+                setmax_x = 1'b1;
             end
-
-            SET_X: begin
-                // Send the MAX_X value and pulse setmax_x
-                value      = HOR_PIXELS - 1;
-                setmax_x   = 1'b1;
-                next_state = SET_Y;
+            2'd2: begin
+                value    = VER_PIXELS - 1;
+                setmax_y = 1'b1;
             end
-
-            SET_Y: begin
-                // Send the MAX_Y value and pulse setmax_y
-                value      = VER_PIXELS - 1;
-                setmax_y   = 1'b1;
-                next_state = DONE;
-            end
-
-            DONE: begin
-                // Configuration finished. Keep all signals at 0 and stay here.
-                next_state = DONE;
+            default: begin
+                value    = 12'd0;
+                setmax_x = 1'b0;
+                setmax_y = 1'b0;
             end
         endcase
     end

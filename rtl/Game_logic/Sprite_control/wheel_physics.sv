@@ -1,31 +1,31 @@
 module wheel_physics #(
-    parameter int SCREEN_WIDTH  = 256,
-    parameter int SCREEN_HEIGHT = 192,
-    parameter int WHEEL_WIDTH   = 26,
-    parameter int WHEEL_HEIGHT  = 27,
-    parameter int GROUND_LEVEL  = 137
+        parameter int SCREEN_WIDTH  = 256,
+        parameter int SCREEN_HEIGHT = 192,
+        parameter int WHEEL_WIDTH   = 26,
+        parameter int WHEEL_HEIGHT  = 27,
+        parameter int GROUND_LEVEL  = 137
 )(
-    input  logic clk,
-    input  logic rst,
-    input  logic frame_tick,
+        input  logic clk,
+        input  logic rst,
+        input  logic frame_tick,
 
-    input  logic [11:0] mouse_x,
-    input  logic [11:0] mouse_y,
-    input  logic        mouse_btn,
-    input  logic        is_hovered,
+        input  logic [11:0] mouse_x,
+        input  logic [11:0] mouse_y,
+        input  logic        mouse_btn,
+        input  logic        is_hovered,
 
-    input  logic signed [11:0] anchor_x,
-    input  logic signed [11:0] anchor_y,
-    input  logic               attach_to_anchor,
+        input  logic signed [11:0] anchor_x,
+        input  logic signed [11:0] anchor_y,
+        input  logic               attach_to_anchor,
 
-    input  logic grab_enable,
+        input  logic grab_enable,
 
-    output logic signed [11:0] wheel_x,
-    output logic signed [11:0] wheel_y,
-    output logic               is_detached,
-    output logic               is_dragging,
-    output logic               is_removed
-);
+        output logic signed [11:0] wheel_x,
+        output logic signed [11:0] wheel_y,
+        output logic               is_detached,
+        output logic               is_dragging,
+        output logic               is_removed
+    );
 
     timeunit 1ns;
     timeprecision 1ps;
@@ -61,8 +61,8 @@ module wheel_physics #(
     localparam logic signed [15:0] MIN_SLIDE_SPEED  = 16'sd4;
 
     function automatic logic signed [15:0] pixels_to_q(
-        input logic signed [12:0] pixels
-    );
+            input logic signed [12:0] pixels
+        );
         pixels_to_q = $signed({{3{pixels[12]}}, pixels}) <<< 4;
     endfunction
 
@@ -78,8 +78,8 @@ module wheel_physics #(
     always_ff @(posedge clk or negedge rst) begin
         if (!rst) begin
             state         <= MOUNTED;
-            pos_x         <= anchor_x_q;
-            pos_y         <= anchor_y_q;
+            pos_x         <= '0; // Constant reset value avoids LDC/P latch inference
+            pos_y         <= '0; // Constant reset value avoids LDC/P latch inference
             vel_x         <= '0;
             vel_y         <= '0;
             prev_mouse_x  <= '0;
@@ -147,7 +147,7 @@ module wheel_physics #(
                                 vel_y <= -(vel_y - (vel_y >>> 3));
 
                             if ((vel_x <= MIN_SLIDE_SPEED) &&
-                                (vel_x >= -MIN_SLIDE_SPEED))
+                                    (vel_x >= -MIN_SLIDE_SPEED))
                                 vel_x <= '0;
                             else
                                 vel_x <= vel_x - (vel_x >>> 3);
@@ -156,7 +156,7 @@ module wheel_physics #(
                             vel_y <= '0;
 
                             if ((vel_x <= MIN_SLIDE_SPEED) &&
-                                (vel_x >= -MIN_SLIDE_SPEED))
+                                    (vel_x >= -MIN_SLIDE_SPEED))
                                 vel_x <= '0;
                             else
                                 vel_x <= vel_x - (vel_x >>> 3);
@@ -203,17 +203,17 @@ module wheel_physics #(
         endcase
     end
 
-    assign wheel_x = pos_x >>> 4;
-    assign wheel_y = pos_y >>> 4;
-
+    // Direct output assignments
+    assign wheel_x = (state == MOUNTED) ? anchor_x : (pos_x >>> 4);
+    assign wheel_y = (state == MOUNTED) ? anchor_y : (pos_y >>> 4);
     assign is_detached = (state != MOUNTED);
     assign is_dragging = (state == DRAGGED);
 
     // Stare kolo jest uznane za wyrzucone dopiero, gdy caly sprite opusci ekran.
     assign is_removed = is_detached &&
-                        (((wheel_x + WHEEL_WIDTH)  <= 0)          ||
-                         (wheel_x >= SCREEN_WIDTH)                 ||
-                         ((wheel_y + WHEEL_HEIGHT) <= 0)          ||
-                         (wheel_y >= SCREEN_HEIGHT));
+        (((wheel_x + WHEEL_WIDTH)  <= 0)          ||
+            (wheel_x >= SCREEN_WIDTH)                 ||
+            ((wheel_y + WHEEL_HEIGHT) <= 0)          ||
+            (wheel_y >= SCREEN_HEIGHT));
 
 endmodule
