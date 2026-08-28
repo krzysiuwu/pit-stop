@@ -50,6 +50,8 @@ Timing and power sign-off:
 
 - Split the game-panel BCD, line-selection and font-address path into three
   registered stages for the 65 MHz pixel clock.
+- Registered button selection before the sprite BRAM address and replaced the
+  inferred DSP48 multiplication by 78 with constant shift/add arithmetic.
 - Added a dedicated reset-distribution stage with a synthesis fanout limit.
 - Marked the asynchronous reset button path and normal reset activity correctly.
 - Enabled the Vivado post-route timing-oriented implementation strategy.

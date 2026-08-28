@@ -95,17 +95,71 @@ module draw_buttons (
         end
     end
 
-    logic in_button;
-    logic [11:0] local_button_x;
-    logic [11:0] local_button_y;
+    logic in_button_raw;
+    logic [11:0] local_button_x_raw;
+    logic [11:0] local_button_y_raw;
+
+    // Register the button selection before calculating the BRAM address.
+    // The previous path crossed the screen FSM, hitbox comparisons, a DSP48
+    // multiplication by 78 and the BRAM address port in a single 65 MHz cycle.
+    logic        in_button_s0;
+    logic [11:0] local_button_x_s0;
+    logic [11:0] local_button_y_s0;
+    logic        selected_hovered_s0;
+    logic [31:0] selected_text_s0;
+    logic [3:0]  lut_in_s0;
+    logic [10:0] vcount_s0;
+    logic        vsync_s0;
+    logic [10:0] hcount_s0;
+    logic        hsync_s0;
+    logic        vblnk_s0;
+    logic        hblnk_s0;
+
+    assign in_button_raw = play_active || options_active || back_active;
+    assign local_button_x_raw = cur_x - selected_x;
+    assign local_button_y_raw = cur_y - selected_y;
+
+    always_ff @(posedge clk or negedge rst) begin
+        if (!rst) begin
+            in_button_s0       <= 1'b0;
+            local_button_x_s0  <= 12'd0;
+            local_button_y_s0  <= 12'd0;
+            selected_hovered_s0 <= 1'b0;
+            selected_text_s0   <= "    ";
+            lut_in_s0          <= 4'd0;
+            vcount_s0          <= '0;
+            vsync_s0           <= 1'b0;
+            hcount_s0          <= '0;
+            hsync_s0           <= 1'b0;
+            vblnk_s0           <= 1'b0;
+            hblnk_s0           <= 1'b0;
+        end else begin
+            in_button_s0       <= in_button_raw;
+            local_button_x_s0  <= local_button_x_raw;
+            local_button_y_s0  <= local_button_y_raw;
+            selected_hovered_s0 <= selected_hovered;
+            selected_text_s0   <= selected_text;
+            lut_in_s0          <= lut_in;
+            vcount_s0          <= vga_in.vcount;
+            vsync_s0           <= vga_in.vsync;
+            hcount_s0          <= vga_in.hcount;
+            hsync_s0           <= vga_in.hsync;
+            vblnk_s0           <= vga_in.vblnk;
+            hblnk_s0           <= vga_in.hblnk;
+        end
+    end
+
     logic [11:0] button_address;
     logic [3:0]  button_data;
+    logic [11:0] button_row_offset;
 
-    assign in_button = play_active || options_active || back_active;
-    assign local_button_x = cur_x - selected_x;
-    assign local_button_y = cur_y - selected_y;
-    assign button_address = in_button
-                          ? local_button_y * BTN_WIDTH + local_button_x
+    // 78*y = 64*y + 16*y - 2*y.  Expressing the constant explicitly keeps
+    // this small address calculation in the carry fabric instead of a DSP48.
+    assign button_row_offset = (local_button_y_s0 << 6) +
+                               (local_button_y_s0 << 4) -
+                               (local_button_y_s0 << 1);
+    assign button_address = in_button_s0
+                          ? button_row_offset + local_button_x_s0
                           : 12'd0;
 
     BasicButton8chars_Rom u_button_rom (
@@ -122,19 +176,19 @@ module draw_buttons (
     logic [9:0]  font_address;
     logic [7:0]  font_data;
 
-    assign in_text = in_button &&
-                     (local_button_x >= TEXT_OFFSET_X) &&
-                     (local_button_x < TEXT_OFFSET_X + TEXT_WIDTH) &&
-                     (local_button_y >= TEXT_OFFSET_Y) &&
-                     (local_button_y < TEXT_OFFSET_Y + TEXT_HEIGHT);
-    assign local_text_x = local_button_x - TEXT_OFFSET_X;
-    assign local_text_y = local_button_y - TEXT_OFFSET_Y;
+    assign in_text = in_button_s0 &&
+                     (local_button_x_s0 >= TEXT_OFFSET_X) &&
+                     (local_button_x_s0 < TEXT_OFFSET_X + TEXT_WIDTH) &&
+                     (local_button_y_s0 >= TEXT_OFFSET_Y) &&
+                     (local_button_y_s0 < TEXT_OFFSET_Y + TEXT_HEIGHT);
+    assign local_text_x = local_button_x_s0 - TEXT_OFFSET_X;
+    assign local_text_y = local_button_y_s0 - TEXT_OFFSET_Y;
     assign char_index = local_text_x[4:3];
 
     always_comb begin
         current_char = 8'h20;
         if (in_text)
-            current_char = selected_text[((3 - char_index) * 8) +: 8];
+            current_char = selected_text_s0[((3 - char_index) * 8) +: 8];
     end
 
     assign font_address = in_text
@@ -169,17 +223,17 @@ module draw_buttons (
             vga_out.vblnk  <= '0;
             vga_out.hblnk  <= '0;
         end else begin
-            in_button_d    <= in_button;
+            in_button_d    <= in_button_s0;
             in_text_d      <= in_text;
             text_pixel_x_d <= local_text_x[2:0];
-            hovered_d      <= selected_hovered;
-            lut_in_d       <= lut_in;
-            vga_out.vcount <= vga_in.vcount;
-            vga_out.vsync  <= vga_in.vsync;
-            vga_out.hcount <= vga_in.hcount;
-            vga_out.hsync  <= vga_in.hsync;
-            vga_out.vblnk  <= vga_in.vblnk;
-            vga_out.hblnk  <= vga_in.hblnk;
+            hovered_d      <= selected_hovered_s0;
+            lut_in_d       <= lut_in_s0;
+            vga_out.vcount <= vcount_s0;
+            vga_out.vsync  <= vsync_s0;
+            vga_out.hcount <= hcount_s0;
+            vga_out.hsync  <= hsync_s0;
+            vga_out.vblnk  <= vblnk_s0;
+            vga_out.hblnk  <= hblnk_s0;
         end
     end
 
