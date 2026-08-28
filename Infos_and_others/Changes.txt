@@ -44,3 +44,14 @@ Symmetric two-board UART multiplayer:
 - Added a two-instance automated UART/session/result test.
 - Added synchronized reset release and fixed out-of-range text indexing.
 - Made bitstream generation stop safely instead of copying a stale .bit file.
+
+
+Timing and power sign-off:
+
+- Split the game-panel BCD, line-selection and font-address path into three
+  registered stages for the 65 MHz pixel clock.
+- Added a dedicated reset-distribution stage with a synthesis fanout limit.
+- Marked the asynchronous reset button path and normal reset activity correctly.
+- Enabled the Vivado post-route timing-oriented implementation strategy.
+- Added detailed timing, high-fanout and advisory power reports.
+- Made the build fail when routed setup slack is negative.

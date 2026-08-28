@@ -161,9 +161,16 @@ set_property PACKAGE_PIN A16 [get_ports uart_rx]
 ## Asynchronous board inputs end at explicit two-stage synchronizers.
 ## Cut only the input-to-first-register timing path; timing after the first
 ## register remains fully analyzed.
+set_false_path -from [get_ports btnC]
 set_false_path -from [get_ports uart_rx]
 set_false_path -from [get_ports btnU]
 set_false_path -from [get_ports {sw[*]}]
+
+## The push-button reset is asserted only during startup or by the user.
+## Tell vectorless power analysis to model reset pins in their normal,
+## deasserted state instead of assuming that a high-fanout reset is active
+## for a large fraction of the run.
+set_switching_activity -deassert_resets
 ##Sch name = JB3
 #set_property PACKAGE_PIN B15 [get_ports {JB[2]}]
 	#set_property IOSTANDARD LVCMOS33 [get_ports {JB[2]}]

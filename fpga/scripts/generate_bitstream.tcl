@@ -34,10 +34,25 @@ proc assert_run_complete {run_name} {
     }
 }
 
+proc assert_timing_met {} {
+    set failing_paths [get_timing_paths -quiet -delay_type max \
+        -slack_lesser_than 0.0 -max_paths 1]
+
+    if {[llength ${failing_paths}] != 0} {
+        set worst_slack [get_property SLACK [lindex ${failing_paths} 0]]
+        error "Timing requirements not met after routing (WNS=${worst_slack} ns). See ../results/timing_summary.rpt and ../results/timing_paths.rpt."
+    }
+}
+
 
 # Generate bitstream
 proc generate_bitstream {} {
     file mkdir ../results
+
+    # The shared text renderers favor area.  Use Vivado's timing-oriented
+    # implementation flow, including post-route physical optimization, to
+    # recover placement and routing margin without relaxing the 65 MHz clock.
+    set_property strategy Performance_ExplorePostRoutePhysOpt [get_runs impl_1]
 
     # Run synthesis
     reset_run synth_1
@@ -53,10 +68,33 @@ proc generate_bitstream {} {
     assert_run_complete impl_1
     open_run impl_1
     report_utilization -file ../results/implementation_utilization.rpt
-    report_timing_summary -delay_type max -max_paths 10 \
+    report_timing_summary -delay_type min_max -max_paths 20 \
+        -report_unconstrained \
         -file ../results/timing_summary.rpt
+    report_timing -delay_type max -max_paths 50 -nworst 5 \
+        -sort_by group -path_type full_clock_expanded \
+        -file ../results/timing_paths.rpt
     report_clock_utilization -file ../results/clock_utilization.rpt
+    report_high_fanout_nets -max_nets 50 \
+        -file ../results/high_fanout_nets.rpt
     report_methodology -file ../results/methodology.rpt
+
+    # Power analysis is vectorless in this flow.  Model the synchronized,
+    # active-low reset distribution in its normal deasserted state.  Match
+    # possible MAX_FANOUT replicas as well as the original RTL net.
+    set_switching_activity -deassert_resets
+    set core_reset_nets [get_nets -hierarchical -quiet \
+        -filter {NAME =~ *reset_distribution*}]
+    if {[llength ${core_reset_nets}] != 0} {
+        set_switching_activity -static_probability 1.0 -toggle_rate 0.0 \
+            ${core_reset_nets}
+    }
+    report_power -advisory -file ../results/power.rpt
+
+    # A generated bitstream is not considered a successful build when setup
+    # timing is negative.  Previously Vivado returned a completed run while
+    # only printing Timing 38-282 as a critical warning.
+    assert_timing_met
 }
 
 

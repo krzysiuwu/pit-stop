@@ -168,8 +168,15 @@ Skrypt zapisuje w `results/` nowy bitstream oraz raporty:
 - `synthesis_utilization.rpt`,
 - `implementation_utilization.rpt`,
 - `timing_summary.rpt`,
+- `timing_paths.rpt`,
 - `clock_utilization.rpt`,
-- `methodology.rpt`.
+- `high_fanout_nets.rpt`,
+- `methodology.rpt`,
+- `power.rpt`.
+
+Build konczy sie bledem, jezeli po routingu najgorszy setup slack (`WNS`) jest
+ujemny. Poprawny bitstream wymaga `WNS >= 0` oraz `WHS >= 0` w
+`results/timing_summary.rpt`.
 
 Bitstream dolaczony do starszych wersji projektu nie zawieral UART-u. Przed
 wgraniem na plytki trzeba wygenerowac nowy `results/top_vga_basys3.bit` i wgrac
