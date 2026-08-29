@@ -75,7 +75,7 @@ module wheel_physics #(
     assign dragged_y_q = pixels_to_q(mouse_y_signed - drag_offset_y);
     assign next_pos_y  = pos_y + vel_y;
 
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst) begin
             state         <= MOUNTED;
             pos_x         <= '0; // Constant reset value avoids LDC/P latch inference

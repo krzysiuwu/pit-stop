@@ -51,7 +51,7 @@ module draw_PitstopLogo (
     logic [5:0] anim_counter;
     logic [1:0] frame_index;
 
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst) begin
             vsync_d      <= 1'b0;
             anim_counter <= '0;
@@ -80,7 +80,7 @@ module draw_PitstopLogo (
     logic in_hitbox_d;
     logic [3:0] lut_in_d;
 
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst) begin
             in_hitbox_d    <= 1'b0;
             vga_out.vcount <= '0;

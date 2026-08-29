@@ -87,7 +87,7 @@ module draw_string #(
     logic [3:0] lut_in_d;
     logic [2:0] pixel_x_d; // Rejestr do zapamiętania współrzędnej X wewnątrz znaku
 
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst) begin
             in_hitbox_d    <= 1'b0;
             pixel_x_d      <= '0;

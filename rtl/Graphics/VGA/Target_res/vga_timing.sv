@@ -22,7 +22,7 @@ module vga_timing (
     logic [10:0] vcount_nxt, hcount_nxt;
     logic vsync_nxt, vblnk_nxt, hsync_nxt, hblnk_nxt;
 
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst) begin
             vga_out.vcount <= 11'b0;
             vga_out.vsync <= 1'b0;

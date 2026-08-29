@@ -18,7 +18,7 @@ module mouse_limits (
 
     logic [1:0] step;
 
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst) begin
             step <= 2'd0;
         end else if (step != 2'd3) begin

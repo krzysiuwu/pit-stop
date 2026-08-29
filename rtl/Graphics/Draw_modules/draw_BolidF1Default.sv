@@ -71,7 +71,7 @@ module draw_BolidF1Default (
     logic [3:0] lut_in_d;
     logic [1:0] anim_step_d;
 
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst) begin
             vga_out.vcount <= '0;
             vga_out.vsync  <= '0;

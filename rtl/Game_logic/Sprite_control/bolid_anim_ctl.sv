@@ -71,7 +71,7 @@ module bolid_anim_ctrl (
             next_wheel_step = step + 1'b1;
     endfunction
 
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst) begin
             state             <= IDLE;
             position_fp       <= POS_START_FP;

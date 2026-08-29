@@ -55,7 +55,7 @@ module top_fsm (
     assign low_res_mouse_y =
         (mouse_y_div4 > 12'd191) ? 12'd191 : mouse_y_div4;
 
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst) begin
             switches_meta <= 16'd0;
             switches_sync <= 16'd0;

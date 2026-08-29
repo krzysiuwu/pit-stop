@@ -76,7 +76,7 @@ module system_fsm (
         .wheel_anim_step(bolid_wheel_anim_step)
     );
 
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst)
             state <= MENU_BOOT;
         else

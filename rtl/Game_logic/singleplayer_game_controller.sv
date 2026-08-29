@@ -62,7 +62,7 @@ module singleplayer_game_controller #(
         endcase
     end
 
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst) begin
             game_running          <= 1'b0;
             game_finished         <= 1'b0;

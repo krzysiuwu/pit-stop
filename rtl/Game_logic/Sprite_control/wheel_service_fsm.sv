@@ -99,7 +99,7 @@ module wheel_service_fsm #(
             rotate_backward = step - 1'b1;
     endfunction
 
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst) begin
             state            <= OLD_LOCKED;
             service_progress <= '0;

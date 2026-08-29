@@ -95,7 +95,7 @@ assign is_shadow = (cur_y >= 96 && cur_y < 108);
 logic vsync_prev;
 logic [6:0] frame_cnt; 
 
-always_ff @(posedge clk or negedge rst) begin
+always_ff @(posedge clk) begin
     if (!rst) begin
         frame_cnt <= '0;
         vsync_prev <= '0;
@@ -205,7 +205,7 @@ assign addr_grandstand = is_grandstand ? ((local_y * Grandstand_W) + local_x) : 
  * Internal logic
  */
 
-always_ff @(posedge clk or negedge rst) begin
+always_ff @(posedge clk) begin
     if (!rst) begin
         is_cloud_d      <= '0;
         is_grandstand_d <= '0;
@@ -231,7 +231,7 @@ always_ff @(posedge clk or negedge rst) begin
     end
 end
 
-always_ff @(posedge clk or negedge rst) begin : bg_ff_blk
+always_ff @(posedge clk) begin : bg_ff_blk
     if (!rst) begin
         vga_out.vcount <= '0;
         vga_out.vsync  <= '0;

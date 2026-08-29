@@ -72,7 +72,7 @@ module draw_BasicButton8chars (
     logic [3:0] lut_in_d;
     logic       is_hovered_d;
 
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst) begin
             vga_out.vcount <= '0;
             vga_out.vsync  <= '0;

@@ -117,7 +117,7 @@ module anim_test (
     logic animation_started;
     logic [6:0] pitstop_frames;
 
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst) begin
             vsync_prev <= 1'b0;
             frame_tick <= 1'b0;
@@ -128,7 +128,7 @@ module anim_test (
     end
 
     // Prosty sekwencer wymuszający sygnały dla testu
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst) begin
             trigger_arrive <= 1'b0;
             trigger_depart <= 1'b0;
@@ -219,7 +219,7 @@ module anim_test (
     // -------------------------------------------------------------------------
     LUT2RGB_converter u_LUT2RGB_converter (
         .clk(clk),
-        .rst_n(rst),
+        .rst,
         
         .lut_value(lut_step7_wheel),
         .vga_in(vga_step7_wheel),

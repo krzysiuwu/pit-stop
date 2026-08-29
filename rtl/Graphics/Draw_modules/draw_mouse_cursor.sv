@@ -126,7 +126,7 @@ module draw_mouse_cursor (
     logic [3:0] pixel_color_d;
     logic [3:0] lut_in_d;
 
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst) begin
             vga_out.vcount <= '0; vga_out.vsync  <= '0; vga_out.hcount <= '0;
             vga_out.hsync  <= '0; vga_out.vblnk  <= '0; vga_out.hblnk  <= '0;

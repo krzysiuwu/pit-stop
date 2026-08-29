@@ -275,7 +275,7 @@ module draw_options_panel (
     logic [3:0] lut_in_d;
     logic       text_pixel;
 
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst) begin
             in_panel_d     <= 1'b0;
             in_text_d      <= 1'b0;

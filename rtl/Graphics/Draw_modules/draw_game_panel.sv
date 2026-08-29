@@ -232,7 +232,7 @@ module draw_game_panel (
     logic        vblnk_d1, vblnk_d2;
     logic        hblnk_d1, hblnk_d2;
 
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst) begin
             selected_number_d1    <= 10'd0;
             selected_ascii_d2     <= 24'h303030;
@@ -535,7 +535,7 @@ module draw_game_panel (
     logic [3:0] lut_in_d;
     logic       text_pixel;
 
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst) begin
             in_panel_d     <= 1'b0;
             in_text_d      <= 1'b0;

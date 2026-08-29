@@ -41,7 +41,7 @@ module char_renderer (
     assign rom_addr = in_hitbox ? {char_code, local_y, local_x} : 13'b0;
 
     logic in_hitbox_d;
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst) in_hitbox_d <= 1'b0;
         else      in_hitbox_d <= in_hitbox;
     end

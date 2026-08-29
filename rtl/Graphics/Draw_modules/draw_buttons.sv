@@ -119,7 +119,7 @@ module draw_buttons (
     assign local_button_x_raw = cur_x - selected_x;
     assign local_button_y_raw = cur_y - selected_y;
 
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst) begin
             in_button_s0       <= 1'b0;
             local_button_x_s0  <= 12'd0;
@@ -209,7 +209,7 @@ module draw_buttons (
     logic       text_pixel;
     logic [3:0] button_color;
 
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst) begin
             in_button_d    <= 1'b0;
             in_text_d      <= 1'b0;

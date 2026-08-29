@@ -108,7 +108,7 @@ module pit_stop_core (
     logic vsync_prev;
     logic frame_tick;
 
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst) begin
             vsync_prev <= 1'b0;
             frame_tick <= 1'b0;
@@ -212,7 +212,7 @@ module pit_stop_core (
 
     // BTNU is used only by the hardware UART test. It is synchronized and
     // latched so the finish flag remains present in periodic packets.
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst) begin
             debug_finish_meta <= 1'b0;
             debug_finish_sync <= 1'b0;
@@ -222,7 +222,7 @@ module pit_stop_core (
         end
     end
 
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst)
             debug_finish_latched <= 1'b0;
         else if (game_start_pulse || local_session_reset)
@@ -231,7 +231,7 @@ module pit_stop_core (
             debug_finish_latched <= 1'b1;
     end
 
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst) begin
             active_multiplayer  <= 1'b0;
             pending_multiplayer <= 1'b0;
@@ -556,7 +556,7 @@ module pit_stop_core (
 
     // Rack zapamietuje, ktore stanowisko zaczelo czekac jako pierwsze. Dzieki
     // temu kola mozna zdejmowac w dowolnej kolejnosci.
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst) begin
             rack_select_rear <= 1'b0;
         end else if (!enable_wheel_service) begin
@@ -792,7 +792,7 @@ module pit_stop_core (
     );
 
     LUT2RGB_converter u_lut_to_rgb (
-        .clk(clk), .rst_n(rst), .lut_value(lut_cursor),
+        .clk(clk), .rst, .lut_value(lut_cursor),
         .vga_in(vga_cursor), .rgb_out(rgb_pipe), .vga_out(vga_upscale)
     );
 

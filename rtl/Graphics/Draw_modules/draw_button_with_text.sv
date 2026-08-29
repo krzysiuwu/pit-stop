@@ -120,7 +120,7 @@ module draw_button_with_text #(
     logic       is_hovered_d;
     logic [3:0] lut_in_d;
 
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst) begin
             in_btn_d       <= 1'b0;
             in_txt_d       <= 1'b0;

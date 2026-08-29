@@ -62,7 +62,7 @@ module top_vga (
      * Signals synchronization
      */
 
-    always_ff @(posedge clk or negedge rst) begin : bg_ff_blk
+    always_ff @(posedge clk) begin : bg_ff_blk
         if (!rst) begin
             vga_mouse.vsync  <= '0;
             vga_mouse.hsync  <= '0;
@@ -100,7 +100,7 @@ module top_vga (
 
     LUT2RGB_converter u_LUT2RGB_converter (
         .clk,
-        .rst_n(rst),
+        .rst,
         .lut_value(lut_pipe),
         .rgb_out(rgb_pipe),
         .vga_in (vga_bg),

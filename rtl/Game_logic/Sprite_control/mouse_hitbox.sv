@@ -36,7 +36,7 @@ module mouse_hitbox #(
     if (CLICK_ON_RELEASE) begin : gen_click_on_release
         logic press_armed;
 
-        always_ff @(posedge clk or negedge rst) begin
+        always_ff @(posedge clk) begin
             if (!rst) begin
                 mouse_btn_prev <= 1'b0;
                 press_armed    <= 1'b0;
@@ -59,7 +59,7 @@ module mouse_hitbox #(
             end
         end
     end else begin : gen_click_on_press
-        always_ff @(posedge clk or negedge rst) begin
+        always_ff @(posedge clk) begin
             if (!rst) begin
                 mouse_btn_prev <= 1'b0;
                 is_clicked     <= 1'b0;

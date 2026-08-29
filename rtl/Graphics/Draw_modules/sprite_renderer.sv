@@ -39,7 +39,7 @@ module sprite_renderer #(
 
     logic in_hitbox_d;
 
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst) begin
             in_hitbox_d <= 1'b0;
         end else begin

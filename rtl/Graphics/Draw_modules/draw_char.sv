@@ -51,7 +51,7 @@ module draw_char (
     logic [2:0] pixel_x_d;
     logic [3:0] char_color_d;
 
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst) begin
             vga_out.vcount <= '0;
             vga_out.vsync  <= '0;

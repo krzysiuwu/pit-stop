@@ -17,7 +17,7 @@ module game_options (
     (* ASYNC_REG = "TRUE" *) logic [15:0] switches_meta;
     (* ASYNC_REG = "TRUE" *) logic [15:0] switches_sync;
 
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst) begin
             switches_meta <= 16'b0;
             switches_sync <= 16'b0;

@@ -199,7 +199,7 @@ module drawing_test (
     // -------------------------------------------------------------------------
     LUT2RGB_converter u_LUT2RGB_converter (
         .clk(clk),
-        .rst_n(rst),
+        .rst,
         
         // Przyjmujemy zsumowane kolory z ostatniej warstwy (Koła)
         .lut_value(lut_step7_wheel),

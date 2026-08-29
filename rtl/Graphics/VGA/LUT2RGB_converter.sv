@@ -7,7 +7,7 @@
 module LUT2RGB_converter (
 
         input logic clk,
-        input logic rst_n,
+        input logic rst,
         input logic [3:0] lut_value,
 
         output logic [11:0] rgb_out,
@@ -40,9 +40,8 @@ module LUT2RGB_converter (
         endcase
     end
 
-    always_ff @(posedge clk or negedge rst_n) begin
-
-        if(!rst_n) begin
+    always_ff @(posedge clk) begin
+        if(!rst) begin
             vga_out.vcount <= '0;
             vga_out.vblnk <= '0;
             vga_out.vsync <= '0;
