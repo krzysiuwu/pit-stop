@@ -1,18 +1,9 @@
 /**
- * San Jose State University
- * EE178 Lab #4
- * Author: prof. Eric Crabilla
- *
- * Modified by:
- * 2025  AGH University of Science and Technology
- * MTM UEC2
- * Piotr Kaczmarczyk
- *
- * Description:
- * Testbench for top_vga.
- * Automatically stops simulation after generating a specific number of frames.
+ * Testbench: drawing_test_tb
+ * Summary: Captures a fixed number of frames from the sprite-composition test pipeline.
+ * Author: Adam Krupa
+ * Based on: SJSU EE178/AGH UEC2 simulation framework.
  */
-
 module drawing_test_tb;
 
     timeunit 1ns;
@@ -25,7 +16,7 @@ module drawing_test_tb;
     localparam RST_START_TIME = 30;
     localparam RST_ACTIVE_TIME = 30;
     
-    // Liczba klatek do wygenerowania przed automatycznym zakończeniem
+    // Number of frames generated before the test stops automatically.
     localparam int FRAMES_TO_SIMULATE = 4;
 
     /**
@@ -56,7 +47,7 @@ module drawing_test_tb;
         .b(b)
     );
 
-    // Używamy Twojej wersji modułu tiff_writer
+    // Capture the rendered output with tiff_writer.
     tiff_writer #(
         .XDIM(16'd1344),
         .YDIM(16'd806),
@@ -73,7 +64,7 @@ module drawing_test_tb;
      * Main test & Auto-Stop Logic
      */
     initial begin
-        // Inicjalizacja i Reset
+        // Initialize inputs and apply reset.
         rst = 1'b1;
         #(RST_START_TIME) rst = 1'b0;
         #(RST_ACTIVE_TIME) rst = 1'b1;
@@ -81,11 +72,11 @@ module drawing_test_tb;
         $display("Rozpoczeto symulacje...");
         $display("Czekam na wygenerowanie %0d klatek...", FRAMES_TO_SIMULATE);
 
-        // Poczekaj aż VS opadnie na początku
+        // Wait for the initial VSYNC pulse to deassert.
         wait (vs == 1'b0);
         
-        // Moduł tiff_writer otwiera plik na posedge go (vs) i zamyka na kolejnym posedge.
-        // Pętla odliczy dokładnie tyle cykli, by zamknąć ostatnią klatkę.
+        // tiff_writer opens a frame on one VSYNC edge and closes it on the next.
+        // Count enough edges to close the final requested frame.
         for (int i = 0; i <= FRAMES_TO_SIMULATE; i++) begin
             @(posedge vs);
             if (i > 0) begin
@@ -93,7 +84,7 @@ module drawing_test_tb;
             end
         end
 
-        // Zakończenie symulacji
+        // Finish the simulation.
         $display("==================================================");
         $display("Symulacja zakonczona sukcesem.");
         $display("Sprawdz folder 'results' i uzyj skryptu Python!");

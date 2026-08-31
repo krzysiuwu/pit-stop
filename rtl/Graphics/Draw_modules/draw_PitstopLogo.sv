@@ -1,9 +1,8 @@
 /**
- * Description:
- * Animated logo renderer (4 frames, 128x32 pixels).
- * Pipelined version.
+ * Module: draw_PitstopLogo
+ * Summary: Renders a four-frame animated pit-stop logo while compensating for synchronous ROM latency.
+ * Author: Adam Krupa
  */
-
 import vga_pkg::*;
 
 module draw_PitstopLogo (
@@ -54,8 +53,8 @@ module draw_PitstopLogo (
         if (!rst) begin
             anim_counter <= '0;
         end else begin
-            // Zarejestrowane wyjscie synchronizacji jest jednoczesnie
-            // poprzednia probka potrzebna do wykrycia poczatku klatki.
+            // The registered synchronization output also serves as
+            // the previous sample used to detect the start of a frame.
             if (vga_in.vsync && !vga_out.vsync) begin
                 anim_counter <= anim_counter + 1'b1;
             end

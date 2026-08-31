@@ -1,3 +1,8 @@
+/**
+ * Module: pit_stop_core
+ * Summary: Integrates game control, wheel interaction, multiplayer UART, scoring, and the complete VGA rendering pipeline.
+ * Author: Adam Krupa
+ */
 import game_pkg::*;
 
 module pit_stop_core (
@@ -53,7 +58,7 @@ module pit_stop_core (
     localparam logic [11:0] RACK_WIDTH  = 12'd52;
     localparam logic [11:0] RACK_HEIGHT = 12'd45;
 
-    // Pozycje sa zgodne ze sprite'em BolidF1Default (samochod: x=60, y=120).
+    // Hub positions match the BolidF1Default sprite placed at x=60, y=120.
     localparam logic signed [11:0] FRONT_MOUNT_X = 12'sd84;
     localparam logic signed [11:0] REAR_MOUNT_X  = 12'sd192;
     localparam logic signed [11:0] MOUNT_Y       = 12'sd137;
@@ -62,7 +67,7 @@ module pit_stop_core (
     localparam logic signed [11:0] MOUNT_MARGIN  = 12'sd12;
 
     // -------------------------------------------------------------------------
-    // Potok wideo
+    // Video pipeline
     // -------------------------------------------------------------------------
     vga_if vga_timing_if();
     vga_if vga_bg();
@@ -103,8 +108,8 @@ module pit_stop_core (
         .vga_out(vga_timing_if)
     );
 
-    // Jedyny zegar logiki animacji jest wyprowadzony ze zbocza synchronizacji
-    // pionowej. Pozycje obiektow nie zmieniaja sie podczas rysowania klatki.
+    // Derive one frame tick from vertical synchronization so moving objects
+    // remain stationary while the current frame is being rendered.
     logic vsync_prev;
     logic frame_tick;
 
@@ -119,7 +124,7 @@ module pit_stop_core (
     end
 
     // -------------------------------------------------------------------------
-    // Systemowa maszyna stanow i animacja bolidu
+    // System state machine and car animation
     // -------------------------------------------------------------------------
     logic [2:0] system_screen;
     logic enable_bolid_default;
@@ -379,7 +384,7 @@ module pit_stop_core (
     end
 
     // -------------------------------------------------------------------------
-    // Przyciski i rack
+    // Buttons and wheel rack
     // -------------------------------------------------------------------------
     logic play_hover;
     logic options_hover;
@@ -438,7 +443,7 @@ module pit_stop_core (
     );
 
     // -------------------------------------------------------------------------
-    // Dwa niezalezne stanowiska wymiany kol
+    // Two independent wheel-service stations
     // -------------------------------------------------------------------------
     logic signed [11:0] front_wheel_x;
     logic signed [11:0] front_wheel_y;
@@ -506,9 +511,9 @@ module pit_stop_core (
                             rear_anchor_at_rear ? REAR_MOUNT_X : FRONT_MOUNT_X;
     assign rear_anchor_y  = rear_anchor_at_rack ? RACK_PICK_Y : MOUNT_Y;
 
-    // Rejestracja wynikow detekcji przerywa petle kombinacyjna:
-    // pozycja kola -> hitbox mocowania -> decyzja FSM -> kotwica -> pozycja.
-    // Jeden takt opoznienia (ok. 15 ns) jest pomijalny wobec okresu danych PS/2.
+    // Register proximity results to break the combinational loop:
+    // wheel position -> mount hitbox -> FSM decision -> anchor -> wheel position.
+    // One clock of latency is negligible compared with the PS/2 event interval.
     always_ff @(posedge clk) begin
         if (!rst) begin
             front_wheel_near_front_mount <= 1'b0;
@@ -547,8 +552,8 @@ module pit_stop_core (
         end
     end
 
-    // Piasty naleza do samochodu, nie do konkretnej instancji kola. Po
-    // wyrzuceniu starych kol kazda nowa opona moze zajac dowolna wolna piaste.
+    // Hubs belong to the car, not to a specific wheel instance. After
+    // removal, either replacement wheel may occupy either available hub.
     assign front_new_mounted = front_new_active && front_locked;
     assign rear_new_mounted  = rear_new_active && rear_locked;
 
@@ -565,14 +570,14 @@ module pit_stop_core (
     assign front_mount_available = !front_mount_occupied;
     assign rear_mount_available  = !rear_mount_occupied;
 
-    // Przy nakladajacych sie hitboxach tylko gorne (pozniej renderowane) kolo
-    // moze przejac mysz. Zapobiega to jednoczesnemu przeciaganiu obu kol.
+    // When wheel hitboxes overlap, only the upper, later-rendered wheel
+    // may capture the mouse, preventing both wheels from being dragged.
     assign front_grab_to_physics = front_grab_enable && !rear_dragging &&
                                    !(rear_grab_enable && rear_hover);
     assign rear_grab_to_physics  = rear_grab_enable && !front_dragging;
 
-    // Rack zapamietuje, ktore stanowisko zaczelo czekac jako pierwsze. Dzieki
-    // temu kola mozna zdejmowac w dowolnej kolejnosci.
+    // The rack remembers which station started waiting first, allowing
+    // the original wheels to be removed in either order.
     always_ff @(posedge clk) begin
         if (!rst) begin
             rack_select_rear <= 1'b0;
@@ -677,7 +682,7 @@ module pit_stop_core (
     );
 
     // -------------------------------------------------------------------------
-    // Renderowanie warstw
+    // Rendering layers
     // -------------------------------------------------------------------------
     draw_bg u_draw_bg (
         .clk(clk), .rst(rst),

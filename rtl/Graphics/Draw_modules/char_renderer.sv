@@ -1,9 +1,8 @@
 /**
- * Description:
- * Single character renderer from 1-bit font ROM.
- * Converts 1-bit monochrome data to 4-bit VGA palette color.
+ * Module: char_renderer
+ * Summary: Converts a monochrome font-ROM row into one palette-colored character pixel.
+ * Author: Adam Krupa
  */
-
 module char_renderer (
     input  logic clk,
     input  logic rst,

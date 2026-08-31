@@ -1,3 +1,8 @@
+/**
+ * Module: system_fsm
+ * Summary: Controls menu navigation and the complete car arrival, service, departure, and summary-screen sequence.
+ * Author: Adam Krupa
+ */
 import game_pkg::*;
 
 module system_fsm (
@@ -35,9 +40,9 @@ module system_fsm (
     timeunit 1ns;
     timeprecision 1ps;
 
-    // Stany sekwencji sa oddzielone od numeru ekranu. Pozwala to zachowac
-    // prosty interfejs renderera, a jednoczesnie trzymac caly przebieg rundy
-    // poza modulem top.
+    // Sequence states are independent of screen identifiers. This keeps
+    // the renderer interface simple while the complete round flow remains
+    // outside the top-level module.
     typedef enum logic [3:0] {
         MENU_BOOT,
         MAIN_MENU,
@@ -206,8 +211,8 @@ module system_fsm (
                 enable_button_play    = 1'b1;
                 enable_button_options = 1'b1;
 
-                // depart_done jest aktywny do chwili przyjecia nowego rozkazu,
-                // wiec pojedynczy warunek wystarcza do bezszwowego zapetlenia.
+                // depart_done remains asserted until a new command is accepted,
+                // so one condition is enough to restart the menu animation seamlessly.
                 if (depart_done)
                     trigger_drive_through = 1'b1;
             end

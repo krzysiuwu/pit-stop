@@ -1,12 +1,9 @@
 /**
- * Copyright (C) 2025  AGH University of Science and Technology
- * MTM UEC2
- * Author: Piotr Kaczmarczyk
- *
- * Description:
- * Vga timing controller.
+ * Module: vga_timing
+ * Summary: Generates pixel coordinates, synchronization pulses, and blanking flags for 1024-by-768 VGA output.
+ * Author: Adam Krupa
+ * Based on: AGH UEC2 VGA timing controller by Piotr Kaczmarczyk.
  */
-
 module vga_timing (
         input  logic clk,
         input  logic rst,

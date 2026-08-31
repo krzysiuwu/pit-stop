@@ -1,3 +1,8 @@
+/**
+ * Module: BolidF1NoWheels_Rom
+ * Summary: Implements synchronous ROM storage for the wheel-less F1 car sprite.
+ * Author: Adam Krupa
+ */
 module BolidF1NoWheels_Rom (
     input  logic clk ,
     input  logic [12:0] address,  // address = (Y * 165) + X

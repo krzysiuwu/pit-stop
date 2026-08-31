@@ -1,3 +1,8 @@
+/**
+ * Module: top_interactive
+ * Summary: Adapts the shared game core to the interactive Verilator frontend.
+ * Author: Adam Krupa
+ */
 module top_interactive (
     input  logic clk,
     input  logic rst,
@@ -39,7 +44,7 @@ module top_interactive (
     assign low_res_mouse_y =
         (mouse_y_div4 > 12'd191) ? 12'd191 : mouse_y_div4;
 
-    // Symulator i FPGA korzystaja z dokladnie tego samego rdzenia gry.
+    // The simulator and FPGA use exactly the same game core.
     pit_stop_core u_pit_stop_core (
         .clk(clk),
         .rst(rst),

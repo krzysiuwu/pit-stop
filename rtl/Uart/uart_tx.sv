@@ -1,3 +1,8 @@
+/**
+ * Module: uart_tx
+ * Summary: Serializes bytes as 115200-baud 8N1 UART frames.
+ * Author: Adam Krupa
+ */
 module uart_tx #(
     parameter int CLOCK_HZ = 65_000_000,
     parameter int BAUD     = 115_200
@@ -23,6 +28,8 @@ module uart_tx #(
     logic [COUNTER_WIDTH-1:0] clock_counter;
     logic busy;
 
+    // data_ready forms a byte-level handshake with uart_game_link. The serial
+    // line remains high between frames, as required by 8N1 UART.
     assign data_ready = !busy;
     assign tx = busy ? frame[bit_index] : 1'b1;
 

@@ -1,3 +1,8 @@
+/**
+ * Testbench: uart_multiplayer_tb
+ * Summary: Connects two game-link instances and verifies synchronization, scores, finish exchange, and match results.
+ * Author: Adam Krupa
+ */
 import game_pkg::*;
 
 module uart_multiplayer_tb;

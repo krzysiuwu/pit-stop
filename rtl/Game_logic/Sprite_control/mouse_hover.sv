@@ -1,3 +1,8 @@
+/**
+ * Module: mouse_hover
+ * Summary: Performs combinational point-in-rectangle detection for the mouse cursor.
+ * Author: Adam Krupa
+ */
 module mouse_hover (
     input  logic [11:0] mouse_x,
     input  logic [11:0] mouse_y,

@@ -1,3 +1,8 @@
+/**
+ * Module: draw_game_panel
+ * Summary: Shares one pipelined text renderer between the options, UART-waiting, and match-summary panels.
+ * Author: Adam Krupa
+ */
 import vga_pkg::*;
 import game_pkg::*;
 

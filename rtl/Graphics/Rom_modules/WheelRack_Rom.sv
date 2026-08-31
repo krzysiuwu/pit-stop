@@ -1,3 +1,8 @@
+/**
+ * Module: WheelRack_Rom
+ * Summary: Implements synchronous ROM storage for the wheel-rack sprite.
+ * Author: Adam Krupa
+ */
 module WheelRack_Rom (
     input  logic clk ,
     input  logic [11:0] address,  // address = (Y * 52) + X

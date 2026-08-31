@@ -1,8 +1,7 @@
 /**
  * Module: mouse_limits
- * Description:
- * Configures the maximum X and Y limits for the MouseCtl module
- * on reset using a 2-bit sequence counter.
+ * Summary: Programs the maximum X and Y coordinates accepted by the PS/2 mouse controller.
+ * Author: Adam Krupa
  */
 module mouse_limits (
     input  logic clk,

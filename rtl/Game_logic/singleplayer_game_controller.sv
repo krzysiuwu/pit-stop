@@ -1,3 +1,8 @@
+/**
+ * Module: singleplayer_game_controller
+ * Summary: Tracks rounds, score, timers, pit-stop statistics, and end conditions for every game mode.
+ * Author: Adam Krupa
+ */
 import game_pkg::*;
 
 module singleplayer_game_controller #(
@@ -44,8 +49,8 @@ module singleplayer_game_controller #(
 
     assign round_complete_pulse = round_complete && !round_complete_d;
 
-    // Niepelna sekunda jest zaokraglana w gore. Dzieki temu bardzo szybki
-    // pit-stop nie jest raportowany jako 0 sekund.
+    // Round a partial second up so an exceptionally fast
+    // pit stop is never reported as zero seconds.
     always_comb begin
         completed_stop_seconds = current_stop_seconds;
         if (service_frame_counter != 0) begin
@@ -101,7 +106,7 @@ module singleplayer_game_controller #(
                 speed_up_limit        <= selected_target_value;
                 round_complete_d      <= 1'b0;
             end else if (game_running) begin
-                // Czas calej rozgrywki oraz glowny licznik TIME ATTACK.
+                // Track total match time and the main TIME ATTACK countdown.
                 if (frame_tick) begin
                     if (game_frame_counter == FRAMES_PER_SECOND - 1) begin
                         game_frame_counter <= '0;
@@ -124,7 +129,7 @@ module singleplayer_game_controller #(
                     end
                 end
 
-                // Kazdy wjazd nowego bolidu rozpoczyna osobny pomiar pit-stopu.
+                // Each arriving car starts a separate pit-stop measurement.
                 if (service_active && !service_active_d) begin
                     service_frame_counter <= '0;
                     current_stop_seconds  <= 8'd0;
@@ -136,8 +141,8 @@ module singleplayer_game_controller #(
                         if (current_stop_seconds != 8'hff)
                             current_stop_seconds <= current_stop_seconds + 1'b1;
 
-                        // Ukonczenie rundy na ostatniej klatce ma pierwszenstwo
-                        // przed porazka z powodu limitu czasu.
+                        // Completing a round on the final frame takes priority
+                        // over losing because the time limit expired.
                         if ((active_game_mode == MODE_SPEED_UP) &&
                             !round_complete_pulse) begin
                             if (remaining_seconds > 8'd1) begin
@@ -193,7 +198,7 @@ module singleplayer_game_controller #(
                         end
 
                         default: begin
-                            // TIME ATTACK konczy sie dopiero po uplywie czasu.
+                            // TIME ATTACK ends only after its time limit expires.
                         end
                     endcase
                 end

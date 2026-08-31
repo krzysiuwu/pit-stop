@@ -1,3 +1,8 @@
+/**
+ * Module: draw_summary_panel
+ * Summary: Legacy renderer for final score, result, and pit-stop statistics.
+ * Author: Adam Krupa
+ */
 import vga_pkg::*;
 import low_res_pkg::*;
 import game_pkg::*;

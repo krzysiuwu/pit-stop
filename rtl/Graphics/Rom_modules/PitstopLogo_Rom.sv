@@ -1,3 +1,8 @@
+/**
+ * Module: PitstopLogo_Rom
+ * Summary: Implements synchronous ROM storage for all frames of the animated pit-stop logo.
+ * Author: Adam Krupa
+ */
 module PitstopLogo_Rom (
     input  logic clk,
     input  logic [13:0] address,  // address = (Frame * 4096) + (Y * 128) + X

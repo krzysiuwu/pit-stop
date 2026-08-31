@@ -1,3 +1,8 @@
+/**
+ * Module: multiplayer_result
+ * Summary: Compares final local and remote scores and produces WIN, LOSE, or DRAW.
+ * Author: Adam Krupa
+ */
 import game_pkg::*;
 
 module multiplayer_result (

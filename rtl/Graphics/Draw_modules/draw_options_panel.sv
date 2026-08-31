@@ -1,3 +1,8 @@
+/**
+ * Module: draw_options_panel
+ * Summary: Legacy renderer for the game-options and UART-status panel.
+ * Author: Adam Krupa
+ */
 import vga_pkg::*;
 import low_res_pkg::*;
 

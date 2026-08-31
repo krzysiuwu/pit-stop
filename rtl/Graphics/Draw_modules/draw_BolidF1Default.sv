@@ -1,3 +1,8 @@
+/**
+ * Module: draw_BolidF1Default
+ * Summary: Renders the complete F1 car and rotates wheel palette colors to show motion.
+ * Author: Adam Krupa
+ */
 import vga_pkg::*;
 
 module draw_BolidF1Default (
@@ -5,11 +10,11 @@ module draw_BolidF1Default (
     input  logic rst,
     input  logic enable,
     
-    // --- Sygnał sterujący animacją ---
+    // Animation control
     input  logic [1:0]  wheel_anim_step, // Stan animacji (od 0 do 2)
     
     input  logic signed [11:0] x_pos,
-    // Usunięto port wejściowy y_pos, wartość jest teraz stała
+    // The car uses a fixed vertical position; only X is animated.
     
     input  logic [3:0] lut_in,
     vga_if.in          vga_in,
@@ -21,7 +26,7 @@ module draw_BolidF1Default (
     localparam int SPRITE_WIDTH  = 165;
     localparam int SPRITE_HEIGHT = 44;
     
-    // --- Sztywno ustalona pozycja Y na ekranie ---
+    // Fixed vertical screen position
     localparam logic [11:0] Y_POS = 12'd120;
 
     logic in_hitbox;
@@ -36,11 +41,11 @@ module draw_BolidF1Default (
     logic [11:0] local_x;
     logic [11:0] local_y;
 
-    // Współrzędne pobierane z właściwego etapu potoku VGA.
+    // Use coordinates from the matching VGA pipeline stage.
     assign cur_x = {1'b0, vga_in.hcount} >> 2;
     assign cur_y = {1'b0, vga_in.vcount} >> 2;
 
-    // Rozszerzenie znaku jest konieczne, gdy bolid wyjeżdża za lewą krawędź.
+    // Signed extension is required while the car moves beyond the left edge.
     assign cur_x_signed = $signed({1'b0, cur_x});
     assign sprite_left  = x_pos;
     assign sprite_right = sprite_left + 13'sd165;
@@ -66,7 +71,7 @@ module draw_BolidF1Default (
         .LUT_value(rom_data)
     );
 
-    // --- Rejestry opóźniające potoku ---
+    // Pipeline delay registers
     logic       in_hitbox_d;
     logic [3:0] lut_in_d;
     logic [1:0] anim_step_d;
@@ -97,7 +102,7 @@ module draw_BolidF1Default (
         end
     end
 
-    // --- Logika rotacji kolorów na kołach ---
+    // Wheel color rotation
     logic [3:0] mapped_color;
     
     always_comb begin
@@ -120,7 +125,7 @@ module draw_BolidF1Default (
         endcase
     end
 
-    // --- Nakładanie warstw (Z-Buffer) ---
+    // Layer composition
     always_comb begin
         if (in_hitbox_d && rom_data != 4'hF) begin
             lut_out = mapped_color;

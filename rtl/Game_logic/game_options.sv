@@ -1,3 +1,8 @@
+/**
+ * Module: game_options
+ * Summary: Synchronizes and decodes the Basys 3 switches into game mode, target, multiplayer, and UART-test settings.
+ * Author: Adam Krupa
+ */
 module game_options (
     input  logic        clk,
     input  logic        rst,

@@ -1,25 +1,9 @@
 /**
- * San Jose State University
- * EE178 Lab #4
- * Author: prof. Eric Crabilla
- *
- * Modified by:
- * 2025  AGH University of Science and Technology
- * MTM UEC2
- * Piotr Kaczmarczyk
- *
- * Description:
- * Testbench for top_vga.
- * Thanks to the tiff_writer module, an expected image
- * produced by the project is exported to a tif file.
- * Since the vs signal is connected to the go input of
- * the tiff_writer, the first (top-left) pixel of the tif
- * will not correspond to the vga project (0,0) pixel.
- * The active image (not blanked space) in the tif file
- * will be shifted down by the number of lines equal to
- * the difference between VER_SYNC_START and VER_TOTAL_TIME.
+ * Testbench: top_vga_tb
+ * Summary: Captures VGA frames from the legacy top-level simulation design.
+ * Author: Adam Krupa
+ * Based on: SJSU EE178/AGH UEC2 simulation framework.
  */
-
 module top_vga_tb;
 
     timeunit 1ns;

@@ -1,8 +1,8 @@
 /**
- * Description:
- * Package with vga related constants.
-*/
-
+ * Package: vga_pkg
+ * Summary: Defines 1024-by-768 VGA timing and internal 256-by-192 rendering constants.
+ * Author: Adam Krupa
+ */
 package vga_pkg;
 
     // Parameters for VGA Display 1024 x 768 @ 60fps using a 65 MHz clock;

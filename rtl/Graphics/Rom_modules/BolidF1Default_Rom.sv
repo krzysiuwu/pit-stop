@@ -1,3 +1,8 @@
+/**
+ * Module: BolidF1Default_Rom
+ * Summary: Implements synchronous ROM storage for the complete F1 car sprite.
+ * Author: Adam Krupa
+ */
 module BolidF1Default_Rom (
     input  logic clk ,
     input  logic [12:0] address,  // address = (Y * 165) + X

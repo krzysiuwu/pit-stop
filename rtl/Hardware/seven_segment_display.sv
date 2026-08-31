@@ -1,3 +1,8 @@
+/**
+ * Module: seven_segment_display
+ * Summary: Multiplexes two hexadecimal digits onto the active-low Basys 3 seven-segment display.
+ * Author: Adam Krupa
+ */
 module seven_segment_display (
     input  logic       clk,
     input  logic       rst,

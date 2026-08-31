@@ -1,3 +1,8 @@
+/**
+ * Module: wheel_physics
+ * Summary: Models wheel pickup, dragging, throwing, gravity, bouncing, removal, and attachment to an anchor.
+ * Author: Adam Krupa
+ */
 module wheel_physics #(
         parameter int SCREEN_WIDTH  = 256,
         parameter int SCREEN_HEIGHT = 192,
@@ -38,7 +43,7 @@ module wheel_physics #(
 
     wheel_state_t state, next_state;
 
-    // Pozycja i predkosc w formacie Q12.4.
+    // Position and velocity use Q12.4 fixed-point representation.
     logic signed [15:0] pos_x, pos_y;
     logic signed [15:0] vel_x, vel_y;
 
@@ -89,8 +94,8 @@ module wheel_physics #(
         end else begin
             state <= next_state;
 
-            // Miejsce chwycenia jest zachowane, wiec kolo nie przeskakuje
-            // srodkiem pod kursor po nacisnieciu przycisku.
+            // Preserve the grab offset so the wheel does not jump
+            // to center itself under the cursor when the button is pressed.
             if ((state != DRAGGED) && (next_state == DRAGGED)) begin
                 drag_offset_x <= mouse_x_signed - (pos_x >>> 4);
                 drag_offset_y <= mouse_y_signed - (pos_y >>> 4);
@@ -98,8 +103,8 @@ module wheel_physics #(
                 prev_mouse_y  <= mouse_y_signed;
             end
 
-            // Impuls jest uzywany przy pobraniu kola z racka oraz po
-            // odlozeniu nowego kola w poblizu piasty.
+            // The attach pulse moves a wheel from the rack or
+            // snaps a replacement wheel to a nearby hub.
             if (attach_to_anchor) begin
                 state         <= MOUNTED;
                 pos_x         <= anchor_x_q;
@@ -126,8 +131,8 @@ module wheel_physics #(
                         pos_x <= dragged_x_q;
                         pos_y <= dragged_y_q;
 
-                        // Polowa przesuniecia kursora na klatke daje wyrazny,
-                        // ale nadal kontrolowalny rzut.
+                        // Half of the cursor displacement per frame produces a visible
+                        // but controllable throwing velocity.
                         vel_x <= pixels_to_q(mouse_x_signed - prev_mouse_x) >>> 1;
                         vel_y <= pixels_to_q(mouse_y_signed - prev_mouse_y) >>> 1;
 
@@ -192,7 +197,7 @@ module wheel_physics #(
             end
 
             AIRBORNE: begin
-                // Po nieudanym rzucie kolo nadal mozna podniesc.
+                // A wheel can be picked up again after an unsuccessful throw.
                 if (grab_enable && is_hovered && mouse_btn)
                     next_state = DRAGGED;
             end
@@ -209,7 +214,7 @@ module wheel_physics #(
     assign is_detached = (state != MOUNTED);
     assign is_dragging = (state == DRAGGED);
 
-    // Stare kolo jest uznane za wyrzucone dopiero, gdy caly sprite opusci ekran.
+    // A removed wheel is accepted only after its entire sprite leaves the screen.
     assign is_removed = is_detached &&
         (((wheel_x + WHEEL_WIDTH)  <= 0)          ||
             (wheel_x >= SCREEN_WIDTH)                 ||

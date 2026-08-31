@@ -1,3 +1,8 @@
+/**
+ * Module: draw_BolidF1NoWheels
+ * Summary: Renders the stationary F1 car body without wheels during service.
+ * Author: Adam Krupa
+ */
 import vga_pkg::*;
 
 module draw_BolidF1NoWheels (

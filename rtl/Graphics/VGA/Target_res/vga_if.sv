@@ -1,3 +1,8 @@
+/**
+ * Interface: vga_if
+ * Summary: Groups pixel coordinates, sync pulses, and blanking flags passed between VGA pipeline stages.
+ * Author: Adam Krupa
+ */
 interface vga_if;
 
     logic [10:0] vcount;

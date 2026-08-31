@@ -1,3 +1,8 @@
+/**
+ * Module: Grandstand_Rom
+ * Summary: Implements synchronous ROM storage for the grandstand sprite.
+ * Author: Adam Krupa
+ */
 module Grandstand_Rom (
     input  logic clk ,
     input  logic [11:0] address,  // 3080 entries: address = (Y * 55) + X

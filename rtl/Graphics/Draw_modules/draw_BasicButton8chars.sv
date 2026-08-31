@@ -1,3 +1,8 @@
+/**
+ * Module: draw_BasicButton8chars
+ * Summary: Legacy renderer for one eight-character button with hover and pressed visual states.
+ * Author: Adam Krupa
+ */
 import vga_pkg::*;
 import low_res_pkg::*;
 
@@ -6,9 +11,9 @@ module draw_BasicButton8chars (
     input  logic rst,
     input  logic enable,
     
-    // --- Dodane sygnały interakcji ---
-    input  logic is_hovered,  // 1, gdy kursor myszy znajduje się nad przyciskiem
-    input  logic is_pressed,  // 1, gdy przycisk jest kliknięty (wciśnięty lewy przycisk myszy)
+    // Interaction inputs
+    input  logic is_hovered,  // High while the cursor is over the button.
+    input  logic is_pressed,  // High while the left mouse button is held down.
     
     input  logic [11:0] x_pos,
     input  logic [11:0] y_pos,
@@ -30,8 +35,8 @@ module draw_BasicButton8chars (
     logic [3:0] sprite_pixel;
     logic       sprite_active;
 
-    // 1. Logika wciśnięcia (przesunięcie w osi Y)
-    // Kiedy przycisk jest naciśnięty, sprzętowo dodajemy 2 piksele do jego pozycji Y
+    // Move the sprite down while the button is pressed.
+    // Adding two pixels to Y provides immediate pressed-state feedback.
     logic [11:0] dynamic_y_pos;
     assign dynamic_y_pos = is_pressed ? (y_pos + 12'd2) : y_pos;
 
@@ -56,7 +61,7 @@ module draw_BasicButton8chars (
         .enable(enable),
         
         .x_pos(x_pos),
-        .y_pos(dynamic_y_pos), // Przekazanie nowej, dynamicznej pozycji!
+        .y_pos(dynamic_y_pos), // Pass the pressed-state vertical position.
         
         .hcount(cur_x),
         .vcount(cur_y),
@@ -68,7 +73,7 @@ module draw_BasicButton8chars (
         .is_active(sprite_active)
     );
 
-    // 2. Opóźnienia potoku
+    // Pipeline delay
     logic [3:0] lut_in_d;
     logic       is_hovered_d;
 
@@ -93,16 +98,16 @@ module draw_BasicButton8chars (
             
             lut_in_d       <= lut_in;
             
-            // Rejestrujemy sygnał najechania, by zrekompensować opóźnienie pamięci ROM
+            // Delay the hover flag to match the synchronous sprite ROM output.
             is_hovered_d   <= is_hovered; 
         end
     end
 
-    // 3. Nakładanie warstw i zmiana koloru (hover effect)
+    // Compose the layer and apply the hover color effect.
     always_comb begin
         if (sprite_active) begin
-            // Zakładamy, że 4'h0 to Twój kolor czarny, a 4'3 to jasny/ciemny szary.
-            // Zmień wartość 4'h3 na odpowiedni indeks koloru z Twojego pliku Default_LUT.mem
+            // Palette index 0 is black; index 3 supplies the hover highlight.
+            // Keep index 3 consistent with the highlight entry in Default_LUT.mem.
             if (is_hovered_d && sprite_pixel == 4'h0) begin
                 lut_out = 4'h3; 
             end else begin

@@ -1,13 +1,9 @@
 /**
- *  Copyright (C) 2025  AGH University of Science and Technology
- * MTM UEC2
- * Author: Piotr Kaczmarczyk
- *
- * Description:
- * Testbench for vga_timing module.
+ * Testbench: vga_timing_tb
+ * Summary: Checks the generated 1024-by-768 VGA counters, synchronization pulses, and blanking intervals.
+ * Author: Adam Krupa
+ * Based on: AGH UEC2 testbench by Piotr Kaczmarczyk.
  */
-
-
 module vga_timing_tb;
 
     timeunit 1ns;

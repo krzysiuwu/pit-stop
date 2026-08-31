@@ -1,3 +1,8 @@
+/**
+ * Module: draw_Wheel
+ * Summary: Renders an independently positioned wheel with animated tread colors and transparency.
+ * Author: Adam Krupa
+ */
 import vga_pkg::*;
 
 module draw_Wheel (
@@ -16,7 +21,6 @@ module draw_Wheel (
     vga_if.out         vga_out
 );
 
-    // draw_Wheel
     localparam int SPRITE_WIDTH  = 26;
     localparam int SPRITE_HEIGHT = 27;
 
@@ -87,8 +91,8 @@ module draw_Wheel (
         end
     end
 
-    // Obrót trzech kolorów bieżnika. Wartości odpowiadają kolorom
-    // używanym przez animację kół w draw_BolidF1Default.
+    // Rotate the three tread colors using the same palette entries
+    // as the wheel animation in draw_BolidF1Default.
     logic [3:0] mapped_color;
 
     always_comb begin

@@ -1,10 +1,15 @@
+/**
+ * Module: draw_mouse_cursor
+ * Summary: Draws the arrow, hand, or power-tool cursor directly from compact bitmap constants.
+ * Author: Adam Krupa
+ */
 import vga_pkg::*;
 
 module draw_mouse_cursor (
     input  logic clk,
     input  logic rst,
     input  logic enable,
-    input  logic [1:0] cursor_type, // 00=Strzałka, 01=Łapka, 10=Wkrętarka
+    input  logic [1:0] cursor_type, // 00=arrow, 01=hand, 10=power tool
     
     input  logic [11:0] mouse_x,
     input  logic [11:0] mouse_y,
@@ -19,7 +24,7 @@ module draw_mouse_cursor (
     localparam int CURSOR_SIZE = 16;
 
     // =========================================================================
-    // 0: STRZAŁKA (Czarna obwódka '0', Białe wypełnienie '4')
+    // 0: ARROW (black outline 0, white fill 4)
     // =========================================================================
     localparam logic [15:0] MASK_ARROW [0:15] = '{
         16'h8000, 16'hC000, 16'hE000, 16'hF000, 16'hF800, 16'hFC00, 16'hFE00, 16'hFF00,
@@ -33,7 +38,7 @@ module draw_mouse_cursor (
     };
 
     // =========================================================================
-    // 1: ŁAPKA (Czarna obwódka '0', Białe wypełnienie '4')
+    // 1: HAND (black outline 0, white fill 4)
     // =========================================================================
     localparam logic [15:0] MASK_HAND [0:15] = '{
         16'h0300, 16'h0780, 16'h07E0, 16'h07F0, 16'h07FA, 16'h37FD, 16'h7FFF, 16'hFFFF,
@@ -47,22 +52,22 @@ module draw_mouse_cursor (
     };
 
     // =========================================================================
-    // 2: WKRĘTARKA (2=Śr.Szary, 3=Jas.Szary, 5=Jas.Czerwony, 7=Żółty)
+    // 2: POWER TOOL (2=dark gray, 3=light gray, 5=light red, 7=yellow)
     // =========================================================================
     localparam logic [15:0] MASK_WRENCH [0:15] = '{
         16'h1E00, 16'h3F00, 16'hFFFC, 16'hFFFC, 16'hFFFC, 16'h1F00, 16'h1F00, 16'h1F00,
         16'h1F00, 16'h1F00, 16'h3F80, 16'h3F80, 16'h3F80, 16'h0000, 16'h0000, 16'h0000
     };
     localparam logic [63:0] COLOR_WRENCH [0:15] = '{
-        64'h0000000000000000, // Zarys górny
+        64'h0000000000000000, // Upper outline
         64'h0003333000000000, // Nasadka (Jasnoszary)
-        64'h0002222777777000, // Korpus góra (Średnioszary + Żółty detal)
-        64'h0332222255555000, // Korpus środek (Nasadka + Szary + Czerwony tył)
-        64'h0002222777777000, // Korpus dół
-        64'h0000222000000000, // Rękojeść (Szary)
-        64'h0000222000000000, // Rękojeść
+        64'h0002222777777000, // Upper body: dark gray with a yellow detail
+        64'h0332222255555000, // Center body: socket, gray body, and red rear
+        64'h0002222777777000, // Lower body
+        64'h0000222000000000, // Gray handle
+        64'h0000222000000000, // Handle
         64'h0000555000000000, // Spust (Czerwony)
-        64'h0000222000000000, // Rękojeść
+        64'h0000222000000000, // Handle
         64'h0000555000000000, // Spust
         64'h0003333300000000, // Bateria na dole
         64'h0003333300000000, // Bateria na dole

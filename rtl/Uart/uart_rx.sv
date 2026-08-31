@@ -1,3 +1,8 @@
+/**
+ * Module: uart_rx
+ * Summary: Receives 115200-baud 8N1 UART bytes with input synchronization and framing-error detection.
+ * Author: Adam Krupa
+ */
 module uart_rx #(
     parameter int CLOCK_HZ = 65_000_000,
     parameter int BAUD     = 115_200
@@ -33,6 +38,8 @@ module uart_rx #(
     logic [2:0] bit_index;
     logic [7:0] data_shift;
 
+    // UART RX is asynchronous to clk; the two-stage synchronizer prevents
+    // metastability from entering the sampling state machine.
     always_ff @(posedge clk or negedge rst) begin
         if (!rst) begin
             rx_meta <= 1'b1;
@@ -65,6 +72,8 @@ module uart_rx #(
                 end
 
                 RX_START: begin
+                    // Confirm the start bit at its midpoint to reject short
+                    // low pulses and center all following data samples.
                     if (clock_counter == HALF_BIT - 1) begin
                         clock_counter <= '0;
                         if (!rx_sync)

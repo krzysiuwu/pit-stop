@@ -1,3 +1,8 @@
+/**
+ * Module: Font_Rom
+ * Summary: Implements synchronous row-addressed storage for the monochrome bitmap font.
+ * Author: Adam Krupa
+ */
 module Font_Rom (
     input  logic clk,
     input  logic [9:0] address,

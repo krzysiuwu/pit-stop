@@ -1,3 +1,8 @@
+/**
+ * Package: game_pkg
+ * Summary: Defines shared screen identifiers, game modes, and match-result encodings.
+ * Author: Adam Krupa
+ */
 package game_pkg;
 
     localparam logic [1:0] MODE_TIME_ATTACK = 2'b00;

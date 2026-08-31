@@ -1,3 +1,8 @@
+/**
+ * Module: uart_game_link
+ * Summary: Frames, transmits, validates, and decodes periodic multiplayer state packets over UART.
+ * Author: Adam Krupa
+ */
 module uart_game_link #(
     parameter int CLOCK_HZ = 65_000_000,
     parameter int BAUD = 115_200,
@@ -66,6 +71,9 @@ module uart_game_link #(
     logic [7:0] tx_score_snapshot;
     logic [7:0] tx_checksum_snapshot;
 
+    // Packet format: two magic bytes, session, flags, mode, target, score,
+    // and an XOR checksum. The flags encode multiplayer, session-valid,
+    // game-finished, and diagnostic-mode state in bits [0] through [3].
     assign tx_flags = {
         4'b0000,
         local_debug_mode,
@@ -105,6 +113,8 @@ module uart_game_link #(
         .tx(uart_tx_o)
     );
 
+    // Snapshot the entire packet before transmission so slowly changing game
+    // state cannot produce a frame containing values from different cycles.
     always_ff @(posedge clk or negedge rst) begin
         if (!rst) begin
             tx_byte_index      <= 3'd0;
@@ -168,7 +178,8 @@ module uart_game_link #(
     logic       valid_packet_pulse;
     logic       checksum_error_pulse;
 
-    // Counter-based reception avoiding FSM extraction & pruning
+    // The two-byte magic prefix lets the counter resynchronize after a lost or
+    // corrupted byte. A packet is exposed only after its checksum is valid.
     always_ff @(posedge clk or negedge rst) begin
         if (!rst) begin
             rx_byte_count        <= 3'd0;
@@ -226,6 +237,8 @@ module uart_game_link #(
 
     logic [LINK_TIMEOUT_WIDTH-1:0] link_timeout_counter;
 
+    // A valid new session received from either board becomes the shared
+    // session. Because both boards run this logic, neither one is a fixed host.
     always_ff @(posedge clk or negedge rst) begin
         if (!rst) begin
             current_session_id          <= 8'd0;

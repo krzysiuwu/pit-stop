@@ -1,3 +1,8 @@
+/**
+ * Module: bin_to_bcd3
+ * Summary: Converts a ten-bit unsigned binary value into three BCD digits using double dabble.
+ * Author: Adam Krupa
+ */
 module bin_to_bcd3 (
     input  logic [9:0] binary,
     output logic [3:0] hundreds,

@@ -1,3 +1,8 @@
+/**
+ * Module: top_fsm
+ * Summary: Bridges synchronized PS/2 mouse data and board controls into the shared pit-stop game core.
+ * Author: Adam Krupa
+ */
 module top_fsm (
     input  logic clk,
     input  logic rst,
@@ -27,8 +32,8 @@ module top_fsm (
     timeunit 1ns;
     timeprecision 1ps;
 
-    // Ten modul pozostaje cienka warstwa sprzetowa: odbiera dane PS/2,
-    // skaluje wspolrzedne i przekazuje je do wspolnego rdzenia gry.
+    // This module is a thin hardware adapter: it receives PS/2 data,
+    // scales coordinates, and forwards them to the shared game core.
     logic [11:0] mouse_x;
     logic [11:0] mouse_y;
     logic        mouse_btn_left;

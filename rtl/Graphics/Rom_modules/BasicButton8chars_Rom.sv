@@ -1,3 +1,8 @@
+/**
+ * Module: BasicButton8chars_Rom
+ * Summary: Implements synchronous ROM storage for the eight-character button sprite.
+ * Author: Adam Krupa
+ */
 module BasicButton8chars_Rom (
     input  logic clk ,
     input  logic [11:0] address,  // address = (Y * 28) + X

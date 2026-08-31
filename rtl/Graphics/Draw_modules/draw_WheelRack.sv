@@ -1,3 +1,8 @@
+/**
+ * Module: draw_WheelRack
+ * Summary: Renders the wheel rack sprite and overlays it on the incoming palette stream.
+ * Author: Adam Krupa
+ */
 import vga_pkg::*;
 
 module draw_WheelRack (
@@ -18,7 +23,7 @@ module draw_WheelRack (
     localparam int SPRITE_WIDTH  = 52;
     localparam int SPRITE_HEIGHT = 45;
 
-    // 1. Własna, wbudowana logika hitboxa (zamiast sprite_renderer)
+    // Inline hitbox logic avoids a separate sprite_renderer instance.
     logic in_hitbox;
     logic [11:0] local_x;
     logic [11:0] local_y;
@@ -39,7 +44,7 @@ module draw_WheelRack (
     assign local_x = cur_x - x_pos;
     assign local_y = cur_y - y_pos;
 
-    // 2. Adres i Pamięć ROM
+    // ROM address and storage
     logic [11:0] rom_addr;
     assign rom_addr = in_hitbox ? ((local_y * SPRITE_WIDTH) + local_x) : 12'd0;
 
@@ -51,7 +56,7 @@ module draw_WheelRack (
         .LUT_value(rom_data)
     );
 
-    // 3. Potok opóźniający
+    // Pipeline delay
     logic       in_hitbox_d;
     logic [3:0] lut_in_d;
 
@@ -79,8 +84,8 @@ module draw_WheelRack (
         end
     end
 
-    // 4. Nakładanie warstw. Kolory wheelracka są indeksami tej samej,
-    // globalnej palety co pozostałe sprite'y.
+    // Compose the wheel-rack layer. Its colors use the same global
+    // palette indices as every other sprite.
     logic rack_pixel_active;
     assign rack_pixel_active = in_hitbox_d && (rom_data != 4'hF);
 

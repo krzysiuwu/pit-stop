@@ -66,3 +66,13 @@ Synthesis warning cleanup:
 - Registered all four wheel-to-mount proximity flags before the service FSMs.
 - Removed the structural combinational feedback from wheel position through
   mount selection and anchor position without changing the wheel protocol.
+
+
+HDL documentation refactor:
+
+- Standardized English headers across project-owned RTL and testbench files.
+- Added an author and concise functional summary to every project component.
+- Translated Polish comments and replaced informal notes with technical text.
+- Added focused explanations for UART framing, CDC, rendering pipelines,
+  state machines, wheel physics, and timing-critical register boundaries.
+- Preserved the origin of generated or course-provided source material.

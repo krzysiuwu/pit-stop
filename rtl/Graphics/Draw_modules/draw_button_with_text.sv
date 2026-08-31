@@ -1,8 +1,13 @@
+/**
+ * Module: draw_button_with_text
+ * Summary: Legacy parameterized renderer that combines a button sprite with centered font-ROM text.
+ * Author: Adam Krupa
+ */
 import vga_pkg::*;
 import low_res_pkg::*;
 
 module draw_button_with_text #(
-    parameter int STR_LEN = 8 // Ilość znaków w tekście - teraz dynamiczna!
+    parameter int STR_LEN = 8 // Number of characters in the rendered label.
 )(
     input  logic clk,
     input  logic rst,
@@ -14,7 +19,7 @@ module draw_button_with_text #(
     input  logic [11:0] x_pos,
     input  logic [11:0] y_pos,
     
-    input  logic [(STR_LEN*8)-1:0] text_string, // Sznurek obcięty idealnie do długości słowa
+    input  logic [(STR_LEN*8)-1:0] text_string, // Packed ASCII string with STR_LEN characters.
     
     input  logic [3:0] lut_in,
     vga_if.in          vga_in,
@@ -30,9 +35,9 @@ module draw_button_with_text #(
     localparam int TEXT_WIDTH  = STR_LEN * 8;
     localparam int TEXT_HEIGHT = 8;
     
-    // Idealne, matematyczne wyśrodkowanie co do piksela dla dowolnego słowa!
+    // Center text at pixel precision for any supported word length.
     localparam int TEXT_OFFSET_X = (BTN_WIDTH - TEXT_WIDTH) / 2;
-    localparam int TEXT_OFFSET_Y = 6; // Podniesione wyżej (wcześniej było 10)
+    localparam int TEXT_OFFSET_Y = 6; // Vertical offset that optically centers the glyphs.
 
     logic [11:0] cur_x, cur_y;
     
@@ -43,7 +48,7 @@ module draw_button_with_text #(
     assign dyn_y_pos = is_pressed ? (y_pos + 12'd2) : y_pos;
 
     // =========================================================================
-    // LOGIKA TŁA PRZYCISKU
+    // BUTTON BACKGROUND
     // =========================================================================
     logic in_btn;
     logic [11:0] local_btn_x, local_btn_y;
@@ -66,7 +71,7 @@ module draw_button_with_text #(
     );
 
     // =========================================================================
-    // LOGIKA TEKSTU
+    // TEXT RENDERING
     // =========================================================================
     logic in_txt;
     logic [11:0] txt_start_x, txt_start_y;
@@ -112,7 +117,7 @@ module draw_button_with_text #(
     );
 
     // =========================================================================
-    // POTOK OPÓŹNIAJĄCY
+    // PIPELINE DELAY
     // =========================================================================
     logic       in_btn_d;
     logic       in_txt_d;
@@ -152,7 +157,7 @@ module draw_button_with_text #(
     end
 
     // =========================================================================
-    // NAKŁADANIE WARSTW
+    // LAYER COMPOSITION
     // =========================================================================
     logic       txt_pixel_bit;
     logic       txt_active;

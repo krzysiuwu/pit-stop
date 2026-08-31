@@ -1,9 +1,8 @@
-/*
- * Module to upscale our low-res resolution, to the target 1024x768 resolution. Basically every 1 pixel of low resolution will correspond to 4 pixels of target resolution.
- * This module will also take the LUT color values, and convert them to 12-bit color coding, which is used by VGA displays
- *
+/**
+ * Module: LUT2RGB_converter
+ * Summary: Maps four-bit palette indices to 12-bit RGB while preserving VGA pipeline alignment.
+ * Author: Adam Krupa
  */
-
 module LUT2RGB_converter (
 
         input logic clk,

@@ -1,3 +1,8 @@
+/**
+ * Module: draw_buttons
+ * Summary: Shares one button sprite ROM and one font ROM across the PLAY, OPTS, and BACK buttons.
+ * Author: Adam Krupa
+ */
 import vga_pkg::*;
 
 module draw_buttons (

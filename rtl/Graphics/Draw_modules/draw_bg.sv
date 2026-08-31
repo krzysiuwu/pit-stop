@@ -1,10 +1,9 @@
 /**
- * Description:
- * Draw background with static asphalt (dithering, depth, curbs) for 256x192 resolution
- * Now with animated, floating clouds!
+ * Module: draw_bg
+ * Summary: Generates the low-resolution race-track background with grandstands and animated clouds.
+ * Author: Adam Krupa
  */
-
- module draw_bg (
+module draw_bg (
     input  logic clk,
     input  logic rst,
 
@@ -101,22 +100,22 @@ always_ff @(posedge clk) begin
         vsync_prev <= '0;
     end else begin
         vsync_prev <= vga_in.vsync;
-        // Detekcja nowej klatki (zbocze na vsync). Zliczamy klatki do animacji.
+        // Count VSYNC edges to advance the background animation once per frame.
         if (!vga_in.vsync && vsync_prev) begin
             frame_cnt <= frame_cnt + 1'b1;
         end
     end
 end
 
-// Tablica fali trójkątnej: wartości {2, 3, 4, 3, 2, 1, 0, 1}
-// Odejmując od tego 2, uzyskujemy płynne wahanie: 0, +1, +2, +1, 0, -1, -2, -1
+// Triangle-wave samples: {2, 3, 4, 3, 2, 1, 0, 1}.
+// Subtracting two yields the smooth offset sequence 0, +1, +2, +1, 0, -1, -2, -1.
 logic [2:0] cloud_anim_rom [0:7] = '{ 3'd2, 3'd3, 3'd4, 3'd3, 3'd2, 3'd1, 3'd0, 3'd1 };
 
 logic [11:0] dyn_c1_y, dyn_c2_y, dyn_c3_y;
 
 always_comb begin
-    // Bity [6:4] zmieniają się co 16 klatek (~0.25 sekundy na 1 piksel ruchu)
-    // C2 ma odwróconą fazę (~frame_cnt), żeby chmury nie latały w idealnym szyku
+    // Bits [6:4] advance every 16 frames, approximately one pixel per 0.25 s.
+    // Invert C2's phase so the clouds do not move in perfect formation.
     dyn_c1_y = 12'(C1_Y) + cloud_anim_rom[frame_cnt[6:4]] - 12'd2;
     dyn_c2_y = 12'(C2_Y) + cloud_anim_rom[~frame_cnt[6:4]] - 12'd2;
     dyn_c3_y = 12'(C3_Y) + cloud_anim_rom[frame_cnt[6:4]] - 12'd2;
@@ -126,7 +125,7 @@ end
  * Active Region Detection & Address Calculation
  */
 
-// 1. Sprawdzamy hitboxy na podstawie DYNAMICZNYCH pozycji Y chmur
+// Detect cloud hitboxes using their animated vertical positions.
 assign is_c1 = (cur_x >= C1_X) && (cur_x < C1_X + CLOUD_W) &&
     (cur_y >= dyn_c1_y) && (cur_y < dyn_c1_y + CLOUD_H);
 
@@ -138,7 +137,7 @@ assign is_c3 = (cur_x >= C3_X) && (cur_x < C3_X + CLOUD_W) &&
 
 assign is_cloud = is_c1 | is_c2 | is_c3;
 
-// Grandstands hitboxes (bez zmian)
+// Detect the static grandstand hitboxes.
 assign is_g1 = (cur_x >= G1_X) && (cur_x < G1_X + Grandstand_W) &&
     (cur_y >= GY) && (cur_y < GY + Grandstand_H);
 assign is_g2 = (cur_x >= G2_X) && (cur_x < G2_X + Grandstand_W) &&
@@ -156,7 +155,7 @@ assign is_g7 = (cur_x >= G7_X) && (cur_x < G7_X + Grandstand_W) &&
 
 assign is_grandstand = is_g1 | is_g2 | is_g3 | is_g4 | is_g5 | is_g6 | is_g7;
 
-// 2. Obliczanie local_x i local_y dla aktywnego sprite'a
+// Calculate local coordinates for the active sprite.
 always_comb begin
     if (is_c1) begin
         local_x = cur_x - C1_X;
@@ -168,7 +167,7 @@ always_comb begin
         local_x = cur_x - C3_X;
         local_y = cur_y - dyn_c3_y;
         
-    // Kaskada trybun    
+    // Select the active grandstand instance.
     end else if (is_g1) begin
         local_x = cur_x - G1_X;
         local_y = cur_y - GY;
@@ -240,8 +239,8 @@ always_ff @(posedge clk) begin : bg_ff_blk
         lut_out        <= '0;
     end else begin
         vga_out.vcount <= vcount_d;
-        // vsync_prev jest juz rejestrem vga_in.vsync. Wspoldzielenie go
-        // zachowuje dwutaktowe opoznienie potoku i usuwa duplikat rejestru.
+        // vsync_prev already registers vga_in.vsync. Reusing it preserves
+        // the two-cycle pipeline delay without synthesizing a duplicate register.
         vga_out.vsync  <= vsync_prev;
         vga_out.vblnk  <= vblnk_d;
         vga_out.hcount <= hcount_d;

@@ -1,9 +1,8 @@
 /**
- * Description:
- * Universal sprite rendering module with ROM latency compensation.
- * Transparency is handled assuming 4'hF (Magenta) is the transparent color.
+ * Module: sprite_renderer
+ * Summary: Provides reusable hitbox, ROM-address, latency-compensation, transparency, and layer-composition logic.
+ * Author: Adam Krupa
  */
-
 module sprite_renderer #(
     parameter int WIDTH  = 32,
     parameter int HEIGHT = 32

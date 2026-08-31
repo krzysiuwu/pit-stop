@@ -1,3 +1,8 @@
+/**
+ * Module: wheel_service_fsm
+ * Summary: Sequences wheel loosening, removal, replacement, positioning, tightening, and service completion.
+ * Author: Adam Krupa
+ */
 module wheel_service_fsm #(
     parameter int SCROLL_STEPS_REQUIRED        = 6,
     parameter bit LOOSEN_WITH_NEGATIVE_SCROLL = 1'b1,
@@ -66,23 +71,23 @@ module wheel_service_fsm #(
     assign scroll_positive = mouse_new_event && (mouse_scroll > 0);
     assign scroll_negative = mouse_new_event && (mouse_scroll < 0);
 
-    // Kierunek mozna odwrocic jednym parametrem po tescie myszy PS/2.
+    // One parameter reverses the scroll direction after PS/2 mouse testing.
     assign loosen_scroll = LOOSEN_WITH_NEGATIVE_SCROLL ?
                            scroll_negative : scroll_positive;
     assign tighten_scroll = LOOSEN_WITH_NEGATIVE_SCROLL ?
                             scroll_positive : scroll_negative;
 
-    // Nowe kola sa wymienne. O miejscu montazu decyduje polozenie kola
-    // w chwili puszczenia myszy, a nie instancja FSM, ktora wydala je z racka.
+    // Replacement wheels are interchangeable. Their drop position determines
+    // the selected hub, not the FSM instance that obtained them from the rack.
     assign snap_to_front = wheel_dragging && !mouse_btn &&
                            wheel_near_front_mount && front_mount_available;
     assign snap_to_rear  = wheel_dragging && !mouse_btn &&
                            wheel_near_rear_mount && rear_mount_available;
     assign snap_to_mount = snap_to_front || snap_to_rear;
 
-    // Polozenie zamontowanego kola musi zalezec wylacznie od rejestru.
-    // anchor_at_rear moze chwilowo wskazywac cel zatrzasniecia w MOVING_NEW,
-    // dlatego nie wolno uzywac go do wyznaczania zajetosci piast.
+    // The mounted hub must depend only on registered state.
+    // anchor_at_rear may transiently indicate the snap target in MOVING_NEW,
+    // so it must not be used to calculate hub occupancy.
     assign mounted_at_rear = target_rear;
 
     function automatic logic [1:0] rotate_forward(input logic [1:0] step);
@@ -106,7 +111,7 @@ module wheel_service_fsm #(
             wheel_anim_step  <= '0;
             target_rear      <= INITIAL_MOUNT_IS_REAR;
         end else if (!enable) begin
-            // Kazdy nowy bolid rozpoczyna pelny cykl z zalozonym starym kolem.
+            // Every arriving car starts with the original wheel installed.
             state            <= OLD_LOCKED;
             service_progress <= '0;
             wheel_anim_step  <= '0;
@@ -159,7 +164,7 @@ module wheel_service_fsm #(
                 end
 
                 MOVING_NEW: begin
-                    // Upuszczenie kolejnego kola poza ekranem nie blokuje gry.
+                    // Dropping another replacement wheel off-screen must not block the game.
                     if (wheel_removed) begin
                         state            <= WAITING_FOR_NEW;
                         service_progress <= '0;
@@ -233,7 +238,7 @@ module wheel_service_fsm #(
                 needs_new_wheel   = enable;
 
                 if (rack_take_pulse) begin
-                    // Przeniesienie fizyki z wyrzuconej pozycji na rack.
+                    // Move the physics model from the discarded position back to the rack.
                     attach_to_anchor = 1'b1;
                     anchor_at_rack   = 1'b1;
                     anchor_at_rear   = INITIAL_MOUNT_IS_REAR;
@@ -254,8 +259,8 @@ module wheel_service_fsm #(
                 old_wheel_removed = 1'b1;
                 new_wheel_active  = 1'b1;
 
-                // Zwolnienie przycisku blisko piasty powoduje zatrzasniecie
-                // kola dokladnie w pozycji montazowej.
+                // Releasing the button near an available hub snaps
+                // the wheel exactly to the mounting position.
                 if (snap_to_mount) begin
                     attach_to_anchor = 1'b1;
                     anchor_at_rear   = snap_to_rear;

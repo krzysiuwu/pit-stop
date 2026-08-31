@@ -1,10 +1,8 @@
 /**
- * Basic VGA Top Module
- * Description:
- * Modul top do wyswietlania tla i potoku testowego dla nowych sprite'ow,
- * wzbogacony o automatyczne testowanie kontrolera animacji bolidu.
+ * Module: anim_test
+ * Summary: Builds a simulation-only VGA pipeline and scripted car sequence for animation verification.
+ * Author: Adam Krupa
  */
-
 module anim_test (
         input  logic clk,
         input  logic rst,
@@ -19,7 +17,7 @@ module anim_test (
     timeprecision 1ps;
 
     // -------------------------------------------------------------------------
-    // Sygnały wewnętrzne i Interfejsy
+    // Internal signals and interfaces
     // -------------------------------------------------------------------------
     logic [11:0] rgb_pipe;
 
@@ -44,7 +42,7 @@ module anim_test (
     logic [3:0] lut_step7_wheel;
 
     // -------------------------------------------------------------------------
-    // Przypisanie wyjść
+    // Output assignments
     // -------------------------------------------------------------------------
     assign vs = ~vga_upscale.vsync;
     assign hs = ~vga_upscale.hsync;
@@ -54,7 +52,7 @@ module anim_test (
     assign b = (vga_upscale.hblnk || vga_upscale.vblnk) ? 4'h0 : rgb_pipe[3:0];
 
     // -------------------------------------------------------------------------
-    // ETAP 0: Generator Synchronizacji
+    // STAGE 0: VGA timing generator
     // -------------------------------------------------------------------------
     vga_timing u_vga_timing (
         .clk(clk),
@@ -66,7 +64,7 @@ module anim_test (
     assign low_res_pipe.vcount = vga_timing_if.vcount >> 2;
 
     // -------------------------------------------------------------------------
-    // ETAP 1: Tło
+    // STAGE 1: Background
     // -------------------------------------------------------------------------
     draw_bg u_draw_bg (
         .clk(clk),
@@ -77,7 +75,7 @@ module anim_test (
     );
 
     // -------------------------------------------------------------------------
-    // ETAP 2, 3, 4: Przyciski (Pozostawione jako statyczne tło)
+    // STAGES 2-4: Buttons retained as static background layers
     // -------------------------------------------------------------------------
     draw_button_with_text #(.STR_LEN(6)) u_btn_normal (
         .clk(clk), .rst(rst), .enable(1'b1), .is_hovered(1'b0), .is_pressed(1'b0),
@@ -104,7 +102,7 @@ module anim_test (
     );
 
     // =========================================================================
-    // KONTROLER ANIMACJI BOLIDU I GENERATOR ZDARZEŃ (SEKWENCER TESTOWY)
+    // CAR ANIMATION CONTROLLER AND SCRIPTED TEST EVENTS
     // =========================================================================
     logic trigger_arrive, trigger_depart;
     logic arrive_done, depart_done;
@@ -127,7 +125,7 @@ module anim_test (
         end
     end
 
-    // Prosty sekwencer wymuszający sygnały dla testu
+    // Script the control pulses used by the animation test.
     always_ff @(posedge clk) begin
         if (!rst) begin
             trigger_arrive <= 1'b0;
@@ -168,14 +166,14 @@ module anim_test (
     );
 
     // -------------------------------------------------------------------------
-    // ETAP 5: Bolid F1 (Domyślny / Z kołami - animowany)
+    // STAGE 5: Animated complete F1 car
     // -------------------------------------------------------------------------
-    // Moduł używa zaktualizowanych portów (bez y_pos)
+    // The current car renderer has no y_pos input.
     draw_BolidF1Default u_draw_bolid_def (
         .clk(clk),
         .rst(rst),
-        .enable(car_enable),               // Włączony tylko podczas ruchu!
-        .wheel_anim_step(wheel_anim_step), // Klatka animacji wyliczona przez sprzęt
+        .enable(car_enable),               // Visible only while the car is moving.
+        .wheel_anim_step(wheel_anim_step), // Hardware-generated wheel animation phase.
         .x_pos(car_x_pos),                 // Pozycja z kontrolera animacji
         .lut_in(lut_step4_btn3),
         .vga_in(vga_step4_btn3),
@@ -184,13 +182,13 @@ module anim_test (
     );
 
     // -------------------------------------------------------------------------
-    // ETAP 6: Bolid F1 (Bez kół - podczas Pit Stopu)
+    // STAGE 6: Wheel-less F1 car during the pit stop
     // -------------------------------------------------------------------------
     draw_BolidF1NoWheels u_draw_bolid_nw (
         .clk(clk),
         .rst(rst),
-        .enable(arrive_done), // Włączony TYLKO gdy główny bolid stoi w pit stopie!
-        .x_pos(12'd60),       // Stała pozycja odpowiadająca POS_STOP z kontrolera animacji
+        .enable(arrive_done), // Visible only while the car is stopped for service.
+        .x_pos(12'd60),       // Fixed position matching POS_STOP in the animation controller.
         .y_pos(12'd120),
         .lut_in(lut_step5_bolid_def),
         .vga_in(vga_step5_bolid_def),
@@ -199,14 +197,14 @@ module anim_test (
     );
 
     // -------------------------------------------------------------------------
-    // ETAP 7: Opona (W pit stopie)
+    // STAGE 7: Pit-stop wheel
     // -------------------------------------------------------------------------
     draw_Wheel u_draw_wheel (
         .clk(clk),
         .rst(rst),
-        .enable(arrive_done), // Również widoczna tylko podczas wymiany kół
+        .enable(arrive_done), // Visible only during wheel service.
         .wheel_anim_step(2'b00),
-        .x_pos(12'd85),       // Dopasowane pozycje względem środka bolidu
+        .x_pos(12'd85),       // Position aligned with the car's wheel hub.
         .y_pos(12'd137),
         .lut_in(lut_step6_bolid_nw),
         .vga_in(vga_step6_bolid_nw),
@@ -215,7 +213,7 @@ module anim_test (
     );
 
     // -------------------------------------------------------------------------
-    // KONWERTER KOLORÓW (LUT -> FIZYCZNE Piny)
+    // COLOR CONVERTER (palette index to physical RGB pins)
     // -------------------------------------------------------------------------
     LUT2RGB_converter u_LUT2RGB_converter (
         .clk(clk),

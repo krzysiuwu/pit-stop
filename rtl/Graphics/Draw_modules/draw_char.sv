@@ -1,3 +1,8 @@
+/**
+ * Module: draw_char
+ * Summary: Legacy single-character overlay that aligns font-ROM data with the VGA pipeline.
+ * Author: Adam Krupa
+ */
 import vga_pkg::*;
 import low_res_pkg::*;
 

@@ -1,10 +1,8 @@
 /**
- * Description:
- * Dynamic string renderer (default 10 characters).
- * Adapted for 10-bit row address / 8-bit data Font_Rom.
- * Pipelined version.
+ * Module: draw_string
+ * Summary: Renders a parameterized ASCII string through a synchronous font ROM and VGA-aligned pipeline.
+ * Author: Adam Krupa
  */
-
 import vga_pkg::*;
 import low_res_pkg::*;
 
@@ -21,12 +19,12 @@ module draw_string #(
     input  logic [(MAX_CHARS*8)-1:0] text_string, 
     input  logic [3:0]  text_color,               
 
-    // --- Wejścia potoku ---
+    // Pipeline inputs
     input  logic [3:0] lut_in,
     vga_if.in          vga_in,
     low_res_if.in      low_res_in,
 
-    // --- Wyjścia potoku ---
+    // Pipeline outputs
     output logic [3:0] lut_out,
     vga_if.out         vga_out
 );
@@ -36,7 +34,7 @@ module draw_string #(
 
     logic in_hitbox;
     logic [7:0] local_x; // Od 0 do (MAX_CHARS*8 - 1)
-    logic [2:0] local_y; // Od 0 do 7 wewnątrz jednego znaku
+    logic [2:0] local_y; // Row 0 through 7 within the current glyph.
 
     logic [11:0] cur_x, cur_y;
     assign cur_x = vga_in.hcount >> 2;
@@ -68,24 +66,24 @@ module draw_string #(
             current_char_code = char_array[char_index];
     end
 
-    // Zmiana rozmiarów pod Twój moduł Font_Rom
+    // Match the row-address and data widths of Font_Rom.
     logic [9:0] rom_addr;
     logic [7:0]  rom_data; 
 
-    // Adresujemy tylko wiersz: 7 bitów znaku + 3 bity wiersza (Y)
+    // Address one row with seven character bits and three row bits.
     assign rom_addr = in_hitbox ? {current_char_code[6:0], local_y[2:0]} : 10'b0;
 
-    // Instancja Twojego modułu ROM
+    // Synchronous font ROM
     Font_Rom u_font_rom (
         .clk(clk),
         .address(rom_addr),
-        .data_out(rom_data) // Wyjście to cały 8-bitowy wiersz
+        .data_out(rom_data) // Return the complete eight-bit glyph row.
     );
 
-    // --- Rejestry opóźniające potoku ---
+    // Pipeline delay registers
     logic       in_hitbox_d;
     logic [3:0] lut_in_d;
-    logic [2:0] pixel_x_d; // Rejestr do zapamiętania współrzędnej X wewnątrz znaku
+    logic [2:0] pixel_x_d; // Delayed horizontal coordinate within the glyph.
 
     always_ff @(posedge clk) begin
         if (!rst) begin
@@ -101,7 +99,7 @@ module draw_string #(
         end else begin
             in_hitbox_d    <= in_hitbox;
             
-            // Opóźniamy współrzędną X o 1 takt, aby spotkała się z wyjściem z ROMu
+            // Delay X by one cycle to align it with the synchronous ROM output.
             pixel_x_d      <= local_x[2:0]; 
             
             vga_out.vcount <= vga_in.vcount;
@@ -115,19 +113,19 @@ module draw_string #(
         end
     end
 
-    // --- Rysowanie konkretnego piksela ---
+    // Select the current glyph pixel.
     logic       pixel_bit;
     logic       sprite_active;
     logic [3:0] sprite_pixel;
 
-    // Wyciągamy 1 bit ze zwróconego 8-bitowego wiersza.
-    // Najstarszy bit (7) jest z reguły rysowany po lewej stronie, stąd (7 - pixel_x)
+    // Extract one pixel from the returned eight-bit glyph row.
+    // Bit 7 is the leftmost pixel, so the index is reversed with 7 - pixel_x.
     assign pixel_bit = rom_data[7 - pixel_x_d];
 
     assign sprite_active = in_hitbox_d && (pixel_bit == 1'b1);
     assign sprite_pixel  = text_color;
 
-    // Nakładanie warstw (Z-Buffer)
+    // Compose the text over the incoming layer.
     always_comb begin
         if (sprite_active) begin
             lut_out = sprite_pixel;

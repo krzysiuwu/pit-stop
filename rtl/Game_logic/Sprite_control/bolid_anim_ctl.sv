@@ -1,3 +1,8 @@
+/**
+ * Module: bolid_anim_ctrl
+ * Summary: Controls the F1 car entry, braking, pit-stop hold, departure, and wheel animation phase.
+ * Author: Adam Krupa
+ */
 module bolid_anim_ctrl (
     input  logic clk,
     input  logic rst,
@@ -18,12 +23,12 @@ module bolid_anim_ctrl (
     timeunit 1ns;
     timeprecision 1ps;
 
-    // Wspolrzedne odnosza sie do obrazu roboczego 256x192.
+    // Coordinates refer to the internal 256-by-192 rendering space.
     localparam int POS_START =  260;
     localparam int POS_STOP  =   60;
     localparam int POS_END   = -170;
 
-    // Pozycja i predkosc w formacie Q12.8.
+    // Position and velocity use Q12.8 fixed-point representation.
     localparam int FP_SHIFT     = 8;
     localparam int POS_FP_WIDTH = 20;
 
@@ -31,8 +36,8 @@ module bolid_anim_ctrl (
     localparam logic signed [POS_FP_WIDTH-1:0] POS_STOP_FP  = 20'sd60  <<< FP_SHIFT;
     localparam logic signed [POS_FP_WIDTH-1:0] POS_END_FP   = -20'sd170 <<< FP_SHIFT;
 
-    // Profil dla ok. 60 klatek/s. Bolid wjezdza szybko, lagodnie hamuje,
-    // a po pit stopie rusza wolno i jednostajnie przyspiesza.
+    // The profile targets approximately 60 frames per second: the car enters
+    // quickly, brakes smoothly, then accelerates steadily after service.
     localparam logic [15:0] MAX_SPEED_FP           = 16'd896; // 3.50 px/klatke
     localparam logic [15:0] DEPART_START_SPEED_FP  = 16'd64;  // 0.25 px/klatke
     localparam logic [15:0] MIN_APPROACH_SPEED_FP  = 16'd64;
@@ -40,7 +45,7 @@ module bolid_anim_ctrl (
     localparam logic [15:0] BRAKING_FP             = 16'd8;
     localparam logic [15:0] DRIVE_THROUGH_SPEED_FP = 16'd768; // 3.00 px/klatke
 
-    // Zmiana koloru kola co cztery przebyte piksele.
+    // Advance the wheel color phase every four pixels of travel.
     localparam logic [15:0] WHEEL_STEP_DISTANCE_FP = 16'd1024;
 
     typedef enum logic [2:0] {
@@ -79,15 +84,15 @@ module bolid_anim_ctrl (
             wheel_distance_fp <= '0;
             wheel_step        <= '0;
         end else if (trigger_arrive) begin
-            // Polecenie wjazdu moze przerwac animacje menu. Dzieki temu po
-            // kliknieciu PLAY nowy bolid zawsze zaczyna poza prawa krawedzia.
+            // An arrival command may interrupt the menu animation, ensuring that
+            // a new car always starts beyond the right edge after PLAY is selected.
             state             <= ARRIVING;
             position_fp       <= POS_START_FP;
             speed_fp          <= MAX_SPEED_FP;
             wheel_distance_fp <= '0;
             wheel_step        <= '0;
         end else if (trigger_drive_through) begin
-            // Ponowne wyzwolenie w stanie DONE zapetla przejazd w menu.
+            // Retriggering DONE loops the car pass on the menu screen.
             state             <= DRIVING_THROUGH;
             position_fp       <= POS_START_FP;
             speed_fp          <= DRIVE_THROUGH_SPEED_FP;
@@ -206,7 +211,7 @@ module bolid_anim_ctrl (
     assign car_x_pos       = position_fp >>> FP_SHIFT;
     assign wheel_anim_step = wheel_step;
 
-    // W czasie obslugi renderowany jest osobny sprite bolidu bez kol.
+    // A separate wheel-less car sprite is rendered during service.
     assign car_enable = (state == ARRIVING) ||
                         (state == DEPARTING) ||
                         (state == DRIVING_THROUGH);

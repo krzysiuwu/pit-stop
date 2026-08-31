@@ -1,9 +1,8 @@
 /**
- * Basic VGA Top Module
- * Description:
- * Modul top do wyswietlania tla i potoku testowego dla nowych sprite'ow.
+ * Module: drawing_test
+ * Summary: Builds a simulation-only VGA pipeline that displays every major sprite and button state.
+ * Author: Adam Krupa
  */
-
 module drawing_test (
         input  logic clk,
         input  logic rst,
@@ -18,13 +17,13 @@ module drawing_test (
     timeprecision 1ps;
 
     // -------------------------------------------------------------------------
-    // Sygnały wewnętrzne i Interfejsy
+    // Internal signals and interfaces
     // -------------------------------------------------------------------------
     logic [11:0] rgb_pipe;
 
     low_res_if low_res_pipe();
 
-    // Magistrale VGA przekazujące koordynaty między etapami
+    // VGA interfaces carry coordinates between rendering stages.
     vga_if vga_timing_if();
     vga_if vga_step1_bg();
     vga_if vga_step2_btn1();
@@ -35,7 +34,7 @@ module drawing_test (
     vga_if vga_step7_wheel();
     vga_if vga_upscale();
 
-    // Sygnały z kolorami wędrujące z warstwy na warstwę
+    // Palette values pass from one layer to the next.
     logic [3:0] lut_step1_bg;
     logic [3:0] lut_step2_btn1;
     logic [3:0] lut_step3_btn2;
@@ -46,19 +45,19 @@ module drawing_test (
 
 
     // -------------------------------------------------------------------------
-    // Przypisanie wyjść
+    // Output assignments
     // -------------------------------------------------------------------------
     assign vs = ~vga_upscale.vsync;
     assign hs = ~vga_upscale.hsync;
     
-    // Zabezpieczenie sprzętowe: Wygaszanie kolorów poza obszarem ekranu
+    // Force RGB to black outside the active display region.
     assign r = (vga_upscale.hblnk || vga_upscale.vblnk) ? 4'h0 : rgb_pipe[11:8];
     assign g = (vga_upscale.hblnk || vga_upscale.vblnk) ? 4'h0 : rgb_pipe[7:4];
     assign b = (vga_upscale.hblnk || vga_upscale.vblnk) ? 4'h0 : rgb_pipe[3:0];
 
 
     // -------------------------------------------------------------------------
-    // ETAP 0: Generator Synchronizacji
+    // STAGE 0: VGA timing generator
     // -------------------------------------------------------------------------
     vga_timing u_vga_timing (
         .clk(clk),
@@ -70,7 +69,7 @@ module drawing_test (
     assign low_res_pipe.vcount = vga_timing_if.vcount >> 2;
 
     // -------------------------------------------------------------------------
-    // ETAP 1: Tło
+    // STAGE 1: Background
     // -------------------------------------------------------------------------
     draw_bg u_draw_bg (
         .clk(clk),
@@ -82,11 +81,11 @@ module drawing_test (
     );
 
     // -------------------------------------------------------------------------
-    // ETAP 2: Przycisk 1 (Stan: Normalny)
+    // STAGE 2: Button 1 in the normal state
     // -------------------------------------------------------------------------
 
     draw_button_with_text #(
-        .STR_LEN(6) // Słowo ma dokładnie 6 liter
+        .STR_LEN(6) // PLAY text contains exactly six characters.
     ) u_btn_normal (
         .clk(clk),
         .rst(rst),
@@ -95,7 +94,7 @@ module drawing_test (
         .is_pressed(1'b0),
         .x_pos(12'd5),
         .y_pos(12'd20),
-        .text_string("NORMAL"), // Bez spacji!
+        .text_string("NORMAL"), // Packed text contains no padding spaces.
         .low_res_in(low_res_pipe),
         
         .lut_in(lut_step1_bg),
@@ -105,10 +104,10 @@ module drawing_test (
     );
 
     // -------------------------------------------------------------------------
-    // ETAP 3: Przycisk 2 (Stan: Hovered)
+    // STAGE 3: Button 2 in the hovered state
     // -------------------------------------------------------------------------
     draw_button_with_text #(
-        .STR_LEN(5) // Słowo ma dokładnie 5 liter
+        .STR_LEN(5) // OPTS text contains exactly five characters.
     ) u_btn_hover (
         .clk(clk),
         .rst(rst),
@@ -117,7 +116,7 @@ module drawing_test (
         .is_pressed(1'b0),
         .x_pos(12'd88),
         .y_pos(12'd20),
-        .text_string("HOVER"), // Bez spacji!
+        .text_string("HOVER"), // Packed text contains no padding spaces.
         .low_res_in(low_res_pipe),
         
         .lut_in(lut_step2_btn1),
@@ -127,10 +126,10 @@ module drawing_test (
     );
 
     // -------------------------------------------------------------------------
-    // ETAP 4: Przycisk 3 (Stan: Pressed)
+    // STAGE 4: Button 3 in the pressed state
     // -------------------------------------------------------------------------
     draw_button_with_text #(
-        .STR_LEN(7) // Słowo ma dokładnie 7 liter
+        .STR_LEN(7) // PRESSED text contains exactly seven characters.
     ) u_btn_pressed (
         .clk(clk),
         .rst(rst),
@@ -139,7 +138,7 @@ module drawing_test (
         .is_pressed(1'b1),
         .x_pos(12'd171),
         .y_pos(12'd20),
-        .text_string("PRESSED"), // Bez spacji!
+        .text_string("PRESSED"), // Packed text contains no padding spaces.
         .low_res_in(low_res_pipe),
         
         .lut_in(lut_step3_btn2),
@@ -149,7 +148,7 @@ module drawing_test (
     );
 
     // -------------------------------------------------------------------------
-    // ETAP 5: Bolid F1 (Domyślny / Z kołami)
+    // STAGE 5: Complete F1 car
     // -------------------------------------------------------------------------
     draw_BolidF1Default u_draw_bolid_def (
         .clk(clk),
@@ -164,7 +163,7 @@ module drawing_test (
     );
 
     // -------------------------------------------------------------------------
-    // ETAP 6: Bolid F1 (Bez kół - podczas Pit Stopu)
+    // STAGE 6: Wheel-less F1 car during the pit stop
     // -------------------------------------------------------------------------
     draw_BolidF1NoWheels u_draw_bolid_nw (
         .clk(clk),
@@ -179,7 +178,7 @@ module drawing_test (
     );
 
     // -------------------------------------------------------------------------
-    // ETAP 7: Opona (Do testu zmiany kół)
+    // STAGE 7: Wheel replacement test sprite
     // -------------------------------------------------------------------------
     draw_Wheel u_draw_wheel (
         .clk(clk),
@@ -195,13 +194,13 @@ module drawing_test (
     );
 
     // -------------------------------------------------------------------------
-    // KONWERTER KOLORÓW (LUT -> FIZYCZNE Piny)
+    // COLOR CONVERTER (palette index to physical RGB pins)
     // -------------------------------------------------------------------------
     LUT2RGB_converter u_LUT2RGB_converter (
         .clk(clk),
         .rst,
         
-        // Przyjmujemy zsumowane kolory z ostatniej warstwy (Koła)
+        // Convert the palette output of the final wheel layer.
         .lut_value(lut_step7_wheel),
         .vga_in(vga_step7_wheel),
         

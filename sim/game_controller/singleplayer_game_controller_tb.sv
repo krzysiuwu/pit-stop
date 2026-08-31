@@ -1,3 +1,8 @@
+/**
+ * Testbench: singleplayer_game_controller_tb
+ * Summary: Checks scoring, timing, statistics, and win/loss behavior in every single-player mode.
+ * Author: Adam Krupa
+ */
 module singleplayer_game_controller_tb;
 
     timeunit 1ns;
@@ -106,20 +111,20 @@ module singleplayer_game_controller_tb;
         repeat (2) @(negedge clk);
         rst = 1'b1;
 
-        // TIME ATTACK: jedna ukonczona wymiana oznacza wygrana po czasie.
+        // TIME ATTACK: one completed service produces a win when time expires.
         begin_game(2'b00, 8'd2);
         complete_stop(1);
         repeat (3) tick_frame();
         clock_once();
         expect_finished(1'b1, 8'd1);
 
-        // TIME ATTACK bez punktu konczy sie porazka.
+        // TIME ATTACK: scoring no points produces a loss.
         begin_game(2'b00, 8'd1);
         repeat (2) tick_frame();
         clock_once();
         expect_finished(1'b0, 8'd0);
 
-        // POINT RACE konczy sie dokladnie po osiagnieciu celu.
+        // POINT RACE ends exactly when the score reaches the target.
         begin_game(2'b01, 8'd2);
         complete_stop(1);
         if (game_finished)
@@ -127,14 +132,14 @@ module singleplayer_game_controller_tb;
         complete_stop(1);
         expect_finished(1'b1, 8'd2);
 
-        // SPEED UP: trzy rundy w tescie oznaczaja wygrana.
+        // SPEED UP: completing all three test rounds produces a win.
         begin_game(2'b10, 8'd3);
         complete_stop(1);
         complete_stop(1);
         complete_stop(1);
         expect_finished(1'b1, 8'd3);
 
-        // SPEED UP: przekroczenie limitu konczy sie porazka.
+        // SPEED UP: exceeding the time limit produces a loss.
         begin_game(2'b10, 8'd1);
         service_active = 1'b1;
         clock_once();
@@ -143,7 +148,7 @@ module singleplayer_game_controller_tb;
         expect_finished(1'b0, 8'd0);
         service_active = 1'b0;
 
-        // BEST OF zbiera wynik oraz statystyki czasowe.
+        // BEST OF accumulates the score and timing statistics.
         begin_game(2'b11, 8'd2);
         complete_stop(1);
         complete_stop(2);

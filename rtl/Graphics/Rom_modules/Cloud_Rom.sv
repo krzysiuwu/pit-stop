@@ -1,3 +1,8 @@
+/**
+ * Module: Cloud_Rom
+ * Summary: Implements synchronous ROM storage for the cloud sprite.
+ * Author: Adam Krupa
+ */
 module Cloud_Rom (
     input  logic clk ,
     input  logic [9:0] address,  // address = (Y * 26) + X

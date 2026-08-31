@@ -1,3 +1,8 @@
+/**
+ * Module: reset_sync
+ * Summary: Synchronizes reset release and provides a separate distribution stage for high-fanout synchronous resets.
+ * Author: Adam Krupa
+ */
 module reset_sync (
     input  logic clk,
     input  logic async_rst_n,

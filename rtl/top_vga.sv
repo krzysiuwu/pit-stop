@@ -1,17 +1,9 @@
 /**
- * San Jose State University
- * EE178 Lab #4
- * Author: prof. Eric Crabilla
- *
- * Modified by:
- * 2025  AGH University of Science and Technology
- * MTM UEC2
- * Piotr Kaczmarczyk
- *
- * Description:
- * The project top module.
+ * Module: top_vga
+ * Summary: Legacy VGA and PS/2 integration top used by the original simulation flow.
+ * Author: Adam Krupa
+ * Based on: SJSU EE178 Lab #4 by Prof. Eric Crabilla, adapted for AGH UEC2 by Piotr Kaczmarczyk.
  */
-
 module top_vga (
         input  logic clk,
         input  logic rst,

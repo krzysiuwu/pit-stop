@@ -1,3 +1,8 @@
+/**
+ * Module: Wheel_Rom
+ * Summary: Implements synchronous ROM storage for the wheel sprite.
+ * Author: Adam Krupa
+ */
 module Wheel_Rom (
     input  logic clk ,
     input  logic [9:0] address,  // address = (Y * 26) + X
