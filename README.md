@@ -1,6 +1,6 @@
 # pit-stop
-
-Gra VGA dla Basys3 z obsługą myszy PS/2.
+<img width="3219" height="2038" alt="IMG_20260831_133148" src="https://github.com/user-attachments/assets/ec7cab54-466b-45c8-ac02-a8d98984f15c" />
+Gra zręcznościowa inspirowana pitstopami w Formule 1 na płytki Basys3
 
 ## Opcje gry
 
@@ -117,7 +117,7 @@ Interfejs `low_res_if` nie jest uzywany w aktywnym potoku. Kazdy renderer
 wylicza wspolrzedne 256x192 z wlasnego, opóźnionego etapu `vga_if`, dzieki czemu
 kolor i synchronizacja pozostają wyrównane. `mouse_limits` programuje kontroler
 PS/2 na zakres 0..1023 i 0..767, wiec nie można wyjść myszką poza ekran.
-## Uruchomienie
+## Uruchomienie w interaktywnym symulatorze
 
 Interaktywny symulator SDL:
 
@@ -154,18 +154,15 @@ ABI `libstdc++`. Zapobiega to błędom linkera z symbolami
 `std::__cxx11::basic_string`; katalog kompilacji dla tego wariantu jest osobny,
 wiec nie trzeba ręcznie usuwać poprzedniego `obj_dir/game_controller`.
 
-Bitstream (po załadowaniu środowiska Vivado):
+## Uruchomienie na płytce Basys3
+W katalogu results znajduje się gotowy bitstream. W celu samodzielnego wygenerowania bitstreamu należy użyć poniższego skryptu
 
 ```bash
 source env.sh
-./tools/generate_bitstream.sh
+generate_bitstream.sh
 ```
-
-Skrypt zapisuje w `results/` nowy bitstream oraz raporty.
-
-Czyste archiwum źródłowe bez `.git`, `obj_dir`, wyników symulacji i starych
-bitstreamów można przygotować poleceniem:
-
+Następnie należy wgrać bitstream na płytke następującym skryptem
 ```bash
-./tools/package_source.sh
+program_fpga.sh
 ```
+Skrypt obsługuje sytuacje w której jest więcej niż jedna płytka podłączona do komputera i programuje je po kolei.
