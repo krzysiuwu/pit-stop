@@ -82,7 +82,7 @@ logic is_cloud_d;
 logic is_grandstand_d;
 logic [3:0] bg_lut_d;
 logic [11:0] hcount_d, vcount_d;
-logic vsync_d, hsync_d, vblnk_d, hblnk_d;
+logic hsync_d, vblnk_d, hblnk_d;
 
 logic is_shadow;
 assign is_shadow = (cur_y >= 96 && cur_y < 108);
@@ -213,7 +213,6 @@ always_ff @(posedge clk) begin
 
         hcount_d <= '0;
         vcount_d <= '0;
-        vsync_d  <= '0;
         hsync_d  <= '0;
         vblnk_d  <= '0;
         hblnk_d  <= '0;
@@ -224,7 +223,6 @@ always_ff @(posedge clk) begin
 
         hcount_d <= vga_in.hcount;
         vcount_d <= vga_in.vcount;
-        vsync_d  <= vga_in.vsync;
         hsync_d  <= vga_in.hsync;
         vblnk_d  <= vga_in.vblnk;
         hblnk_d  <= vga_in.hblnk;
@@ -242,7 +240,9 @@ always_ff @(posedge clk) begin : bg_ff_blk
         lut_out        <= '0;
     end else begin
         vga_out.vcount <= vcount_d;
-        vga_out.vsync  <= vsync_d;
+        // vsync_prev jest juz rejestrem vga_in.vsync. Wspoldzielenie go
+        // zachowuje dwutaktowe opoznienie potoku i usuwa duplikat rejestru.
+        vga_out.vsync  <= vsync_prev;
         vga_out.vblnk  <= vblnk_d;
         vga_out.hcount <= hcount_d;
         vga_out.hsync  <= hsync_d;

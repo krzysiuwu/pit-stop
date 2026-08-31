@@ -47,18 +47,16 @@ module draw_PitstopLogo (
     assign local_x = cur_x - x_pos;
     assign local_y = cur_y - y_pos;
 
-    logic vsync_d;
     logic [5:0] anim_counter;
     logic [1:0] frame_index;
 
     always_ff @(posedge clk) begin
         if (!rst) begin
-            vsync_d      <= 1'b0;
             anim_counter <= '0;
         end else begin
-            vsync_d <= vga_in.vsync;
-
-            if (vga_in.vsync && !vsync_d) begin
+            // Zarejestrowane wyjscie synchronizacji jest jednoczesnie
+            // poprzednia probka potrzebna do wykrycia poczatku klatki.
+            if (vga_in.vsync && !vga_out.vsync) begin
                 anim_counter <= anim_counter + 1'b1;
             end
         end

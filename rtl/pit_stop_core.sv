@@ -506,29 +506,46 @@ module pit_stop_core (
                             rear_anchor_at_rear ? REAR_MOUNT_X : FRONT_MOUNT_X;
     assign rear_anchor_y  = rear_anchor_at_rack ? RACK_PICK_Y : MOUNT_Y;
 
-    assign front_wheel_near_front_mount =
-        (front_wheel_x >= FRONT_MOUNT_X - MOUNT_MARGIN) &&
-        (front_wheel_x <= FRONT_MOUNT_X + MOUNT_MARGIN) &&
-        (front_wheel_y >= MOUNT_Y - MOUNT_MARGIN) &&
-        (front_wheel_y <= MOUNT_Y + MOUNT_MARGIN);
+    // Rejestracja wynikow detekcji przerywa petle kombinacyjna:
+    // pozycja kola -> hitbox mocowania -> decyzja FSM -> kotwica -> pozycja.
+    // Jeden takt opoznienia (ok. 15 ns) jest pomijalny wobec okresu danych PS/2.
+    always_ff @(posedge clk) begin
+        if (!rst) begin
+            front_wheel_near_front_mount <= 1'b0;
+            front_wheel_near_rear_mount  <= 1'b0;
+            rear_wheel_near_front_mount  <= 1'b0;
+            rear_wheel_near_rear_mount   <= 1'b0;
+        end else if (!enable_wheel_service) begin
+            front_wheel_near_front_mount <= 1'b0;
+            front_wheel_near_rear_mount  <= 1'b0;
+            rear_wheel_near_front_mount  <= 1'b0;
+            rear_wheel_near_rear_mount   <= 1'b0;
+        end else begin
+            front_wheel_near_front_mount <=
+                (front_wheel_x >= FRONT_MOUNT_X - MOUNT_MARGIN) &&
+                (front_wheel_x <= FRONT_MOUNT_X + MOUNT_MARGIN) &&
+                (front_wheel_y >= MOUNT_Y - MOUNT_MARGIN) &&
+                (front_wheel_y <= MOUNT_Y + MOUNT_MARGIN);
 
-    assign front_wheel_near_rear_mount =
-        (front_wheel_x >= REAR_MOUNT_X - MOUNT_MARGIN) &&
-        (front_wheel_x <= REAR_MOUNT_X + MOUNT_MARGIN) &&
-        (front_wheel_y >= MOUNT_Y - MOUNT_MARGIN) &&
-        (front_wheel_y <= MOUNT_Y + MOUNT_MARGIN);
+            front_wheel_near_rear_mount <=
+                (front_wheel_x >= REAR_MOUNT_X - MOUNT_MARGIN) &&
+                (front_wheel_x <= REAR_MOUNT_X + MOUNT_MARGIN) &&
+                (front_wheel_y >= MOUNT_Y - MOUNT_MARGIN) &&
+                (front_wheel_y <= MOUNT_Y + MOUNT_MARGIN);
 
-    assign rear_wheel_near_front_mount =
-        (rear_wheel_x >= FRONT_MOUNT_X - MOUNT_MARGIN) &&
-        (rear_wheel_x <= FRONT_MOUNT_X + MOUNT_MARGIN) &&
-        (rear_wheel_y >= MOUNT_Y - MOUNT_MARGIN) &&
-        (rear_wheel_y <= MOUNT_Y + MOUNT_MARGIN);
+            rear_wheel_near_front_mount <=
+                (rear_wheel_x >= FRONT_MOUNT_X - MOUNT_MARGIN) &&
+                (rear_wheel_x <= FRONT_MOUNT_X + MOUNT_MARGIN) &&
+                (rear_wheel_y >= MOUNT_Y - MOUNT_MARGIN) &&
+                (rear_wheel_y <= MOUNT_Y + MOUNT_MARGIN);
 
-    assign rear_wheel_near_rear_mount =
-        (rear_wheel_x >= REAR_MOUNT_X - MOUNT_MARGIN) &&
-        (rear_wheel_x <= REAR_MOUNT_X + MOUNT_MARGIN) &&
-        (rear_wheel_y >= MOUNT_Y - MOUNT_MARGIN) &&
-        (rear_wheel_y <= MOUNT_Y + MOUNT_MARGIN);
+            rear_wheel_near_rear_mount <=
+                (rear_wheel_x >= REAR_MOUNT_X - MOUNT_MARGIN) &&
+                (rear_wheel_x <= REAR_MOUNT_X + MOUNT_MARGIN) &&
+                (rear_wheel_y >= MOUNT_Y - MOUNT_MARGIN) &&
+                (rear_wheel_y <= MOUNT_Y + MOUNT_MARGIN);
+        end
+    end
 
     // Piasty naleza do samochodu, nie do konkretnej instancji kola. Po
     // wyrzuceniu starych kol kazda nowa opona moze zajac dowolna wolna piaste.

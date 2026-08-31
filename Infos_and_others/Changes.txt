@@ -57,3 +57,12 @@ Timing and power sign-off:
 - Enabled the Vivado post-route timing-oriented implementation strategy.
 - Added detailed timing, high-fanout and advisory power reports.
 - Made the build fail when routed setup slack is negative.
+
+
+Synthesis warning cleanup:
+
+- Reused the existing registered VSYNC samples in the background and logo
+  pipelines instead of synthesizing equivalent duplicate registers.
+- Registered all four wheel-to-mount proximity flags before the service FSMs.
+- Removed the structural combinational feedback from wheel position through
+  mount selection and anchor position without changing the wheel protocol.
