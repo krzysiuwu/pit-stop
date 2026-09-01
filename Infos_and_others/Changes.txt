@@ -86,3 +86,16 @@ Structural architecture refactor
   and two-wheel coordination into functional leaf modules.
 - Updated Vivado, Verilator, and top-level simulation source lists after the
   RTL directory cleanup.
+
+
+Final Vivado warning cleanup
+----------------------------
+- Replaced four constant sprite-address multipliers with fabric shift/add
+  networks so Vivado no longer creates unpipelined DSP48 address paths.
+- Moved the MouseCtl delta arithmetic outside its clocked processes to avoid
+  inferring and then removing temporary sequential elements.
+- Corrected the horizontal PS/2 overflow delta to the documented -256 value.
+- Reused the seven-segment decimal point as an active-low UART error indicator
+  instead of driving the top-level output with a constant.
+- Suppressed only Synth 8-7080, which states that the design is too small for
+  parallel synthesis partitioning and does not identify an RTL defect.

@@ -51,7 +51,16 @@ module draw_Wheel (
     assign local_y = $unsigned(cur_y_signed - y_pos);
 
     logic [$clog2(SPRITE_WIDTH * SPRITE_HEIGHT)-1:0] rom_addr;
-    assign rom_addr = in_hitbox ? ((local_y * SPRITE_WIDTH) + local_x) : '0;
+    (* use_dsp = "no" *) logic [9:0] row_offset;
+    logic [9:0] local_y_ext;
+
+    // 26*y = 16*y + 8*y + 2*y.  A small carry-chain adder is more
+    // appropriate here than an unpipelined DSP48 multiplier.
+    assign local_y_ext = local_y[9:0];
+    assign row_offset = (local_y_ext << 4)
+                      + (local_y_ext << 3)
+                      + (local_y_ext << 1);
+    assign rom_addr = in_hitbox ? (row_offset + local_x[9:0]) : '0;
 
     logic [3:0] rom_data;
 

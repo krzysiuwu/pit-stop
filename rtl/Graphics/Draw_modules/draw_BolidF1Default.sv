@@ -47,7 +47,7 @@ module draw_BolidF1Default (
 
     // Signed extension is required while the car moves beyond the left edge.
     assign cur_x_signed = $signed({1'b0, cur_x});
-    assign sprite_left  = x_pos;
+    assign sprite_left  = $signed({1'b0, x_pos});
     assign sprite_right = sprite_left + 13'sd165;
 
     assign in_hitbox =
@@ -61,7 +61,17 @@ module draw_BolidF1Default (
     assign local_y = cur_y - Y_POS;
 
     logic [$clog2(SPRITE_WIDTH * SPRITE_HEIGHT)-1:0] rom_addr;
-    assign rom_addr = in_hitbox ? ((local_y * SPRITE_WIDTH) + local_x) : '0;
+    (* use_dsp = "no" *) logic [12:0] row_offset;
+    logic [12:0] local_y_ext;
+
+    // 165*y = 128*y + 32*y + 4*y + y.  Keeping this constant
+    // multiplication in LUT/carry logic avoids an unpipelined DSP48 path.
+    assign local_y_ext = {1'b0, local_y};
+    assign row_offset = (local_y_ext << 7)
+                      + (local_y_ext << 5)
+                      + (local_y_ext << 2)
+                      +  local_y_ext;
+    assign rom_addr = in_hitbox ? (row_offset + local_x) : '0;
 
     logic [3:0] rom_data;
 

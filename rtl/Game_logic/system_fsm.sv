@@ -12,7 +12,6 @@ module system_fsm (
         input  logic click_play,
         input  logic click_setup,
         input  logic click_back,
-        input  logic frame_tick,
         input  logic multiplayer_selected,
         input  logic multiplayer_ready,
         input  logic remote_start,

@@ -31,7 +31,6 @@ module wheel_service_coordinator #(
 
     input  logic front_grab_enable,
     input  logic rear_grab_enable,
-    input  logic front_hover,
     input  logic rear_hover,
     input  logic front_dragging,
     input  logic rear_dragging,

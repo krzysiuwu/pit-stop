@@ -44,7 +44,17 @@ module draw_BolidF1NoWheels (
     assign local_y = cur_y - y_pos;
 
     logic [$clog2(SPRITE_WIDTH * SPRITE_HEIGHT)-1:0] rom_addr;
-    assign rom_addr = in_hitbox ? ((local_y * SPRITE_WIDTH) + local_x) : '0;
+    (* use_dsp = "no" *) logic [12:0] row_offset;
+    logic [12:0] local_y_ext;
+
+    // 165*y = 128*y + 32*y + 4*y + y.  The explicit shift/add form
+    // prevents Vivado from allocating an unpipelined DSP48 for addressing.
+    assign local_y_ext = {1'b0, local_y};
+    assign row_offset = (local_y_ext << 7)
+                      + (local_y_ext << 5)
+                      + (local_y_ext << 2)
+                      +  local_y_ext;
+    assign rom_addr = in_hitbox ? (row_offset + local_x) : '0;
 
     logic [3:0] rom_data;
 

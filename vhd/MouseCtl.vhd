@@ -291,6 +291,11 @@ signal x_sign,y_sign: std_logic := '0';
 -- y_inc is the negated value from the mouse in the third byte
 signal x_inc,y_inc: std_logic_vector(7 downto 0) := (others => '0');
 
+-- Combinational movement values.  Keeping these outside the clocked
+-- processes prevents temporary variables from being inferred as registers.
+signal x_delta,y_delta: std_logic_vector(11 downto 0) := (others => '0');
+signal x_candidate,y_candidate: std_logic_vector(11 downto 0) := (others => '0');
+
 -- active for one clock period, indicates new delta movement received
 -- on x,y axis
 signal x_new,y_new: std_logic := '0';
@@ -365,6 +370,20 @@ signal timeout            : STD_LOGIC := '0';
 
 begin
 
+   -- Sign-extend the received delta and account for the PS/2 overflow flag.
+   x_delta <= "111100000000" when (x_sign = '1' and x_overflow = '1') else
+              ("1111" & x_inc) when x_sign = '1' else
+              "000100000000" when x_overflow = '1' else
+              ("0000" & x_inc);
+
+   y_delta <= "111100000000" when (y_sign = '1' and y_overflow = '1') else
+              ("1111" & y_inc) when y_sign = '1' else
+              "000100000000" when y_overflow = '1' else
+              ("0000" & y_inc);
+
+   x_candidate <= x_pos + x_delta;
+   y_candidate <= y_pos + y_delta;
+
    Inst_Ps2Interface: Ps2Interface
    PORT MAP
    (
@@ -432,8 +451,6 @@ timeout  <= '1' when timeout_cnt = (TIMEOUT_PERIOD_CLOCKS - 1) else '0';
    -- movement detected by adding the delta movement in x_inc, or by
    -- adding 256 or -256 when overflow occurs.
    set_x: process(clk)
-   variable x_inter: std_logic_vector(11 downto 0);
-   variable inc: std_logic_vector(11 downto 0);
    begin
       if(rising_edge(clk)) then
          -- if setx active, set new x_pos value
@@ -443,47 +460,27 @@ timeout  <= '1' when timeout_cnt = (TIMEOUT_PERIOD_CLOCKS - 1) else '0';
          elsif(x_new = '1') then
             -- if negative movement on x axis
             if(x_sign = '1') then
-               -- if overflow occurred
-               if(x_overflow = '1') then
-                  -- inc is -256
-                  inc := "111000000000";
-               else
-                  -- inc is sign extended x_inc
-                  inc := "1111" & x_inc;
-               end if;
-               -- intermediary horizontal position
-               x_inter := x_pos + inc;
-               -- if first bit of x_inter is 1
+               -- if first bit of the candidate is 1
                -- then negative overflow occurred and
                -- new x position is 0.
-               -- Note: x_pos and x_inter have 11 bits,
+               -- Note: x_pos and x_candidate have 12 bits,
                -- and because xpos has only 10, when
                -- first bit becomes 1, this is considered
                -- a negative number when moving left
-               if(x_inter(11) = '1') then
+               if(x_candidate(11) = '1') then
                   x_pos <= (others => '0');
                else
-                  x_pos <= x_inter;
+                  x_pos <= x_candidate;
                end if;
             -- if positive movement on x axis
             else
-               -- if overflow occurred
-               if(x_overflow = '1') then
-                  -- inc is 256
-                  inc := "000100000000";
-               else
-                  -- inc is sign extended x_inc
-                  inc := "0000" & x_inc;
-               end if;
-               -- intermediary horizontal position
-               x_inter := x_pos + inc;
-               -- if x_inter is greater than x_max
+               -- if the candidate is greater than x_max
                -- then positive overflow occurred and
                -- new x position is x_max.
-               if(x_inter > ('0' & x_max)) then
+               if(x_candidate > x_max) then
                   x_pos <= x_max;
                else
-                  x_pos <= x_inter;
+                  x_pos <= x_candidate;
                end if;
             end if;
          end if;
@@ -495,8 +492,6 @@ timeout  <= '1' when timeout_cnt = (TIMEOUT_PERIOD_CLOCKS - 1) else '0';
    -- movement detected by adding the delta movement in y_inc, or by
    -- adding 256 or -256 when overflow occurs.
    set_y: process(clk)
-   variable y_inter: std_logic_vector(11 downto 0);
-   variable inc: std_logic_vector(11 downto 0);
    begin
       if(rising_edge(clk)) then
          -- if sety active, set new y_pos value
@@ -507,47 +502,27 @@ timeout  <= '1' when timeout_cnt = (TIMEOUT_PERIOD_CLOCKS - 1) else '0';
             -- if negative movement on y axis
             -- Note: axes origin is upper-left corner
             if(y_sign = '1') then
-               -- if overflow occurred
-               if(y_overflow = '1') then
-                  -- inc is -256
-                  inc := "111100000000";
-               else
-                  -- inc is sign extended y_inc
-                  inc := "1111" & y_inc;
-               end if;
-               -- intermediary vertical position
-               y_inter := y_pos + inc;
-               -- if first bit of y_inter is 1
+               -- if first bit of the candidate is 1
                -- then negative overflow occurred and
                -- new y position is 0.
-               -- Note: y_pos and y_inter have 11 bits,
+               -- Note: y_pos and y_candidate have 12 bits,
                -- and because ypos has only 10, when
                -- first bit becomes 1, this is considered
                -- a negative number when moving upward
-               if(y_inter(11) = '1') then
+               if(y_candidate(11) = '1') then
                   y_pos <= (others => '0');
                else
-                  y_pos <= y_inter;
+                  y_pos <= y_candidate;
                end if;
             -- if positive movement on y axis
             else
-               -- if overflow occurred
-               if(y_overflow = '1') then
-                  -- inc is 256
-                  inc := "000100000000";
-               else
-                  -- inc is sign extended y_inc
-                  inc := "0000" & y_inc;
-               end if;
-               -- intermediary vertical position
-               y_inter := y_pos + inc;
-               -- if y_inter is greater than y_max
+               -- if the candidate is greater than y_max
                -- then positive overflow occurred and
                -- new y position is y_max.
-               if(y_inter > (y_max)) then
+               if(y_candidate > y_max) then
                   y_pos <= y_max;
                else
-                  y_pos <= y_inter;
+                  y_pos <= y_candidate;
                end if;
             end if;
          end if;

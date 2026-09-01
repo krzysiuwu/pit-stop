@@ -119,6 +119,7 @@ module top_vga_basys3 (
         .clk(clk_65M),
         .rst(core_rst),
         .value(seven_segment_value),
+        .status_dot(uart_error),
         .seg,
         .an,
         .dp

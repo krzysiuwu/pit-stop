@@ -16,6 +16,10 @@ proc create_new_project {project_name target top_module} {
     file mkdir build
     create_project ${project_name} build -part ${target} -force
 
+    # This message only reports that the design is too small for Vivado's
+    # parallel synthesis partitioning.  It does not identify an RTL problem.
+    set_msg_config -id {Synth 8-7080} -suppress
+
     # read files from the variables provided by the project_details.tcl
     if {[info exists ::xdc_files]}     {read_xdc ${::xdc_files}}
     if {[info exists ::sv_files]}      {read_verilog -sv ${::sv_files}}

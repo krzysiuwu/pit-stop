@@ -14,7 +14,7 @@ module BolidF1Default_Rom (
      * Local variables and signals
      */
 
-    reg [3:0] rom [0:7259];
+    reg [3:0] rom [0:7259] = '{default: 4'b0};
 
 
 /**

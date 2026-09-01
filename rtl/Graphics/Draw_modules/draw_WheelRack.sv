@@ -46,7 +46,14 @@ module draw_WheelRack (
 
     // ROM address and storage
     logic [11:0] rom_addr;
-    assign rom_addr = in_hitbox ? ((local_y * SPRITE_WIDTH) + local_x) : 12'd0;
+    (* use_dsp = "no" *) logic [11:0] row_offset;
+
+    // 52*y = 32*y + 16*y + 4*y.  This explicit constant multiply keeps
+    // sprite addressing in fabric and removes the unpipelined DSP48 path.
+    assign row_offset = (local_y << 5)
+                      + (local_y << 4)
+                      + (local_y << 2);
+    assign rom_addr = in_hitbox ? (row_offset + local_x) : 12'd0;
 
     logic [3:0] rom_data;
 

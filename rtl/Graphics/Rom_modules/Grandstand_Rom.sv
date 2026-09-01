@@ -14,7 +14,7 @@ module Grandstand_Rom (
      * Local variables and signals
      */
 
-    reg [3:0] rom [0:3079];
+    reg [3:0] rom [0:3079] = '{default: 4'b0};
 
 
 /**

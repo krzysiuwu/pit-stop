@@ -7,6 +7,7 @@ module seven_segment_display (
         input  logic       clk,
         input  logic       rst,
         input  logic [7:0] value,
+        input  logic       status_dot,
 
         output logic [6:0] seg,
         output logic [3:0] an,
@@ -80,6 +81,8 @@ module seven_segment_display (
         endcase
     end
 
-    assign dp = 1'b1;
+    // Reuse the otherwise idle leftmost digit as an active-low status dot.
+    // The top level drives it from uart_error, so dp is no longer a constant.
+    assign dp = ~(status_dot && (digit_select == 2'd3));
 
 endmodule
