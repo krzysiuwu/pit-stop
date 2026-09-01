@@ -1,7 +1,7 @@
 /**
  * Module: wheel_physics
  * Summary: Models wheel pickup, dragging, throwing, gravity, bouncing, removal, and attachment to an anchor.
- * Author: Adam Krupa, Krzysztof Jędrzejek
+ * Author: Adam Krupa
  */
 module wheel_physics #(
         parameter int SCREEN_WIDTH  = 256,
@@ -9,7 +9,7 @@ module wheel_physics #(
         parameter int WHEEL_WIDTH   = 26,
         parameter int WHEEL_HEIGHT  = 27,
         parameter int GROUND_LEVEL  = 137
-    )(
+)(
         input  logic clk,
         input  logic rst,
         input  logic frame_tick,
@@ -64,6 +64,12 @@ module wheel_physics #(
     localparam logic signed [15:0] GROUND_LEVEL_Q   = GROUND_LEVEL * 16;
     localparam logic signed [15:0] MIN_BOUNCE_SPEED = 16'sd32;
     localparam logic signed [15:0] MIN_SLIDE_SPEED  = 16'sd4;
+    localparam logic signed [11:0] MIN_RECOVERABLE_X = -(WHEEL_WIDTH / 2);
+    localparam logic signed [11:0] MAX_RECOVERABLE_X =
+        SCREEN_WIDTH - (WHEEL_WIDTH / 2);
+    localparam logic signed [11:0] MIN_RECOVERABLE_Y = -(WHEEL_HEIGHT / 2);
+    localparam logic signed [11:0] MAX_RECOVERABLE_Y =
+        SCREEN_HEIGHT - (WHEEL_HEIGHT / 2);
 
     function automatic logic signed [15:0] pixels_to_q(
             input logic signed [12:0] pixels
@@ -214,11 +220,12 @@ module wheel_physics #(
     assign is_detached = (state != MOUNTED);
     assign is_dragging = (state == DRAGGED);
 
-    // A removed wheel is accepted only after its entire sprite leaves the screen.
+    // Once the wheel center crosses an edge, treat the throw as complete.
+    // Otherwise at least half of the signed hitbox remains visible and grabbable.
     assign is_removed = is_detached &&
-        (((wheel_x + WHEEL_WIDTH)  <= 0)          ||
-            (wheel_x >= SCREEN_WIDTH)                 ||
-            ((wheel_y + WHEEL_HEIGHT) <= 0)          ||
-            (wheel_y >= SCREEN_HEIGHT));
+        ((wheel_x <  MIN_RECOVERABLE_X) ||
+         (wheel_x >= MAX_RECOVERABLE_X) ||
+         (wheel_y <  MIN_RECOVERABLE_Y) ||
+         (wheel_y >= MAX_RECOVERABLE_Y));
 
 endmodule
