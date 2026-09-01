@@ -135,10 +135,7 @@ jednego renderera panelu i wspólnej pamięci fontu. Konwersje wartosci binarnyc
 na trzy cyfry BCD realizuje wspólny moduł `bin_to_bcd3` zamiast wielu operatorów
 dzielenia i modulo.
 
-Interfejs `low_res_if` nie jest uzywany w aktywnym potoku. Kazdy renderer
-wylicza wspolrzedne 256x192 z wlasnego, opóźnionego etapu `vga_if`, dzieki czemu
-kolor i synchronizacja pozostają wyrównane. `mouse_limits` programuje kontroler
-PS/2 na zakres 0..1023 i 0..767, wiec nie można wyjść myszką poza ekran.
+`mouse_limits` programuje kontroler PS/2 na zakres 0..1023 i 0..767, wiec nie można wyjść myszką poza ekran.
 
 ## Uruchomienie na płytce Basys3
 W katalogu results znajduje się gotowy bitstream. W celu samodzielnego wygenerowania bitstreamu należy użyć poniższego skryptu
