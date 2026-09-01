@@ -10,7 +10,7 @@ module Font_Rom (
     );
 
 
-    logic [7:0] font_array [0:1023] = '{default: 4'b0};
+    logic [7:0] font_array [0:1023];
 
     initial begin
         `ifdef VERILATOR

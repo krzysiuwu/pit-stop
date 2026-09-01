@@ -14,7 +14,7 @@ module PitstopLogo_Rom (
      * Local variables and signals
      */
 
-    reg [3:0] rom [0:16383] = '{default: 4'b0};
+    reg [3:0] rom [0:16383];
 
 
 /**

@@ -14,7 +14,7 @@ module Cloud_Rom (
      * Local variables and signals
      */
 
-    reg [3:0] rom [0:519] = '{default: 4'b0};
+    reg [3:0] rom [0:519];
 
 
 /**

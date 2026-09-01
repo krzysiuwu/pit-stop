@@ -47,7 +47,7 @@ module draw_BolidF1Default (
 
     // Signed extension is required while the car moves beyond the left edge.
     assign cur_x_signed = $signed({1'b0, cur_x});
-    assign sprite_left  = $signed({1'b0, x_pos});
+    assign sprite_left  = x_pos;
     assign sprite_right = sprite_left + 13'sd165;
 
     assign in_hitbox =
