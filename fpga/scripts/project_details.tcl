@@ -32,9 +32,9 @@ set xdc_files {
 # Specify SystemVerilog design files location   -- EDIT
 set sv_files {
     ../rtl/Game_logic/game_pkg.sv
-    ../rtl/Graphics/VGA/Target_res/vga_pkg.sv
-    ../rtl/Graphics/VGA/Target_res/vga_if.sv
-    ../rtl/Graphics/VGA/Target_res/vga_timing.sv
+    ../rtl/Graphics/VGA/vga_pkg.sv
+    ../rtl/Graphics/VGA/vga_if.sv
+    ../rtl/Graphics/VGA/vga_timing.sv
     ../rtl/Graphics/VGA/LUT2RGB_converter.sv
     ../rtl/Graphics/Rom_modules/Cloud_Rom.sv
     ../rtl/Graphics/Rom_modules/Grandstand_Rom.sv
@@ -69,7 +69,7 @@ set sv_files {
     ../rtl/Hardware/seven_segment_display.sv
     ../rtl/Hardware/reset_sync.sv
     ../rtl/Graphics/Draw_modules/draw_mouse_cursor.sv
-    ../rtl/mouse_limits.sv
+    ../rtl/Hardware/mouse_limits.sv
     ../rtl/pit_stop_core.sv
     ../rtl/top_fsm.sv
     ../clock/clk_wiz_0.v
@@ -82,7 +82,7 @@ set sv_files {
 #     path/to/file.v
 # }
 
-#Specify VHDL design files location            
+#Specify VHDL design files location
 set vhdl_files {
     ../vhd/MouseCtl.vhd
     ../vhd/Ps2Interface.vhd
@@ -90,7 +90,6 @@ set vhdl_files {
 
 # Specify files for a memory initialization     -- EDIT
 set mem_files {
-    ../rtl/Graphics/Sprites_and_textures/Default_LUT.mem
     ../rtl/Graphics/Sprites_and_textures/Cloud_sprite.mem
     ../rtl/Graphics/Sprites_and_textures/Grandstand_sprite.mem
     ../rtl/Graphics/Sprites_and_textures/BasicButton8chars_sprite.mem
