@@ -25,9 +25,10 @@ verilator -Wno-fatal --cc --exe --build -j 0 -O3 \
     -LDFLAGS "${SDL_LIBS}" \
     --top-module top_interactive \
     rtl/Game_logic/game_pkg.sv \
-    rtl/Graphics/VGA/Target_res/vga_pkg.sv \
-    rtl/Graphics/VGA/Target_res/vga_if.sv \
-    rtl/Graphics/VGA/Target_res/vga_timing.sv \
+    rtl/Graphics/VGA/vga_pkg.sv \
+    rtl/Graphics/VGA/vga_if.sv \
+    rtl/Graphics/VGA/vga_timing.sv \
+    rtl/Graphics/VGA/frame_tick_generator.sv \
     rtl/Graphics/VGA/LUT2RGB_converter.sv \
     rtl/Graphics/Rom_modules/BasicButton8chars_Rom.sv \
     rtl/Graphics/Rom_modules/Font_Rom.sv \
@@ -45,10 +46,13 @@ verilator -Wno-fatal --cc --exe --build -j 0 -O3 \
     rtl/Graphics/Draw_modules/draw_Wheel.sv \
     rtl/Graphics/Draw_modules/draw_WheelRack.sv \
     rtl/Hardware/bin_to_bcd3.sv \
+    rtl/Hardware/mouse_coordinate_scaler.sv \
     rtl/Graphics/Draw_modules/draw_game_panel.sv \
     rtl/Graphics/Draw_modules/draw_buttons.sv \
     rtl/Graphics/Draw_modules/draw_mouse_cursor.sv \
     rtl/Game_logic/game_options.sv \
+    rtl/Game_logic/multiplayer_session_control.sv \
+    rtl/Game_logic/game_ui_control.sv \
     rtl/Game_logic/singleplayer_game_controller.sv \
     rtl/Game_logic/multiplayer_result.sv \
     rtl/Game_logic/Sprite_control/bolid_anim_ctl.sv \
@@ -56,12 +60,13 @@ verilator -Wno-fatal --cc --exe --build -j 0 -O3 \
     rtl/Game_logic/Sprite_control/mouse_hover.sv \
     rtl/Game_logic/Sprite_control/wheel_physics.sv \
     rtl/Game_logic/Sprite_control/wheel_service_fsm.sv \
+    rtl/Game_logic/Sprite_control/wheel_service_coordinator.sv \
     rtl/Game_logic/system_fsm.sv \
     rtl/Uart/uart_tx.sv \
     rtl/Uart/uart_rx.sv \
     rtl/Uart/uart_game_link.sv \
     rtl/pit_stop_core.sv \
-    rtl/top_interactive.sv \
+    rtl/Test_tops/top_interactive.sv \
     main.cpp
 
 echo "Gotowe: ${BUILD_DIR}/Vtop_interactive.exe (Windows/MSYS) lub ${BUILD_DIR}/Vtop_interactive (Linux)."

@@ -35,6 +35,7 @@ set sv_files {
     ../rtl/Graphics/VGA/vga_pkg.sv
     ../rtl/Graphics/VGA/vga_if.sv
     ../rtl/Graphics/VGA/vga_timing.sv
+    ../rtl/Graphics/VGA/frame_tick_generator.sv
     ../rtl/Graphics/VGA/LUT2RGB_converter.sv
     ../rtl/Graphics/Rom_modules/Cloud_Rom.sv
     ../rtl/Graphics/Rom_modules/Grandstand_Rom.sv
@@ -46,6 +47,8 @@ set sv_files {
     ../rtl/Graphics/Rom_modules/Wheel_Rom.sv
     ../rtl/Graphics/Rom_modules/WheelRack_Rom.sv
     ../rtl/Hardware/bin_to_bcd3.sv
+    ../rtl/Hardware/vector_synchronizer.sv
+    ../rtl/Hardware/mouse_coordinate_scaler.sv
     ../rtl/Graphics/Draw_modules/draw_buttons.sv
     ../rtl/Graphics/Draw_modules/draw_bg.sv
     ../rtl/Graphics/Draw_modules/draw_PitstopLogo.sv
@@ -55,6 +58,8 @@ set sv_files {
     ../rtl/Graphics/Draw_modules/draw_WheelRack.sv
     ../rtl/Graphics/Draw_modules/draw_game_panel.sv
     ../rtl/Game_logic/game_options.sv
+    ../rtl/Game_logic/multiplayer_session_control.sv
+    ../rtl/Game_logic/game_ui_control.sv
     ../rtl/Game_logic/singleplayer_game_controller.sv
     ../rtl/Game_logic/multiplayer_result.sv
     ../rtl/Game_logic/Sprite_control/bolid_anim_ctl.sv
@@ -62,6 +67,7 @@ set sv_files {
     ../rtl/Game_logic/Sprite_control/mouse_hover.sv
     ../rtl/Game_logic/Sprite_control/wheel_physics.sv
     ../rtl/Game_logic/Sprite_control/wheel_service_fsm.sv
+    ../rtl/Game_logic/Sprite_control/wheel_service_coordinator.sv
     ../rtl/Game_logic/system_fsm.sv
     ../rtl/Uart/uart_tx.sv
     ../rtl/Uart/uart_rx.sv

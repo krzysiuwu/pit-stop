@@ -76,3 +76,13 @@ HDL documentation refactor:
 - Added focused explanations for UART framing, CDC, rendering pipelines,
   state machines, wheel physics, and timing-critical register boundaries.
 - Preserved the origin of generated or course-provided source material.
+Structural architecture refactor
+--------------------------------
+- Converted top_vga_basys3, top_fsm, pit_stop_core, and top_interactive into
+  purely structural integration modules without procedural blocks.
+- Extracted switch synchronization and mouse coordinate scaling into reusable
+  functional hardware modules.
+- Extracted frame-tick generation, multiplayer session state, UI selection,
+  and two-wheel coordination into functional leaf modules.
+- Updated Vivado, Verilator, and top-level simulation source lists after the
+  RTL directory cleanup.

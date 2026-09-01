@@ -102,6 +102,20 @@ podnosić. Nowe koła sa wymienne i nie sa przypisane do konkretnej piasty.
 
 ## Architektura
 
+- `fpga/rtl/top_vga_basys3.sv` jest czysto strukturalnym modułem głównym.
+  Łączy generator 65 MHz, kontroler resetu, wyjście zegara pikselowego, adapter
+  wejść `top_fsm` oraz sterownik wyświetlacza 7-segmentowego.
+- `rtl/top_fsm.sv` jest strukturalnym adapterem sprzętowym. Instancjonuje
+  kontroler PS/2, ograniczenia myszy, skalowanie współrzędnych, synchronizator
+  switchy i wspólny rdzeń gry.
+- `rtl/pit_stop_core.sv` jest czysto strukturalnym integratorem logiki gry,
+  obsługi dwóch kół, multiplayera i potoku renderowania VGA.
+- `rtl/Hardware/vector_synchronizer.sv`, `mouse_coordinate_scaler.sv` oraz
+  `rtl/Graphics/VGA/frame_tick_generator.sv` są małymi modułami funkcjonalnymi
+  wydzielonymi z modułów integracyjnych.
+- `multiplayer_session_control.sv`, `game_ui_control.sv` oraz
+  `wheel_service_coordinator.sv` zawierają wydzieloną logikę proceduralną i nie
+  instancjonują innych modułów.
 - `rtl/Game_logic/system_fsm.sv` steruje ekranami i sekwencją rundy.
 - `rtl/Game_logic/singleplayer_game_controller.sv` przechowuje ustawienia
   aktywnej gry, liczy czas, punkty i warunki zwycięstwa.
@@ -112,8 +126,8 @@ podnosić. Nowe koła sa wymienne i nie sa przypisane do konkretnej piasty.
 - `rtl/Game_logic/Sprite_control/bolid_anim_ctl.sv` odpowiada za ruch bolidu.
 - `wheel_service_fsm.sv` realizuje cykl stare/nowe koło, a
   `wheel_physics.sv` odpowiada tylko za przeciaganie i rzut.
-- `rtl/pit_stop_core.sv` łączy logike z potokiem renderowania.
-- `top_fsm.sv` łączy logikę gry z myszką PS/2.
+- `wheel_service_coordinator.sv` rozstrzyga dostępność piast, priorytet racka
+  i nakładające się hitboxy obu kół.
 
 Renderer przyciskow współdzieli jedną pamięć sprite'u i jedną pamięć fontu
 dla `PLAY`, `OPTS` oraz `BACK`. Ekrany opcji i podsumowania korzystaja z
@@ -175,5 +189,4 @@ Skrypty automatycznie wykrywają MSYS2 UCRT64/MINGW z GCC 16 i włączają zgodn
 ABI `libstdc++`. Zapobiega to błędom linkera z symbolami
 `std::__cxx11::basic_string`; katalog kompilacji dla tego wariantu jest osobny,
 wiec nie trzeba ręcznie usuwać poprzedniego `obj_dir/game_controller`.
-
 

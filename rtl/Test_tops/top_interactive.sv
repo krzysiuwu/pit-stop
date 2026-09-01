@@ -31,18 +31,15 @@ module top_interactive (
     timeunit 1ns;
     timeprecision 1ps;
 
-    logic [11:0] mouse_x_div4;
-    logic [11:0] mouse_y_div4;
     logic [11:0] low_res_mouse_x;
     logic [11:0] low_res_mouse_y;
 
-    assign mouse_x_div4 = mouse_x >> 2;
-    assign mouse_y_div4 = mouse_y >> 2;
-
-    assign low_res_mouse_x =
-        (mouse_x_div4 > 12'd255) ? 12'd255 : mouse_x_div4;
-    assign low_res_mouse_y =
-        (mouse_y_div4 > 12'd191) ? 12'd191 : mouse_y_div4;
+    mouse_coordinate_scaler u_mouse_coordinate_scaler (
+        .full_res_x(mouse_x),
+        .full_res_y(mouse_y),
+        .game_x(low_res_mouse_x),
+        .game_y(low_res_mouse_y)
+    );
 
     // The simulator and FPGA use exactly the same game core.
     pit_stop_core u_pit_stop_core (

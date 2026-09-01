@@ -108,20 +108,14 @@ module pit_stop_core (
         .vga_out(vga_timing_if)
     );
 
-    // Derive one frame tick from vertical synchronization so moving objects
-    // remain stationary while the current frame is being rendered.
-    logic vsync_prev;
     logic frame_tick;
 
-    always_ff @(posedge clk) begin
-        if (!rst) begin
-            vsync_prev <= 1'b0;
-            frame_tick <= 1'b0;
-        end else begin
-            vsync_prev <= vga_upscale.vsync;
-            frame_tick <= !vga_upscale.vsync && vsync_prev;
-        end
-    end
+    frame_tick_generator u_frame_tick_generator (
+        .clk,
+        .rst,
+        .vsync(vga_upscale.vsync),
+        .frame_tick
+    );
 
     // -------------------------------------------------------------------------
     // System state machine and car animation
@@ -136,6 +130,12 @@ module pit_stop_core (
     logic enable_wheel_service;
     logic signed [11:0] bolid_x;
     logic [1:0] bolid_wheel_anim_step;
+    logic trigger_bolid_arrive;
+    logic trigger_bolid_depart;
+    logic trigger_bolid_drive_through;
+    logic bolid_arrive_done;
+    logic bolid_depart_done;
+    logic bolid_visible;
     logic option_multiplayer;
     logic [1:0] option_game_mode;
     logic [7:0] option_target_value;
@@ -191,8 +191,6 @@ module pit_stop_core (
     logic       controller_frame_tick;
     logic       controller_service_active;
     logic       controller_round_complete;
-    (* ASYNC_REG = "TRUE" *) logic debug_finish_meta;
-    (* ASYNC_REG = "TRUE" *) logic debug_finish_sync;
     logic       debug_finish_latched;
     logic       multiplayer_local_game_finished;
     logic [7:0] multiplayer_local_score;
@@ -215,58 +213,27 @@ module pit_stop_core (
                                ? multiplayer_local_score
                                : game_score;
 
-    // BTNU is used only by the hardware UART test. It is synchronized and
-    // latched so the finish flag remains present in periodic packets.
-    always_ff @(posedge clk) begin
-        if (!rst) begin
-            debug_finish_meta <= 1'b0;
-            debug_finish_sync <= 1'b0;
-        end else begin
-            debug_finish_meta <= uart_debug_finish;
-            debug_finish_sync <= debug_finish_meta;
-        end
-    end
-
-    always_ff @(posedge clk) begin
-        if (!rst)
-            debug_finish_latched <= 1'b0;
-        else if (game_start_pulse || local_session_reset)
-            debug_finish_latched <= 1'b0;
-        else if (option_uart_test_mode && debug_finish_sync)
-            debug_finish_latched <= 1'b1;
-    end
-
-    always_ff @(posedge clk) begin
-        if (!rst) begin
-            active_multiplayer  <= 1'b0;
-            pending_multiplayer <= 1'b0;
-            pending_start_remote <= 1'b0;
-            pending_game_mode   <= MODE_TIME_ATTACK;
-            pending_target_value <= 8'd1;
-        end else begin
-            if (play_clicked) begin
-                pending_multiplayer  <= option_multiplayer;
-                pending_start_remote <= 1'b0;
-                pending_game_mode    <= option_game_mode;
-                pending_target_value <= option_target_value;
-            end
-
-            // A remote request has priority if both players press PLAY in the
-            // same clock window. Both boards still run the same bitstream.
-            if (remote_start_pulse) begin
-                pending_multiplayer  <= 1'b1;
-                pending_start_remote <= 1'b1;
-                pending_game_mode    <= remote_game_mode;
-                pending_target_value <= remote_target_value;
-            end
-
-            if (game_start_pulse)
-                active_multiplayer <= pending_multiplayer;
-
-            if (local_session_reset)
-                active_multiplayer <= 1'b0;
-        end
-    end
+    multiplayer_session_control u_multiplayer_session_control (
+        .clk,
+        .rst,
+        .play_clicked,
+        .local_multiplayer(option_multiplayer),
+        .local_game_mode(option_game_mode),
+        .local_target_value(option_target_value),
+        .remote_start_pulse,
+        .remote_game_mode,
+        .remote_target_value,
+        .game_start_pulse,
+        .session_reset(local_session_reset),
+        .uart_test_mode(option_uart_test_mode),
+        .uart_debug_finish,
+        .active_multiplayer,
+        .pending_multiplayer,
+        .pending_start_remote,
+        .pending_game_mode,
+        .pending_target_value,
+        .debug_finish_latched
+    );
 
     uart_game_link u_uart_game_link (
         .clk(clk),
@@ -343,6 +310,20 @@ module pit_stop_core (
         .best_stop_seconds(best_stop_seconds)
     );
 
+    bolid_anim_ctrl u_bolid_anim_ctrl (
+        .clk,
+        .rst,
+        .frame_tick,
+        .trigger_arrive(trigger_bolid_arrive),
+        .trigger_depart(trigger_bolid_depart),
+        .trigger_drive_through(trigger_bolid_drive_through),
+        .arrive_done(bolid_arrive_done),
+        .depart_done(bolid_depart_done),
+        .car_enable(bolid_visible),
+        .car_x_pos(bolid_x),
+        .wheel_anim_step(bolid_wheel_anim_step)
+    );
+
     system_fsm u_system_fsm (
         .clk(clk),
         .rst(rst),
@@ -357,6 +338,9 @@ module pit_stop_core (
         .rear_wheel_done(rear_service_done),
         .game_finishing(active_multiplayer && local_publish_finished),
         .game_finished(game_finished_for_fsm),
+        .bolid_arrive_done,
+        .bolid_depart_done,
+        .bolid_visible,
         .state_out(system_screen),
         .enable_bolid_default(enable_bolid_default),
         .enable_bolid_no_wheels(enable_bolid_no_wheels),
@@ -366,22 +350,10 @@ module pit_stop_core (
         .enable_wheel_rack(enable_wheel_rack),
         .enable_wheel_service(enable_wheel_service),
         .game_start_pulse(game_start_pulse),
-        .bolid_x(bolid_x),
-        .bolid_wheel_anim_step(bolid_wheel_anim_step)
+        .trigger_bolid_arrive,
+        .trigger_bolid_depart,
+        .trigger_bolid_drive_through
     );
-
-    always_comb begin
-        if (option_uart_test_mode &&
-            (system_screen != SCREEN_GAMEPLAY) &&
-            (system_screen != SCREEN_SUMMARY))
-            seven_segment_value = uart_remote_score;
-        else if (system_screen == SCREEN_SUMMARY)
-            seven_segment_value = summary_local_score;
-        else if (system_screen == SCREEN_GAMEPLAY)
-            seven_segment_value = game_display_value;
-        else
-            seven_segment_value = option_target_value;
-    end
 
     // -------------------------------------------------------------------------
     // Buttons and wheel rack
@@ -393,16 +365,6 @@ module pit_stop_core (
     logic rack_clicked;
     logic [11:0] back_button_x;
     logic [11:0] back_button_y;
-
-    always_comb begin
-        if (system_screen == SCREEN_SUMMARY) begin
-            back_button_x = BTN_BACK_SUMMARY_X;
-            back_button_y = BTN_BACK_SUMMARY_Y;
-        end else begin
-            back_button_x = BTN_BACK_OPTIONS_X;
-            back_button_y = BTN_BACK_OPTIONS_Y;
-        end
-    end
 
     mouse_hitbox #(
         .CLICK_ON_RELEASE(1'b1)
@@ -482,17 +444,12 @@ module pit_stop_core (
     logic front_wheel_near_rear_mount;
     logic rear_wheel_near_front_mount;
     logic rear_wheel_near_rear_mount;
-    logic front_mount_occupied;
-    logic rear_mount_occupied;
     logic front_mount_available;
     logic rear_mount_available;
-    logic front_new_mounted;
-    logic rear_new_mounted;
     logic front_grab_to_physics;
     logic rear_grab_to_physics;
     logic front_rack_take;
     logic rear_rack_take;
-    logic rack_select_rear;
     logic [1:0] front_wheel_anim_step;
     logic [1:0] rear_wheel_anim_step;
     logic wheel_rst;
@@ -511,93 +468,49 @@ module pit_stop_core (
                             rear_anchor_at_rear ? REAR_MOUNT_X : FRONT_MOUNT_X;
     assign rear_anchor_y  = rear_anchor_at_rack ? RACK_PICK_Y : MOUNT_Y;
 
-    // Register proximity results to break the combinational loop:
-    // wheel position -> mount hitbox -> FSM decision -> anchor -> wheel position.
-    // One clock of latency is negligible compared with the PS/2 event interval.
-    always_ff @(posedge clk) begin
-        if (!rst) begin
-            front_wheel_near_front_mount <= 1'b0;
-            front_wheel_near_rear_mount  <= 1'b0;
-            rear_wheel_near_front_mount  <= 1'b0;
-            rear_wheel_near_rear_mount   <= 1'b0;
-        end else if (!enable_wheel_service) begin
-            front_wheel_near_front_mount <= 1'b0;
-            front_wheel_near_rear_mount  <= 1'b0;
-            rear_wheel_near_front_mount  <= 1'b0;
-            rear_wheel_near_rear_mount   <= 1'b0;
-        end else begin
-            front_wheel_near_front_mount <=
-                (front_wheel_x >= FRONT_MOUNT_X - MOUNT_MARGIN) &&
-                (front_wheel_x <= FRONT_MOUNT_X + MOUNT_MARGIN) &&
-                (front_wheel_y >= MOUNT_Y - MOUNT_MARGIN) &&
-                (front_wheel_y <= MOUNT_Y + MOUNT_MARGIN);
-
-            front_wheel_near_rear_mount <=
-                (front_wheel_x >= REAR_MOUNT_X - MOUNT_MARGIN) &&
-                (front_wheel_x <= REAR_MOUNT_X + MOUNT_MARGIN) &&
-                (front_wheel_y >= MOUNT_Y - MOUNT_MARGIN) &&
-                (front_wheel_y <= MOUNT_Y + MOUNT_MARGIN);
-
-            rear_wheel_near_front_mount <=
-                (rear_wheel_x >= FRONT_MOUNT_X - MOUNT_MARGIN) &&
-                (rear_wheel_x <= FRONT_MOUNT_X + MOUNT_MARGIN) &&
-                (rear_wheel_y >= MOUNT_Y - MOUNT_MARGIN) &&
-                (rear_wheel_y <= MOUNT_Y + MOUNT_MARGIN);
-
-            rear_wheel_near_rear_mount <=
-                (rear_wheel_x >= REAR_MOUNT_X - MOUNT_MARGIN) &&
-                (rear_wheel_x <= REAR_MOUNT_X + MOUNT_MARGIN) &&
-                (rear_wheel_y >= MOUNT_Y - MOUNT_MARGIN) &&
-                (rear_wheel_y <= MOUNT_Y + MOUNT_MARGIN);
-        end
-    end
-
-    // Hubs belong to the car, not to a specific wheel instance. After
-    // removal, either replacement wheel may occupy either available hub.
-    assign front_new_mounted = front_new_active && front_locked;
-    assign rear_new_mounted  = rear_new_active && rear_locked;
-
-    assign front_mount_occupied =
-        (!front_old_removed && !front_detached) ||
-        (front_new_mounted && !front_mounted_at_rear) ||
-        (rear_new_mounted  && !rear_mounted_at_rear);
-
-    assign rear_mount_occupied =
-        (!rear_old_removed && !rear_detached) ||
-        (front_new_mounted && front_mounted_at_rear) ||
-        (rear_new_mounted  && rear_mounted_at_rear);
-
-    assign front_mount_available = !front_mount_occupied;
-    assign rear_mount_available  = !rear_mount_occupied;
-
-    // When wheel hitboxes overlap, only the upper, later-rendered wheel
-    // may capture the mouse, preventing both wheels from being dragged.
-    assign front_grab_to_physics = front_grab_enable && !rear_dragging &&
-                                   !(rear_grab_enable && rear_hover);
-    assign rear_grab_to_physics  = rear_grab_enable && !front_dragging;
-
-    // The rack remembers which station started waiting first, allowing
-    // the original wheels to be removed in either order.
-    always_ff @(posedge clk) begin
-        if (!rst) begin
-            rack_select_rear <= 1'b0;
-        end else if (!enable_wheel_service) begin
-            rack_select_rear <= 1'b0;
-        end else if (front_needs_new && !rear_needs_new) begin
-            rack_select_rear <= 1'b0;
-        end else if (rear_needs_new && !front_needs_new) begin
-            rack_select_rear <= 1'b1;
-        end else if (front_rack_take) begin
-            rack_select_rear <= 1'b1;
-        end else if (rear_rack_take) begin
-            rack_select_rear <= 1'b0;
-        end
-    end
-
-    assign front_rack_take = rack_clicked && front_needs_new &&
-                             (!rear_needs_new || !rack_select_rear);
-    assign rear_rack_take  = rack_clicked && rear_needs_new &&
-                             (!front_needs_new || rack_select_rear);
+    wheel_service_coordinator #(
+        .FRONT_MOUNT_X(FRONT_MOUNT_X),
+        .REAR_MOUNT_X(REAR_MOUNT_X),
+        .MOUNT_Y(MOUNT_Y),
+        .MOUNT_MARGIN(MOUNT_MARGIN)
+    ) u_wheel_service_coordinator (
+        .clk,
+        .rst,
+        .enable(enable_wheel_service),
+        .front_wheel_x,
+        .front_wheel_y,
+        .rear_wheel_x,
+        .rear_wheel_y,
+        .front_old_removed,
+        .rear_old_removed,
+        .front_detached,
+        .rear_detached,
+        .front_new_active,
+        .rear_new_active,
+        .front_locked,
+        .rear_locked,
+        .front_mounted_at_rear,
+        .rear_mounted_at_rear,
+        .front_grab_enable,
+        .rear_grab_enable,
+        .front_hover,
+        .rear_hover,
+        .front_dragging,
+        .rear_dragging,
+        .rack_clicked,
+        .front_needs_new,
+        .rear_needs_new,
+        .front_wheel_near_front_mount,
+        .front_wheel_near_rear_mount,
+        .rear_wheel_near_front_mount,
+        .rear_wheel_near_rear_mount,
+        .front_mount_available,
+        .rear_mount_available,
+        .front_grab_allowed(front_grab_to_physics),
+        .rear_grab_allowed(rear_grab_to_physics),
+        .front_rack_take,
+        .rear_rack_take
+    );
 
     mouse_hover u_hover_front_wheel (
         .enable(front_visible),
@@ -794,18 +707,37 @@ module pit_stop_core (
 
     logic [1:0] current_cursor;
 
-    always_comb begin
-        if ((front_hover && front_locked && !front_service_done) ||
-            (rear_hover && rear_locked && !rear_service_done))
-            current_cursor = 2'b10;
-        else if ((front_hover && front_grab_enable) ||
-                 (rear_hover && rear_grab_enable) ||
-                 (rack_hover && (front_needs_new || rear_needs_new)) ||
-                 play_hover || options_hover || back_hover)
-            current_cursor = 2'b01;
-        else
-            current_cursor = 2'b00;
-    end
+    game_ui_control #(
+        .BACK_OPTIONS_X(BTN_BACK_OPTIONS_X),
+        .BACK_OPTIONS_Y(BTN_BACK_OPTIONS_Y),
+        .BACK_SUMMARY_X(BTN_BACK_SUMMARY_X),
+        .BACK_SUMMARY_Y(BTN_BACK_SUMMARY_Y)
+    ) u_game_ui_control (
+        .system_screen,
+        .uart_test_mode(option_uart_test_mode),
+        .uart_remote_score,
+        .summary_local_score,
+        .game_display_value,
+        .option_target_value,
+        .front_hover,
+        .rear_hover,
+        .front_locked,
+        .rear_locked,
+        .front_service_done,
+        .rear_service_done,
+        .front_grab_enable,
+        .rear_grab_enable,
+        .rack_hover,
+        .front_needs_new,
+        .rear_needs_new,
+        .play_hover,
+        .options_hover,
+        .back_hover,
+        .back_button_x,
+        .back_button_y,
+        .cursor_type(current_cursor),
+        .seven_segment_value
+    );
 
     draw_mouse_cursor u_draw_cursor (
         .clk(clk), .rst(rst), .enable(1'b1),

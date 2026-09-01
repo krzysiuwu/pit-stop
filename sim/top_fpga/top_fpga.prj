@@ -2,11 +2,10 @@
 # Complete source list for the synthesizable pit-stop top.
 
 sv work ../../rtl/Game_logic/game_pkg.sv
-sv work ../../rtl/Graphics/VGA/Target_res/vga_pkg.sv
-sv work ../../rtl/Graphics/VGA/Low_res/low_res_pkg.sv
-sv work ../../rtl/Graphics/VGA/Target_res/vga_if.sv
-sv work ../../rtl/Graphics/VGA/Low_res/low_res_if.sv
-sv work ../../rtl/Graphics/VGA/Target_res/vga_timing.sv
+sv work ../../rtl/Graphics/VGA/vga_pkg.sv
+sv work ../../rtl/Graphics/VGA/vga_if.sv
+sv work ../../rtl/Graphics/VGA/vga_timing.sv
+sv work ../../rtl/Graphics/VGA/frame_tick_generator.sv
 sv work ../../rtl/Graphics/VGA/LUT2RGB_converter.sv
 
 sv work ../../rtl/Graphics/Rom_modules/Cloud_Rom.sv
@@ -25,24 +24,31 @@ sv work ../../rtl/Graphics/Draw_modules/draw_BolidF1Default.sv
 sv work ../../rtl/Graphics/Draw_modules/draw_BolidF1NoWheels.sv
 sv work ../../rtl/Graphics/Draw_modules/draw_Wheel.sv
 sv work ../../rtl/Graphics/Draw_modules/draw_WheelRack.sv
-sv work ../../rtl/Graphics/Draw_modules/draw_options_panel.sv
-sv work ../../rtl/Graphics/Draw_modules/draw_summary_panel.sv
-sv work ../../rtl/Graphics/Draw_modules/draw_button_with_text.sv
+sv work ../../rtl/Hardware/bin_to_bcd3.sv
+sv work ../../rtl/Graphics/Draw_modules/draw_game_panel.sv
+sv work ../../rtl/Graphics/Draw_modules/draw_buttons.sv
 sv work ../../rtl/Graphics/Draw_modules/draw_mouse_cursor.sv
 
 sv work ../../rtl/Game_logic/game_options.sv
+sv work ../../rtl/Game_logic/multiplayer_session_control.sv
+sv work ../../rtl/Game_logic/game_ui_control.sv
 sv work ../../rtl/Game_logic/singleplayer_game_controller.sv
 sv work ../../rtl/Game_logic/multiplayer_result.sv
 sv work ../../rtl/Game_logic/Sprite_control/bolid_anim_ctl.sv
 sv work ../../rtl/Game_logic/Sprite_control/mouse_hitbox.sv
+sv work ../../rtl/Game_logic/Sprite_control/mouse_hover.sv
 sv work ../../rtl/Game_logic/Sprite_control/wheel_physics.sv
 sv work ../../rtl/Game_logic/Sprite_control/wheel_service_fsm.sv
+sv work ../../rtl/Game_logic/Sprite_control/wheel_service_coordinator.sv
 sv work ../../rtl/Game_logic/system_fsm.sv
 sv work ../../rtl/Uart/uart_tx.sv
 sv work ../../rtl/Uart/uart_rx.sv
 sv work ../../rtl/Uart/uart_game_link.sv
 sv work ../../rtl/Hardware/seven_segment_display.sv
 sv work ../../rtl/Hardware/reset_sync.sv
+sv work ../../rtl/Hardware/vector_synchronizer.sv
+sv work ../../rtl/Hardware/mouse_coordinate_scaler.sv
+sv work ../../rtl/Hardware/mouse_limits.sv
 sv work ../../rtl/pit_stop_core.sv
 sv work ../../rtl/top_fsm.sv
 sv work ../../clock/clk_wiz_0.v

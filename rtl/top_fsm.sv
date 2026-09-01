@@ -41,34 +41,30 @@ module top_fsm (
     logic signed [3:0] mouse_scroll;
     logic mouse_new_event;
 
-    logic [11:0] mouse_x_div4;
-    logic [11:0] mouse_y_div4;
     logic [11:0] low_res_mouse_x;
     logic [11:0] low_res_mouse_y;
     logic [11:0] mouse_limit_value;
     logic        mouse_setmax_x;
     logic        mouse_setmax_y;
-    (* ASYNC_REG = "TRUE" *) logic [15:0] switches_meta;
-    (* ASYNC_REG = "TRUE" *) logic [15:0] switches_sync;
+    logic [15:0] switches_sync;
 
     assign mouse_scroll = $signed(mouse_z_raw);
-    assign mouse_x_div4 = mouse_x >> 2;
-    assign mouse_y_div4 = mouse_y >> 2;
 
-    assign low_res_mouse_x =
-        (mouse_x_div4 > 12'd255) ? 12'd255 : mouse_x_div4;
-    assign low_res_mouse_y =
-        (mouse_y_div4 > 12'd191) ? 12'd191 : mouse_y_div4;
+    vector_synchronizer #(
+        .WIDTH(16)
+    ) u_switch_synchronizer (
+        .clk,
+        .rst,
+        .async_in(switches),
+        .sync_out(switches_sync)
+    );
 
-    always_ff @(posedge clk) begin
-        if (!rst) begin
-            switches_meta <= 16'd0;
-            switches_sync <= 16'd0;
-        end else begin
-            switches_meta <= switches;
-            switches_sync <= switches_meta;
-        end
-    end
+    mouse_coordinate_scaler u_mouse_coordinate_scaler (
+        .full_res_x(mouse_x),
+        .full_res_y(mouse_y),
+        .game_x(low_res_mouse_x),
+        .game_y(low_res_mouse_y)
+    );
 
     mouse_limits u_mouse_limits (
         .clk,
