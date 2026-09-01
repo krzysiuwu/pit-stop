@@ -1,7 +1,7 @@
 /**
  * Module: mouse_limits
  * Summary: Programs the maximum X and Y coordinates accepted by the PS/2 mouse controller.
- * Author: Adam Krupa
+ * Author: Krzysztof Jędrzejek
  */
 module mouse_limits (
     input  logic clk,

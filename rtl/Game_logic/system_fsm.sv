@@ -6,36 +6,36 @@
 import game_pkg::*;
 
 module system_fsm (
-    input  logic clk,
-    input  logic rst,
+        input  logic clk,
+        input  logic rst,
 
-    input  logic click_play,
-    input  logic click_setup,
-    input  logic click_back,
-    input  logic frame_tick,
-    input  logic multiplayer_selected,
-    input  logic multiplayer_ready,
-    input  logic remote_start,
+        input  logic click_play,
+        input  logic click_setup,
+        input  logic click_back,
+        input  logic frame_tick,
+        input  logic multiplayer_selected,
+        input  logic multiplayer_ready,
+        input  logic remote_start,
 
-    input  logic front_wheel_done,
-    input  logic rear_wheel_done,
-    input  logic game_finishing,
-    input  logic game_finished,
+        input  logic front_wheel_done,
+        input  logic rear_wheel_done,
+        input  logic game_finishing,
+        input  logic game_finished,
 
-    output logic [2:0] state_out,
+        output logic [2:0] state_out,
 
-    output logic enable_bolid_default,
-    output logic enable_bolid_no_wheels,
-    output logic enable_button_play,
-    output logic enable_button_options,
-    output logic enable_button_back,
-    output logic enable_wheel_rack,
-    output logic enable_wheel_service,
-    output logic game_start_pulse,
+        output logic enable_bolid_default,
+        output logic enable_bolid_no_wheels,
+        output logic enable_button_play,
+        output logic enable_button_options,
+        output logic enable_button_back,
+        output logic enable_wheel_rack,
+        output logic enable_wheel_service,
+        output logic game_start_pulse,
 
-    output logic signed [11:0] bolid_x,
-    output logic [1:0]         bolid_wheel_anim_step
-);
+        output logic signed [11:0] bolid_x,
+        output logic [1:0]         bolid_wheel_anim_step
+    );
 
     timeunit 1ns;
     timeprecision 1ps;

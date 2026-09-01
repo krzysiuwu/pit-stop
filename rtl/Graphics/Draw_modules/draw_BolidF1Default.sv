@@ -6,26 +6,26 @@
 import vga_pkg::*;
 
 module draw_BolidF1Default (
-    input  logic clk,
-    input  logic rst,
-    input  logic enable,
-    
-    // Animation control
-    input  logic [1:0]  wheel_anim_step, // Stan animacji (od 0 do 2)
-    
-    input  logic signed [11:0] x_pos,
-    // The car uses a fixed vertical position; only X is animated.
-    
-    input  logic [3:0] lut_in,
-    vga_if.in          vga_in,
-    
-    output logic [3:0] lut_out,
-    vga_if.out         vga_out
-);
-     
+        input  logic clk,
+        input  logic rst,
+        input  logic enable,
+
+        // Animation control
+        input  logic [1:0]  wheel_anim_step, // Stan animacji (od 0 do 2)
+
+        input  logic signed [11:0] x_pos,
+        // The car uses a fixed vertical position; only X is animated.
+
+        input  logic [3:0] lut_in,
+        vga_if.in          vga_in,
+
+        output logic [3:0] lut_out,
+        vga_if.out         vga_out
+    );
+
     localparam int SPRITE_WIDTH  = 165;
     localparam int SPRITE_HEIGHT = 44;
-    
+
     // Fixed vertical screen position
     localparam logic [11:0] Y_POS = 12'd120;
 
@@ -47,7 +47,7 @@ module draw_BolidF1Default (
 
     // Signed extension is required while the car moves beyond the left edge.
     assign cur_x_signed = $signed({1'b0, cur_x});
-    assign sprite_left  = x_pos;
+    assign sprite_left  = $signed({1'b0, x_pos});
     assign sprite_right = sprite_left + 13'sd165;
 
     assign in_hitbox =
@@ -84,7 +84,7 @@ module draw_BolidF1Default (
             vga_out.hsync  <= '0;
             vga_out.vblnk  <= '0;
             vga_out.hblnk  <= '0;
-            
+
             in_hitbox_d    <= 1'b0;
             lut_in_d       <= '0;
             anim_step_d    <= '0;
@@ -95,7 +95,7 @@ module draw_BolidF1Default (
             vga_out.hsync  <= vga_in.hsync;
             vga_out.vblnk  <= vga_in.vblnk;
             vga_out.hblnk  <= vga_in.hblnk;
-            
+
             in_hitbox_d    <= in_hitbox;
             lut_in_d       <= lut_in;
             anim_step_d    <= wheel_anim_step;
@@ -104,10 +104,10 @@ module draw_BolidF1Default (
 
     // Wheel color rotation
     logic [3:0] mapped_color;
-    
+
     always_comb begin
         mapped_color = rom_data;
-        
+
         case (rom_data)
             4'hA: begin
                 if      (anim_step_d == 2'd1) mapped_color = 4'h9;

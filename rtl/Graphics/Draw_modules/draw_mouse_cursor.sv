@@ -6,20 +6,20 @@
 import vga_pkg::*;
 
 module draw_mouse_cursor (
-    input  logic clk,
-    input  logic rst,
-    input  logic enable,
-    input  logic [1:0] cursor_type, // 00=arrow, 01=hand, 10=power tool
-    
-    input  logic [11:0] mouse_x,
-    input  logic [11:0] mouse_y,
-    
-    input  logic [3:0] lut_in,
-    vga_if.in          vga_in,
-    
-    output logic [3:0] lut_out,
-    vga_if.out         vga_out
-);
+        input  logic clk,
+        input  logic rst,
+        input  logic enable,
+        input  logic [1:0] cursor_type, // 00=arrow, 01=hand, 10=power tool
+
+        input  logic [11:0] mouse_x,
+        input  logic [11:0] mouse_y,
+
+        input  logic [3:0] lut_in,
+        vga_if.in          vga_in,
+
+        output logic [3:0] lut_out,
+        vga_if.out         vga_out
+    );
 
     localparam int CURSOR_SIZE = 16;
 
@@ -71,7 +71,7 @@ module draw_mouse_cursor (
         64'h0000555000000000, // Spust
         64'h0003333300000000, // Bateria na dole
         64'h0003333300000000, // Bateria na dole
-        64'h0000000000000000, 
+        64'h0000000000000000,
         64'h0000000000000000,
         64'h0000000000000000,
         64'h0000000000000000
@@ -94,7 +94,7 @@ module draw_mouse_cursor (
 
     assign local_x = cur_x[3:0] - mouse_x[3:0];
     assign local_y = cur_y[3:0] - mouse_y[3:0];
-    
+
     int color_shift;
     assign color_shift = 63 - (int'(local_x) * 4);
 
@@ -104,7 +104,7 @@ module draw_mouse_cursor (
     always_comb begin
         pixel_active = 1'b0;
         pixel_color  = 4'h0;
-        
+
         if (in_hitbox) begin
             case (cursor_type)
                 2'b00: begin
@@ -139,8 +139,8 @@ module draw_mouse_cursor (
         end else begin
             vga_out.vcount <= vga_in.vcount; vga_out.vsync  <= vga_in.vsync; vga_out.hcount <= vga_in.hcount;
             vga_out.hsync  <= vga_in.hsync;  vga_out.vblnk  <= vga_in.vblnk; vga_out.hblnk  <= vga_in.hblnk;
-            
-            pixel_active_d <= pixel_active;  
+
+            pixel_active_d <= pixel_active;
             pixel_color_d  <= pixel_color;
             lut_in_d       <= lut_in;
         end

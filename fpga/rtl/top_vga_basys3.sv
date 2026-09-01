@@ -1,7 +1,7 @@
 /**
  * Module: top_vga_basys3
  * Summary: Connects the game core, clocking, PS/2 mouse, UART, VGA, LEDs, and seven-segment display to the Basys 3 pins.
- * Author: Adam Krupa
+ * Author: Adam Krupa, Krzysztof Jędrzejek
  * Based on: SJSU EE178 Lab #4 by Prof. Eric Crabilla, adapted for AGH UEC2 by Piotr Kaczmarczyk.
  */
 module top_vga_basys3 (
@@ -47,7 +47,6 @@ module top_vga_basys3 (
     wire uart_error;
     wire uart_remote_debug;
     wire [7:0] uart_remote_score;
-
 
     /**
      * Signals assignments
@@ -112,7 +111,7 @@ module top_vga_basys3 (
         .hs(Hsync),
         .vs(Vsync),
         .seven_segment_value(seven_segment_value),
-        .ps2_data(PS2Data),             
+        .ps2_data(PS2Data),
         .ps2_clk(PS2Clk)
     );
 
@@ -120,9 +119,9 @@ module top_vga_basys3 (
         .clk(clk_65M),
         .rst(core_rst),
         .value(seven_segment_value),
-        .seg(seg),
-        .an(an),
-        .dp(dp)
+        .seg,
+        .an,
+        .dp
     );
 
 endmodule

@@ -4,17 +4,17 @@
  * Author: Adam Krupa
  */
 module uart_tx #(
-    parameter int CLOCK_HZ = 65_000_000,
-    parameter int BAUD     = 115_200
-)(
-    input  logic       clk,
-    input  logic       rst,
-    input  logic       data_valid,
-    input  logic [7:0] data,
+        parameter int CLOCK_HZ = 65_000_000,
+        parameter int BAUD     = 115_200
+    )(
+        input  logic       clk,
+        input  logic       rst,
+        input  logic       data_valid,
+        input  logic [7:0] data,
 
-    output logic       data_ready,
-    output logic       tx
-);
+        output logic       data_ready,
+        output logic       tx
+    );
 
     timeunit 1ns;
     timeprecision 1ps;

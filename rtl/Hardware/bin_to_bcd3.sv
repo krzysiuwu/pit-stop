@@ -4,11 +4,11 @@
  * Author: Adam Krupa
  */
 module bin_to_bcd3 (
-    input  logic [9:0] binary,
-    output logic [3:0] hundreds,
-    output logic [3:0] tens,
-    output logic [3:0] ones
-);
+        input  logic [9:0] binary,
+        output logic [3:0] hundreds,
+        output logic [3:0] tens,
+        output logic [3:0] ones
+    );
 
     logic [9:0]  capped_binary;
     logic [21:0] shift;

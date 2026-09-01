@@ -4,44 +4,44 @@
  * Author: Adam Krupa
  */
 module wheel_service_fsm #(
-    parameter int SCROLL_STEPS_REQUIRED        = 6,
-    parameter bit LOOSEN_WITH_NEGATIVE_SCROLL = 1'b1,
-    parameter bit INITIAL_MOUNT_IS_REAR        = 1'b0
-)(
-    input  logic clk,
-    input  logic rst,
-    input  logic enable,
+        parameter int SCROLL_STEPS_REQUIRED        = 6,
+        parameter bit LOOSEN_WITH_NEGATIVE_SCROLL = 1'b1,
+        parameter bit INITIAL_MOUNT_IS_REAR        = 1'b0
+    )(
+        input  logic clk,
+        input  logic rst,
+        input  logic enable,
 
-    input  logic              wheel_hovered,
-    input  logic              rack_take_pulse,
-    input  logic              mouse_new_event,
-    input  logic signed [3:0] mouse_scroll,
-    input  logic              mouse_btn,
+        input  logic              wheel_hovered,
+        input  logic              rack_take_pulse,
+        input  logic              mouse_new_event,
+        input  logic signed [3:0] mouse_scroll,
+        input  logic              mouse_btn,
 
-    input  logic wheel_detached,
-    input  logic wheel_dragging,
-    input  logic wheel_removed,
-    input  logic wheel_near_front_mount,
-    input  logic wheel_near_rear_mount,
-    input  logic front_mount_available,
-    input  logic rear_mount_available,
+        input  logic wheel_detached,
+        input  logic wheel_dragging,
+        input  logic wheel_removed,
+        input  logic wheel_near_front_mount,
+        input  logic wheel_near_rear_mount,
+        input  logic front_mount_available,
+        input  logic rear_mount_available,
 
-    output logic grab_enable,
-    output logic attach_to_anchor,
-    output logic anchor_at_rack,
-    output logic anchor_at_rear,
-    output logic mounted_at_rear,
-    output logic wheel_visible,
-    output logic wheel_locked,
-    output logic old_wheel_removed,
-    output logic needs_new_wheel,
-    output logic new_wheel_active,
-    output logic service_done,
+        output logic grab_enable,
+        output logic attach_to_anchor,
+        output logic anchor_at_rack,
+        output logic anchor_at_rear,
+        output logic mounted_at_rear,
+        output logic wheel_visible,
+        output logic wheel_locked,
+        output logic old_wheel_removed,
+        output logic needs_new_wheel,
+        output logic new_wheel_active,
+        output logic service_done,
 
-    output logic [1:0] wheel_anim_step,
-    output logic [3:0] service_progress,
-    output logic [3:0] state_debug
-);
+        output logic [1:0] wheel_anim_step,
+        output logic [3:0] service_progress,
+        output logic [3:0] state_debug
+    );
 
     timeunit 1ns;
     timeprecision 1ps;
@@ -73,16 +73,16 @@ module wheel_service_fsm #(
 
     // One parameter reverses the scroll direction after PS/2 mouse testing.
     assign loosen_scroll = LOOSEN_WITH_NEGATIVE_SCROLL ?
-                           scroll_negative : scroll_positive;
+        scroll_negative : scroll_positive;
     assign tighten_scroll = LOOSEN_WITH_NEGATIVE_SCROLL ?
-                            scroll_positive : scroll_negative;
+        scroll_positive : scroll_negative;
 
     // Replacement wheels are interchangeable. Their drop position determines
     // the selected hub, not the FSM instance that obtained them from the rack.
     assign snap_to_front = wheel_dragging && !mouse_btn &&
-                           wheel_near_front_mount && front_mount_available;
+        wheel_near_front_mount && front_mount_available;
     assign snap_to_rear  = wheel_dragging && !mouse_btn &&
-                           wheel_near_rear_mount && rear_mount_available;
+        wheel_near_rear_mount && rear_mount_available;
     assign snap_to_mount = snap_to_front || snap_to_rear;
 
     // The mounted hub must depend only on registered state.

@@ -6,37 +6,37 @@
 import game_pkg::*;
 
 module singleplayer_game_controller #(
-    parameter int FRAMES_PER_SECOND = 60,
-    parameter int SPEED_UP_ROUNDS   = 5
-)(
-    input  logic       clk,
-    input  logic       rst,
-    input  logic       frame_tick,
-    input  logic       start_game,
-    input  logic       service_active,
-    input  logic       round_complete,
-    input  logic [1:0] selected_game_mode,
-    input  logic [7:0] selected_target_value,
+        parameter int FRAMES_PER_SECOND = 60,
+        parameter int SPEED_UP_ROUNDS   = 5
+    )(
+        input  logic       clk,
+        input  logic       rst,
+        input  logic       frame_tick,
+        input  logic       start_game,
+        input  logic       service_active,
+        input  logic       round_complete,
+        input  logic [1:0] selected_game_mode,
+        input  logic [7:0] selected_target_value,
 
-    output logic       game_running,
-    output logic       game_finished,
-    output logic       player_won,
-    output logic [1:0] active_game_mode,
-    output logic [7:0] active_target_value,
-    output logic [7:0] score,
-    output logic [7:0] display_value,
-    output logic [7:0] remaining_seconds,
-    output logic [15:0] elapsed_seconds,
-    output logic [7:0] last_stop_seconds,
-    output logic [7:0] best_stop_seconds
-);
+        output logic       game_running,
+        output logic       game_finished,
+        output logic       player_won,
+        output logic [1:0] active_game_mode,
+        output logic [7:0] active_target_value,
+        output logic [7:0] score,
+        output logic [7:0] display_value,
+        output logic [7:0] remaining_seconds,
+        output logic [15:0] elapsed_seconds,
+        output logic [7:0] last_stop_seconds,
+        output logic [7:0] best_stop_seconds
+    );
 
     timeunit 1ns;
     timeprecision 1ps;
 
     localparam int FRAME_COUNTER_WIDTH =
         (FRAMES_PER_SECOND <= 1) ? 1 : $clog2(FRAMES_PER_SECOND);
-    localparam logic [7:0] SPEED_UP_TARGET = SPEED_UP_ROUNDS;
+    localparam logic [7:0] SPEED_UP_TARGET = 8'(SPEED_UP_ROUNDS);
 
     logic [FRAME_COUNTER_WIDTH-1:0] game_frame_counter;
     logic [FRAME_COUNTER_WIDTH-1:0] service_frame_counter;
@@ -121,7 +121,7 @@ module singleplayer_game_controller #(
                                 game_running      <= 1'b0;
                                 game_finished     <= 1'b1;
                                 player_won        <= (score != 0) ||
-                                                     round_complete_pulse;
+                                    round_complete_pulse;
                             end
                         end
                     end else begin
@@ -144,7 +144,7 @@ module singleplayer_game_controller #(
                         // Completing a round on the final frame takes priority
                         // over losing because the time limit expired.
                         if ((active_game_mode == MODE_SPEED_UP) &&
-                            !round_complete_pulse) begin
+                                !round_complete_pulse) begin
                             if (remaining_seconds > 8'd1) begin
                                 remaining_seconds <= remaining_seconds - 1'b1;
                             end else begin
@@ -165,7 +165,7 @@ module singleplayer_game_controller #(
 
                     last_stop_seconds <= completed_stop_seconds;
                     if ((best_stop_seconds == 0) ||
-                        (completed_stop_seconds < best_stop_seconds)) begin
+                            (completed_stop_seconds < best_stop_seconds)) begin
                         best_stop_seconds <= completed_stop_seconds;
                     end
 

@@ -6,31 +6,31 @@
 import vga_pkg::*;
 
 module draw_buttons (
-    input  logic clk,
-    input  logic rst,
+        input  logic clk,
+        input  logic rst,
 
-    input  logic enable_play,
-    input  logic enable_options,
-    input  logic enable_back,
-    input  logic play_hovered,
-    input  logic options_hovered,
-    input  logic back_hovered,
-    input  logic play_pressed,
-    input  logic options_pressed,
-    input  logic back_pressed,
+        input  logic enable_play,
+        input  logic enable_options,
+        input  logic enable_back,
+        input  logic play_hovered,
+        input  logic options_hovered,
+        input  logic back_hovered,
+        input  logic play_pressed,
+        input  logic options_pressed,
+        input  logic back_pressed,
 
-    input  logic [11:0] play_x,
-    input  logic [11:0] play_y,
-    input  logic [11:0] options_x,
-    input  logic [11:0] options_y,
-    input  logic [11:0] back_x,
-    input  logic [11:0] back_y,
+        input  logic [11:0] play_x,
+        input  logic [11:0] play_y,
+        input  logic [11:0] options_x,
+        input  logic [11:0] options_y,
+        input  logic [11:0] back_x,
+        input  logic [11:0] back_y,
 
-    input  logic [3:0] lut_in,
-    vga_if.in          vga_in,
-    output logic [3:0] lut_out,
-    vga_if.out         vga_out
-);
+        input  logic [3:0] lut_in,
+        vga_if.in          vga_in,
+        output logic [3:0] lut_out,
+        vga_if.out         vga_out
+    );
 
     timeunit 1ns;
     timeprecision 1ps;
@@ -63,18 +63,18 @@ module draw_buttons (
     logic [31:0] selected_text;
 
     assign play_active = enable_play &&
-                         (cur_x >= play_x) && (cur_x < play_x + BTN_WIDTH) &&
-                         (cur_y >= play_y_dynamic) &&
-                         (cur_y < play_y_dynamic + BTN_HEIGHT);
+        (cur_x >= play_x) && (cur_x < play_x + BTN_WIDTH) &&
+        (cur_y >= play_y_dynamic) &&
+        (cur_y < play_y_dynamic + BTN_HEIGHT);
     assign options_active = enable_options &&
-                            (cur_x >= options_x) &&
-                            (cur_x < options_x + BTN_WIDTH) &&
-                            (cur_y >= options_y_dynamic) &&
-                            (cur_y < options_y_dynamic + BTN_HEIGHT);
+        (cur_x >= options_x) &&
+        (cur_x < options_x + BTN_WIDTH) &&
+        (cur_y >= options_y_dynamic) &&
+        (cur_y < options_y_dynamic + BTN_HEIGHT);
     assign back_active = enable_back &&
-                         (cur_x >= back_x) && (cur_x < back_x + BTN_WIDTH) &&
-                         (cur_y >= back_y_dynamic) &&
-                         (cur_y < back_y_dynamic + BTN_HEIGHT);
+        (cur_x >= back_x) && (cur_x < back_x + BTN_WIDTH) &&
+        (cur_y >= back_y_dynamic) &&
+        (cur_y < back_y_dynamic + BTN_HEIGHT);
 
     always_comb begin
         selected_x = 12'd0;
@@ -161,11 +161,11 @@ module draw_buttons (
     // 78*y = 64*y + 16*y - 2*y.  Expressing the constant explicitly keeps
     // this small address calculation in the carry fabric instead of a DSP48.
     assign button_row_offset = (local_button_y_s0 << 6) +
-                               (local_button_y_s0 << 4) -
-                               (local_button_y_s0 << 1);
+        (local_button_y_s0 << 4) -
+        (local_button_y_s0 << 1);
     assign button_address = in_button_s0
-                          ? button_row_offset + local_button_x_s0
-                          : 12'd0;
+        ? button_row_offset + local_button_x_s0
+        : 12'd0;
 
     BasicButton8chars_Rom u_button_rom (
         .clk(clk),
@@ -182,10 +182,10 @@ module draw_buttons (
     logic [7:0]  font_data;
 
     assign in_text = in_button_s0 &&
-                     (local_button_x_s0 >= TEXT_OFFSET_X) &&
-                     (local_button_x_s0 < TEXT_OFFSET_X + TEXT_WIDTH) &&
-                     (local_button_y_s0 >= TEXT_OFFSET_Y) &&
-                     (local_button_y_s0 < TEXT_OFFSET_Y + TEXT_HEIGHT);
+        (local_button_x_s0 >= TEXT_OFFSET_X) &&
+        (local_button_x_s0 < TEXT_OFFSET_X + TEXT_WIDTH) &&
+        (local_button_y_s0 >= TEXT_OFFSET_Y) &&
+        (local_button_y_s0 < TEXT_OFFSET_Y + TEXT_HEIGHT);
     assign local_text_x = local_button_x_s0 - TEXT_OFFSET_X;
     assign local_text_y = local_button_y_s0 - TEXT_OFFSET_Y;
     assign char_index = local_text_x[4:3];
@@ -197,8 +197,8 @@ module draw_buttons (
     end
 
     assign font_address = in_text
-                        ? {current_char[6:0], local_text_y}
-                        : 10'd0;
+        ? {current_char[6:0], local_text_y}
+        : 10'd0;
 
     Font_Rom u_font_rom (
         .clk(clk),
@@ -244,7 +244,7 @@ module draw_buttons (
 
     assign text_pixel = in_text_d && font_data[7 - text_pixel_x_d];
     assign button_color = (hovered_d && button_data == 4'h0)
-                        ? 4'h3 : button_data;
+        ? 4'h3 : button_data;
 
     always_comb begin
         if (text_pixel)

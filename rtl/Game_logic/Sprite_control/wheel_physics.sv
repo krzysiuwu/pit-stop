@@ -1,7 +1,7 @@
 /**
  * Module: wheel_physics
  * Summary: Models wheel pickup, dragging, throwing, gravity, bouncing, removal, and attachment to an anchor.
- * Author: Adam Krupa
+ * Author: Adam Krupa, Krzysztof Jędrzejek
  */
 module wheel_physics #(
         parameter int SCREEN_WIDTH  = 256,
@@ -9,7 +9,7 @@ module wheel_physics #(
         parameter int WHEEL_WIDTH   = 26,
         parameter int WHEEL_HEIGHT  = 27,
         parameter int GROUND_LEVEL  = 137
-)(
+    )(
         input  logic clk,
         input  logic rst,
         input  logic frame_tick,

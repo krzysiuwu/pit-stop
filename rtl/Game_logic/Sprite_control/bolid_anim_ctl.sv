@@ -4,29 +4,24 @@
  * Author: Adam Krupa
  */
 module bolid_anim_ctrl (
-    input  logic clk,
-    input  logic rst,
-    input  logic frame_tick,
+        input  logic clk,
+        input  logic rst,
+        input  logic frame_tick,
 
-    input  logic trigger_arrive,
-    input  logic trigger_depart,
-    input  logic trigger_drive_through,
+        input  logic trigger_arrive,
+        input  logic trigger_depart,
+        input  logic trigger_drive_through,
 
-    output logic arrive_done,
-    output logic depart_done,
+        output logic arrive_done,
+        output logic depart_done,
 
-    output logic               car_enable,
-    output logic signed [11:0] car_x_pos,
-    output logic [1:0]         wheel_anim_step
-);
+        output logic               car_enable,
+        output logic signed [11:0] car_x_pos,
+        output logic [1:0]         wheel_anim_step
+    );
 
     timeunit 1ns;
     timeprecision 1ps;
-
-    // Coordinates refer to the internal 256-by-192 rendering space.
-    localparam int POS_START =  260;
-    localparam int POS_STOP  =   60;
-    localparam int POS_END   = -170;
 
     // Position and velocity use Q12.8 fixed-point representation.
     localparam int FP_SHIFT     = 8;
@@ -124,7 +119,7 @@ module bolid_anim_ctrl (
 
                             if (wheel_distance_fp + speed_fp >= WHEEL_STEP_DISTANCE_FP) begin
                                 wheel_distance_fp <= wheel_distance_fp + speed_fp
-                                                     - WHEEL_STEP_DISTANCE_FP;
+                                    - WHEEL_STEP_DISTANCE_FP;
                                 wheel_step <= next_wheel_step(wheel_step);
                             end else begin
                                 wheel_distance_fp <= wheel_distance_fp + speed_fp;
@@ -161,7 +156,7 @@ module bolid_anim_ctrl (
 
                             if (wheel_distance_fp + speed_fp >= WHEEL_STEP_DISTANCE_FP) begin
                                 wheel_distance_fp <= wheel_distance_fp + speed_fp
-                                                     - WHEEL_STEP_DISTANCE_FP;
+                                    - WHEEL_STEP_DISTANCE_FP;
                                 wheel_step <= next_wheel_step(wheel_step);
                             end else begin
                                 wheel_distance_fp <= wheel_distance_fp + speed_fp;
@@ -183,7 +178,7 @@ module bolid_anim_ctrl (
 
                             if (wheel_distance_fp + speed_fp >= WHEEL_STEP_DISTANCE_FP) begin
                                 wheel_distance_fp <= wheel_distance_fp + speed_fp
-                                                     - WHEEL_STEP_DISTANCE_FP;
+                                    - WHEEL_STEP_DISTANCE_FP;
                                 wheel_step <= next_wheel_step(wheel_step);
                             end else begin
                                 wheel_distance_fp <= wheel_distance_fp + speed_fp;
@@ -213,8 +208,8 @@ module bolid_anim_ctrl (
 
     // A separate wheel-less car sprite is rendered during service.
     assign car_enable = (state == ARRIVING) ||
-                        (state == DEPARTING) ||
-                        (state == DRIVING_THROUGH);
+        (state == DEPARTING) ||
+        (state == DRIVING_THROUGH);
 
     assign arrive_done = (state == PITSTOP_WAIT);
     assign depart_done = (state == DONE);

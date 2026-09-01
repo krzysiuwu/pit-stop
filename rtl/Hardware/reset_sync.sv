@@ -4,10 +4,10 @@
  * Author: Adam Krupa
  */
 module reset_sync (
-    input  logic clk,
-    input  logic async_rst_n,
-    output logic rst_n
-);
+        input  logic clk,
+        input  logic async_rst_n,
+        output logic rst_n
+    );
 
     timeunit 1ns;
     timeprecision 1ps;

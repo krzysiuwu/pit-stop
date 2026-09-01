@@ -7,34 +7,34 @@ import vga_pkg::*;
 import game_pkg::*;
 
 module draw_game_panel (
-    input  logic        clk,
-    input  logic        rst,
-    input  logic        options_enable,
-    input  logic        summary_enable,
+        input  logic        clk,
+        input  logic        rst,
+        input  logic        options_enable,
+        input  logic        summary_enable,
 
-    input  logic        options_multiplayer,
-    input  logic        uart_connected,
-    input  logic        uart_peer_ready,
-    input  logic        uart_test_mode,
-    input  logic        waiting_for_uart,
-    input  logic [1:0]  options_game_mode,
-    input  logic [7:0]  options_target_value,
+        input  logic        options_multiplayer,
+        input  logic        uart_connected,
+        input  logic        uart_peer_ready,
+        input  logic        uart_test_mode,
+        input  logic        waiting_for_uart,
+        input  logic [1:0]  options_game_mode,
+        input  logic [7:0]  options_target_value,
 
-    input  logic        summary_multiplayer,
-    input  logic [1:0]  match_result,
-    input  logic [1:0]  summary_game_mode,
-    input  logic [7:0]  summary_target_value,
-    input  logic [7:0]  score,
-    input  logic [7:0]  remote_score,
-    input  logic [15:0] elapsed_seconds,
-    input  logic [7:0]  last_stop_seconds,
-    input  logic [7:0]  best_stop_seconds,
+        input  logic        summary_multiplayer,
+        input  logic [1:0]  match_result,
+        input  logic [1:0]  summary_game_mode,
+        input  logic [7:0]  summary_target_value,
+        input  logic [7:0]  score,
+        input  logic [7:0]  remote_score,
+        input  logic [15:0] elapsed_seconds,
+        input  logic [7:0]  last_stop_seconds,
+        input  logic [7:0]  best_stop_seconds,
 
-    input  logic [3:0] lut_in,
-    vga_if.in          vga_in,
-    output logic [3:0] lut_out,
-    vga_if.out         vga_out
-);
+        input  logic [3:0] lut_in,
+        vga_if.in          vga_in,
+        output logic [3:0] lut_out,
+        vga_if.out         vga_out
+    );
 
     timeunit 1ns;
     timeprecision 1ps;
@@ -61,19 +61,19 @@ module draw_game_panel (
     assign panel_y = summary_active ? 12'd12 : 12'd25;
     assign panel_h = summary_active ? 12'd140 : 12'd153;
     assign in_panel = panel_enable &&
-                      (cur_x >= PANEL_X) && (cur_x < PANEL_X + PANEL_W) &&
-                      (cur_y >= panel_y) && (cur_y < panel_y + panel_h);
+        (cur_x >= PANEL_X) && (cur_x < PANEL_X + PANEL_W) &&
+        (cur_y >= panel_y) && (cur_y < panel_y + panel_h);
 
     always_comb begin
         panel_color = 4'h1;
 
         if ((cur_x == PANEL_X) || (cur_x == PANEL_X + PANEL_W - 1) ||
-            (cur_y == panel_y) || (cur_y == panel_y + panel_h - 1)) begin
+                (cur_y == panel_y) || (cur_y == panel_y + panel_h - 1)) begin
             panel_color = 4'h0;
         end else if ((cur_x == PANEL_X + 1) ||
-                     (cur_x == PANEL_X + PANEL_W - 2) ||
-                     (cur_y == panel_y + 1) ||
-                     (cur_y == panel_y + panel_h - 2)) begin
+                (cur_x == PANEL_X + PANEL_W - 2) ||
+                (cur_y == panel_y + 1) ||
+                (cur_y == panel_y + panel_h - 2)) begin
             if (summary_active) begin
                 case (match_result)
                     RESULT_WIN:  panel_color = 4'h7;
@@ -84,11 +84,11 @@ module draw_game_panel (
                 panel_color = 4'h5;
             end
         end else if (summary_active &&
-                     ((cur_y == 12'd45) || (cur_y == 12'd61))) begin
+                ((cur_y == 12'd45) || (cur_y == 12'd61))) begin
             panel_color = 4'h6;
         end else if (!summary_active &&
-                     ((cur_y == 12'd42) || (cur_y == 12'd76) ||
-                      (cur_y == 12'd113))) begin
+                ((cur_y == 12'd42) || (cur_y == 12'd76) ||
+                    (cur_y == 12'd113))) begin
             panel_color = 4'h6;
         end
     end
@@ -105,7 +105,7 @@ module draw_game_panel (
         text_local_y = 3'd0;
 
         if (panel_enable && (cur_x >= TEXT_X) &&
-            (cur_x < TEXT_X + LINE_CHARS * 8)) begin
+                (cur_x < TEXT_X + LINE_CHARS * 8)) begin
             if (summary_active) begin
                 if ((cur_y >= 12'd18) && (cur_y < 12'd26)) begin
                     in_text = 1'b1; text_row = 3'd0;
@@ -180,15 +180,15 @@ module draw_game_panel (
             case (text_row)
                 3'd3: selected_number = {2'b0, score};
                 3'd4: selected_number = summary_multiplayer
-                                      ? {2'b0, remote_score}
-                                      : {2'b0, summary_target_value};
+                    ? {2'b0, remote_score}
+                    : {2'b0, summary_target_value};
                 3'd5: selected_number = (elapsed_seconds > 16'd999)
-                                      ? 10'd999 : elapsed_seconds[9:0];
+                    ? 10'd999 : elapsed_seconds[9:0];
                 3'd6: selected_number = {2'b0, last_stop_seconds};
                 default: selected_number = {2'b0, best_stop_seconds};
             endcase
         end else if ((text_row == 3'd7) &&
-                     (char_index >= 5'd11) && (char_index <= 5'd13)) begin
+                (char_index >= 5'd11) && (char_index <= 5'd13)) begin
             // Only one character is rendered per pixel. Select the remote
             // value while scanning its three digit positions so both fields
             // can share this single BCD converter.
@@ -204,8 +204,8 @@ module draw_game_panel (
     );
 
     assign selected_ascii_comb = {{4'h3, selected_hundreds},
-                                  {4'h3, selected_tens},
-                                  {4'h3, selected_ones}};
+            {4'h3, selected_tens},
+            {4'h3, selected_ones}};
 
     // The BCD conversion and the 28-character line selector used to form one
     // long combinational path into the synchronous font ROM.  Pipeline the
@@ -374,35 +374,35 @@ module draw_game_panel (
                 3'd3: begin
                     if (summary_multiplayer_d2)
                         line_text = {"YOU      ", selected_ascii_d2,
-                                     " PTS", {12{8'h20}}};
+                            " PTS", {12{8'h20}}};
                     else
                         line_text = {"SCORE    ", selected_ascii_d2,
-                                     " PTS", {12{8'h20}}};
+                            " PTS", {12{8'h20}}};
                 end
                 3'd4: begin
                     if (summary_multiplayer_d2) begin
                         line_text = {"RIVAL    ", selected_ascii_d2,
-                                     " PTS", {12{8'h20}}};
+                            " PTS", {12{8'h20}}};
                     end else begin
                         case (summary_game_mode_d2)
                             2'b00, 2'b10:
                                 line_text = {"TARGET   ", selected_ascii_d2,
-                                             " SEC", {12{8'h20}}};
+                                    " SEC", {12{8'h20}}};
                             2'b01:
                                 line_text = {"TARGET   ", selected_ascii_d2,
-                                             " PTS", {12{8'h20}}};
+                                    " PTS", {12{8'h20}}};
                             default:
                                 line_text = {"TARGET   ", selected_ascii_d2,
-                                             " RUNS", {11{8'h20}}};
+                                    " RUNS", {11{8'h20}}};
                         endcase
                     end
                 end
                 3'd5: line_text = {"TIME     ", selected_ascii_d2,
-                                   " SEC", {12{8'h20}}};
+                        " SEC", {12{8'h20}}};
                 3'd6: line_text = {"LAST     ", selected_ascii_d2,
-                                   " SEC", {12{8'h20}}};
+                        " SEC", {12{8'h20}}};
                 default: line_text = {"BEST     ", selected_ascii_d2,
-                                      " SEC", {12{8'h20}}};
+                        " SEC", {12{8'h20}}};
             endcase
         end else begin
             case (text_row_d2)
@@ -447,13 +447,13 @@ module draw_game_panel (
                     case (options_game_mode_d2)
                         2'b00, 2'b10:
                             line_text = {"TARGET   ", selected_ascii_d2,
-                                         " SEC", {12{8'h20}}};
+                                " SEC", {12{8'h20}}};
                         2'b01:
                             line_text = {"TARGET   ", selected_ascii_d2,
-                                         " PTS", {12{8'h20}}};
+                                " PTS", {12{8'h20}}};
                         default:
                             line_text = {"TARGET   ", selected_ascii_d2,
-                                         " RUNS", {11{8'h20}}};
+                                " RUNS", {11{8'h20}}};
                     endcase
                 end
                 3'd5: begin
@@ -473,7 +473,7 @@ module draw_game_panel (
                 default: begin
                     if (uart_test_mode_d2)
                         line_text = {"TX ", selected_ascii_d2, "  RX ",
-                                     selected_ascii_d2, "  7SEG RX", {5{8'h20}}};
+                            selected_ascii_d2, "  7SEG RX", {5{8'h20}}};
                     else
                         line_text = {"SW12 ENABLES UART TEST", {6{8'h20}}};
                 end
@@ -507,12 +507,12 @@ module draw_game_panel (
                 text_color = 4'h7;
             else if ((text_row_d2 == 3'd2) && (char_index_d2 >= 5'd9))
                 text_color = ((options_multiplayer_d2 && uart_peer_ready_d2) ||
-                              (uart_test_mode_d2 && uart_connected_d2))
-                           ? 4'h7
-                           : ((options_multiplayer_d2 || uart_test_mode_d2)
-                              ? 4'h5 : 4'h3);
+                    (uart_test_mode_d2 && uart_connected_d2))
+                    ? 4'h7
+                    : ((options_multiplayer_d2 || uart_test_mode_d2)
+                        ? 4'h5 : 4'h3);
             else if (((text_row_d2 == 3'd3) || (text_row_d2 == 3'd4) ||
-                      (text_row_d2 == 3'd5)) && (char_index_d2 >= 5'd9))
+                        (text_row_d2 == 3'd5)) && (char_index_d2 >= 5'd9))
                 text_color = 4'h7;
             else if (text_row_d2 >= 3'd6)
                 text_color = uart_test_mode_d2 ? 4'h7 : 4'h3;
@@ -523,8 +523,8 @@ module draw_game_panel (
     logic [7:0] font_data;
 
     assign font_address = in_text_d2
-                        ? {current_char[6:0], text_local_y_d2}
-                        : 10'd0;
+        ? {current_char[6:0], text_local_y_d2}
+        : 10'd0;
 
     Font_Rom u_font_rom (
         .clk(clk),

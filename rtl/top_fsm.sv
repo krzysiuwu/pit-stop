@@ -4,30 +4,30 @@
  * Author: Adam Krupa
  */
 module top_fsm (
-    input  logic clk,
-    input  logic rst,
-    input  logic [15:0] switches,
-    input  logic uart_rx_i,
-    input  logic uart_debug_finish,
+        input  logic clk,
+        input  logic rst,
+        input  logic [15:0] switches,
+        input  logic uart_rx_i,
+        input  logic uart_debug_finish,
 
-    output logic uart_tx_o,
-    output logic uart_link_connected,
-    output logic uart_rx_activity,
-    output logic uart_error,
-    output logic uart_remote_debug,
-    output logic [7:0] uart_remote_score,
+        output logic uart_tx_o,
+        output logic uart_link_connected,
+        output logic uart_rx_activity,
+        output logic uart_error,
+        output logic uart_remote_debug,
+        output logic [7:0] uart_remote_score,
 
-    output logic [3:0] r,
-    output logic [3:0] g,
-    output logic [3:0] b,
-    output logic hs,
-    output logic vs,
+        output logic [3:0] r,
+        output logic [3:0] g,
+        output logic [3:0] b,
+        output logic hs,
+        output logic vs,
 
-    output logic [7:0] seven_segment_value,
+        output logic [7:0] seven_segment_value,
 
-    inout  logic ps2_data,
-    inout  logic ps2_clk
-);
+        inout  logic ps2_data,
+        inout  logic ps2_clk
+    );
 
     timeunit 1ns;
     timeprecision 1ps;
@@ -71,15 +71,15 @@ module top_fsm (
     end
 
     mouse_limits u_mouse_limits (
-        .clk(clk),
-        .rst(rst),
+        .clk,
+        .rst,
         .value(mouse_limit_value),
         .setmax_x(mouse_setmax_x),
         .setmax_y(mouse_setmax_y)
     );
 
     MouseCtl u_mouse_ctl (
-        .clk(clk),
+        .clk,
         .rst(~rst),
         .xpos(mouse_x),
         .ypos(mouse_y),
@@ -93,29 +93,29 @@ module top_fsm (
         .sety(1'b0),
         .setmax_x(mouse_setmax_x),
         .setmax_y(mouse_setmax_y),
-        .ps2_clk(ps2_clk),
-        .ps2_data(ps2_data)
+        .ps2_clk,
+        .ps2_data
     );
 
     pit_stop_core u_pit_stop_core (
-        .clk(clk),
-        .rst(rst),
+        .clk,
+        .rst,
         .mouse_x(low_res_mouse_x),
         .mouse_y(low_res_mouse_y),
         .mouse_btn_left(mouse_btn_left),
-        .mouse_scroll(mouse_scroll),
-        .mouse_new_event(mouse_new_event),
+        .mouse_scroll,
+        .mouse_new_event,
         .switches(switches_sync),
-        .uart_rx_i(uart_rx_i),
-        .uart_debug_finish(uart_debug_finish),
-        .uart_tx_o(uart_tx_o),
-        .uart_link_connected(uart_link_connected),
-        .uart_rx_activity(uart_rx_activity),
-        .uart_error(uart_error),
-        .uart_remote_debug(uart_remote_debug),
-        .uart_remote_score(uart_remote_score),
-        .r(r), .g(g), .b(b), .hs(hs), .vs(vs),
-        .seven_segment_value(seven_segment_value),
+        .uart_rx_i,
+        .uart_debug_finish,
+        .uart_tx_o,
+        .uart_link_connected,
+        .uart_rx_activity,
+        .uart_error,
+        .uart_remote_debug,
+        .uart_remote_score,
+        .r, .g, .b, .hs, .vs,
+        .seven_segment_value,
         .vga_x(), .vga_y()
     );
 

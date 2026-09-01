@@ -1,39 +1,39 @@
 /**
  * Module: uart_game_link
  * Summary: Frames, transmits, validates, and decodes periodic multiplayer state packets over UART.
- * Author: Adam Krupa
+ * Author: Adam Krupa, Krzysztof Jędrzejek
  */
 module uart_game_link #(
-    parameter int CLOCK_HZ = 65_000_000,
-    parameter int BAUD = 115_200,
-    parameter int TX_INTERVAL_CYCLES = CLOCK_HZ / 50,
-    parameter int LINK_TIMEOUT_CYCLES = CLOCK_HZ / 2
-)(
-    input  logic       clk,
-    input  logic       rst,
-    input  logic       uart_rx_i,
-    output logic       uart_tx_o,
+        parameter int CLOCK_HZ = 65_000_000,
+        parameter int BAUD = 115_200,
+        parameter int TX_INTERVAL_CYCLES = CLOCK_HZ / 50,
+        parameter int LINK_TIMEOUT_CYCLES = CLOCK_HZ / 2
+    )(
+        input  logic       clk,
+        input  logic       rst,
+        input  logic       uart_rx_i,
+        output logic       uart_tx_o,
 
-    input  logic       local_session_start,
-    input  logic       local_session_reset,
-    input  logic       local_multiplayer_selected,
-    input  logic       local_debug_mode,
-    input  logic       local_game_finished,
-    input  logic [1:0] local_game_mode,
-    input  logic [7:0] local_target_value,
-    input  logic [7:0] local_score,
+        input  logic       local_session_start,
+        input  logic       local_session_reset,
+        input  logic       local_multiplayer_selected,
+        input  logic       local_debug_mode,
+        input  logic       local_game_finished,
+        input  logic [1:0] local_game_mode,
+        input  logic [7:0] local_target_value,
+        input  logic [7:0] local_score,
 
-    output logic       link_connected,
-    output logic       remote_multiplayer_selected,
-    output logic       remote_debug_mode,
-    output logic       remote_start_pulse,
-    output logic       remote_game_finished,
-    output logic [1:0] remote_game_mode,
-    output logic [7:0] remote_target_value,
-    output logic [7:0] remote_score,
-    output logic       rx_activity,
-    output logic       rx_error_sticky
-);
+        output logic       link_connected,
+        output logic       remote_multiplayer_selected,
+        output logic       remote_debug_mode,
+        output logic       remote_start_pulse,
+        output logic       remote_game_finished,
+        output logic [1:0] remote_game_mode,
+        output logic [7:0] remote_target_value,
+        output logic [7:0] remote_score,
+        output logic       rx_activity,
+        output logic       rx_error_sticky
+    );
 
     timeunit 1ns;
     timeprecision 1ps;
@@ -75,16 +75,16 @@ module uart_game_link #(
     // and an XOR checksum. The flags encode multiplayer, session-valid,
     // game-finished, and diagnostic-mode state in bits [0] through [3].
     assign tx_flags = {
-        4'b0000,
-        local_debug_mode,
-        local_game_finished,
-        local_session_valid,
-        local_multiplayer_selected
-    };
+            4'b0000,
+            local_debug_mode,
+            local_game_finished,
+            local_session_valid,
+            local_multiplayer_selected
+        };
 
     assign tx_checksum = MAGIC_0 ^ MAGIC_1 ^ current_session_id ^
-                         tx_flags ^ {6'b0, local_game_mode} ^
-                         local_target_value ^ local_score;
+        tx_flags ^ {6'b0, local_game_mode} ^
+        local_target_value ^ local_score;
 
     assign tx_byte_valid = tx_packet_active;
 
@@ -274,7 +274,7 @@ module uart_game_link #(
 
                 if (rx_flags[1]) begin
                     if (!accepted_session_valid ||
-                        (rx_session != current_session_id)) begin
+                            (rx_session != current_session_id)) begin
                         current_session_id     <= rx_session;
                         local_session_valid    <= 1'b1;
                         accepted_session_valid <= 1'b1;

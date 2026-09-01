@@ -6,19 +6,19 @@
 import vga_pkg::*;
 
 module draw_PitstopLogo (
-    input  logic clk,
-    input  logic rst,
-    input  logic enable,
+        input  logic clk,
+        input  logic rst,
+        input  logic enable,
 
-    input  logic [11:0] x_pos,
-    input  logic [11:0] y_pos,
+        input  logic [11:0] x_pos,
+        input  logic [11:0] y_pos,
 
-    input  logic [3:0] lut_in,
-    vga_if.in          vga_in,
+        input  logic [3:0] lut_in,
+        vga_if.in          vga_in,
 
-    output logic [3:0] lut_out,
-    vga_if.out         vga_out
-);
+        output logic [3:0] lut_out,
+        vga_if.out         vga_out
+    );
 
     timeunit 1ns;
     timeprecision 1ps;
@@ -27,8 +27,8 @@ module draw_PitstopLogo (
     localparam int HEIGHT = 32;
 
     logic in_hitbox;
-    logic [6:0] local_x; 
-    logic [4:0] local_y; 
+    logic [6:0] local_x;
+    logic [4:0] local_y;
 
     logic [11:0] cur_x;
     logic [11:0] cur_y;
@@ -89,7 +89,7 @@ module draw_PitstopLogo (
             lut_in_d       <= '0;
         end else begin
             in_hitbox_d    <= in_hitbox;
-            
+
             vga_out.vcount <= vga_in.vcount;
             vga_out.vsync  <= vga_in.vsync;
             vga_out.hcount <= vga_in.hcount;

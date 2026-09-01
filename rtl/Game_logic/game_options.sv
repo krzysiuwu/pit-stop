@@ -4,15 +4,15 @@
  * Author: Adam Krupa
  */
 module game_options (
-    input  logic        clk,
-    input  logic        rst,
-    input  logic [15:0] switches,
+        input  logic        clk,
+        input  logic        rst,
+        input  logic [15:0] switches,
 
-    output logic        multiplayer,
-    output logic        uart_test_mode,
-    output logic [1:0]  game_mode,
-    output logic [7:0]  target_value
-);
+        output logic        multiplayer,
+        output logic        uart_test_mode,
+        output logic [1:0]  game_mode,
+        output logic [7:0]  target_value
+    );
 
     timeunit 1ns;
     timeprecision 1ps;
@@ -39,7 +39,7 @@ module game_options (
     // A target of zero would make every planned mode end immediately. Keeping
     // the visible value at one also makes an all-zero switch setting usable.
     assign target_value = (switches_sync[7:0] == 8'd0)
-                        ? 8'd1
-                        : switches_sync[7:0];
+        ? 8'd1
+        : switches_sync[7:0];
 
 endmodule

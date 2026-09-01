@@ -1,7 +1,7 @@
 /**
  * Module: LUT2RGB_converter
  * Summary: Maps four-bit palette indices to 12-bit RGB while preserving VGA pipeline alignment.
- * Author: Adam Krupa
+ * Author: Krzysztof Jędrzejek
  */
 module LUT2RGB_converter (
 

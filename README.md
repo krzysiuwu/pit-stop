@@ -2,6 +2,14 @@
 <img width="3219" height="2038" alt="IMG_20260831_133148" src="https://github.com/user-attachments/assets/ec7cab54-466b-45c8-ac02-a8d98984f15c" />
 Gra zręcznościowa inspirowana pitstopami w Formule 1 na płytki Basys3
 
+## Spis treści
+- [Opcje gry](#opcje-gry)
+- [Multiplayer UART](#multiplayer-uart)
+- [Przebieg gry](#przebieg-gry)
+- [Architektura](#architektura)
+- [Uruchomienie na płytce Basys3](#uruchomienie-na-płytce-basys3)
+- [Uruchomienie w interaktywnym symulatorze](#uruchomienie-w-interaktywnym-symulatorze)
+
 ## Opcje gry
 
 Ekran `OPTS` pokazuje ustawienia odczytywane na żywo ze switchy Basys3:
@@ -117,6 +125,20 @@ Interfejs `low_res_if` nie jest uzywany w aktywnym potoku. Kazdy renderer
 wylicza wspolrzedne 256x192 z wlasnego, opóźnionego etapu `vga_if`, dzieki czemu
 kolor i synchronizacja pozostają wyrównane. `mouse_limits` programuje kontroler
 PS/2 na zakres 0..1023 i 0..767, wiec nie można wyjść myszką poza ekran.
+
+## Uruchomienie na płytce Basys3
+W katalogu results znajduje się gotowy bitstream. W celu samodzielnego wygenerowania bitstreamu należy użyć poniższego skryptu
+
+```bash
+source env.sh
+generate_bitstream.sh
+```
+Następnie należy wgrać bitstream na płytke następującym skryptem
+```bash
+program_fpga.sh
+```
+Skrypt obsługuje sytuacje w której jest więcej niż jedna płytka podłączona do komputera i programuje je po kolei.
+
 ## Uruchomienie w interaktywnym symulatorze
 
 Interaktywny symulator SDL:
@@ -154,15 +176,4 @@ ABI `libstdc++`. Zapobiega to błędom linkera z symbolami
 `std::__cxx11::basic_string`; katalog kompilacji dla tego wariantu jest osobny,
 wiec nie trzeba ręcznie usuwać poprzedniego `obj_dir/game_controller`.
 
-## Uruchomienie na płytce Basys3
-W katalogu results znajduje się gotowy bitstream. W celu samodzielnego wygenerowania bitstreamu należy użyć poniższego skryptu
 
-```bash
-source env.sh
-generate_bitstream.sh
-```
-Następnie należy wgrać bitstream na płytke następującym skryptem
-```bash
-program_fpga.sh
-```
-Skrypt obsługuje sytuacje w której jest więcej niż jedna płytka podłączona do komputera i programuje je po kolei.

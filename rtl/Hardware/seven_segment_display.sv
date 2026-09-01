@@ -4,14 +4,14 @@
  * Author: Adam Krupa
  */
 module seven_segment_display (
-    input  logic       clk,
-    input  logic       rst,
-    input  logic [7:0] value,
+        input  logic       clk,
+        input  logic       rst,
+        input  logic [7:0] value,
 
-    output logic [6:0] seg,
-    output logic [3:0] an,
-    output logic       dp
-);
+        output logic [6:0] seg,
+        output logic [3:0] an,
+        output logic       dp
+    );
 
     timeunit 1ns;
     timeprecision 1ps;

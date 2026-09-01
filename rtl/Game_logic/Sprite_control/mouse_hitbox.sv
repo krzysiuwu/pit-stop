@@ -1,7 +1,7 @@
 /**
  * Module: mouse_hitbox
  * Summary: Detects pointer overlap and emits a one-clock click pulse on press or release.
- * Author: Adam Krupa
+ * Author: Adam Krupa, Krzysztof Jędrzejek
  */
 module mouse_hitbox #(
         // UI buttons should trigger on release so their pressed state remains

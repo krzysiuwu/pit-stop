@@ -4,17 +4,17 @@
  * Author: Adam Krupa
  */
 module uart_rx #(
-    parameter int CLOCK_HZ = 65_000_000,
-    parameter int BAUD     = 115_200
-)(
-    input  logic       clk,
-    input  logic       rst,
-    input  logic       rx,
+        parameter int CLOCK_HZ = 65_000_000,
+        parameter int BAUD     = 115_200
+    )(
+        input  logic       clk,
+        input  logic       rst,
+        input  logic       rx,
 
-    output logic [7:0] data,
-    output logic       data_valid,
-    output logic       framing_error
-);
+        output logic [7:0] data,
+        output logic       data_valid,
+        output logic       framing_error
+    );
 
     timeunit 1ns;
     timeprecision 1ps;

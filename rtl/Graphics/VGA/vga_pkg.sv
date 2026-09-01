@@ -1,7 +1,7 @@
 /**
  * Package: vga_pkg
  * Summary: Defines 1024-by-768 VGA timing and internal 256-by-192 rendering constants.
- * Author: Adam Krupa
+ * Author: Krzysztof Jędrzejek
  */
 package vga_pkg;
 

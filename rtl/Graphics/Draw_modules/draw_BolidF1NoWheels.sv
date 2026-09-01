@@ -6,20 +6,20 @@
 import vga_pkg::*;
 
 module draw_BolidF1NoWheels (
-    input  logic clk,
-    input  logic rst,
-    input  logic enable,
-    
-    input  logic [11:0] x_pos,
-    input  logic [11:0] y_pos,
-    
-    input  logic [3:0] lut_in,
-    vga_if.in          vga_in,
-    
-    output logic [3:0] lut_out,
-    vga_if.out         vga_out
-);
-     
+        input  logic clk,
+        input  logic rst,
+        input  logic enable,
+
+        input  logic [11:0] x_pos,
+        input  logic [11:0] y_pos,
+
+        input  logic [3:0] lut_in,
+        vga_if.in          vga_in,
+
+        output logic [3:0] lut_out,
+        vga_if.out         vga_out
+    );
+
     localparam int SPRITE_WIDTH  = 165;
     localparam int SPRITE_HEIGHT = 44;
 
@@ -65,7 +65,7 @@ module draw_BolidF1NoWheels (
             vga_out.hsync  <= '0;
             vga_out.vblnk  <= '0;
             vga_out.hblnk  <= '0;
-            
+
             in_hitbox_d    <= 1'b0;
             lut_in_d       <= '0;
         end else begin
@@ -75,7 +75,7 @@ module draw_BolidF1NoWheels (
             vga_out.hsync  <= vga_in.hsync;
             vga_out.vblnk  <= vga_in.vblnk;
             vga_out.hblnk  <= vga_in.hblnk;
-            
+
             in_hitbox_d    <= in_hitbox;
             lut_in_d       <= lut_in;
         end

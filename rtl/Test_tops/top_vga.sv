@@ -1,7 +1,7 @@
 /**
  * Module: top_vga
  * Summary: Legacy VGA and PS/2 integration top used by the original simulation flow.
- * Author: Adam Krupa
+ * Author: Krzysztof Jędrzejek
  * Based on: SJSU EE178 Lab #4 by Prof. Eric Crabilla, adapted for AGH UEC2 by Piotr Kaczmarczyk.
  */
 module top_vga (
