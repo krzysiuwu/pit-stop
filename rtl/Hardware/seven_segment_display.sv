@@ -23,7 +23,7 @@ module seven_segment_display (
     logic [3:0]  tens;
     logic [3:0]  ones;
 
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst)
             refresh_counter <= 16'b0;
         else

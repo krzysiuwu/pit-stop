@@ -40,7 +40,7 @@ module uart_rx #(
 
     // UART RX is asynchronous to clk; the two-stage synchronizer prevents
     // metastability from entering the sampling state machine.
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst) begin
             rx_meta <= 1'b1;
             rx_sync <= 1'b1;
@@ -50,7 +50,7 @@ module uart_rx #(
         end
     end
 
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst) begin
             state         <= RX_IDLE;
             clock_counter <= '0;

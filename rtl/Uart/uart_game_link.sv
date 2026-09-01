@@ -115,7 +115,7 @@ module uart_game_link #(
 
     // Snapshot the entire packet before transmission so slowly changing game
     // state cannot produce a frame containing values from different cycles.
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst) begin
             tx_byte_index      <= 3'd0;
             tx_packet_active   <= 1'b0;
@@ -180,7 +180,7 @@ module uart_game_link #(
 
     // The two-byte magic prefix lets the counter resynchronize after a lost or
     // corrupted byte. A packet is exposed only after its checksum is valid.
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst) begin
             rx_byte_count        <= 3'd0;
             rx_checksum          <= 8'd0;
@@ -239,7 +239,7 @@ module uart_game_link #(
 
     // A valid new session received from either board becomes the shared
     // session. Because both boards run this logic, neither one is a fixed host.
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst) begin
             current_session_id          <= 8'd0;
             local_session_valid         <= 1'b0;

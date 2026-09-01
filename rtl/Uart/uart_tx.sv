@@ -33,7 +33,7 @@ module uart_tx #(
     assign data_ready = !busy;
     assign tx = busy ? frame[bit_index] : 1'b1;
 
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk) begin
         if (!rst) begin
             frame         <= 10'h3ff;
             bit_index     <= 4'd0;
